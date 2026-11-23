@@ -7,9 +7,13 @@ import { ArmyPanel } from './ArmyPanel';
 import { BattleVignette } from './BattleVignette';
 import { Folio, fmt } from './common';
 import { getMap, MapView } from './MapView';
-import { CodexModal, LedgerModal, SarbatModal, SavesModal, SettingsModal, SummaryModal, VaarModal } from './Modals';
+import { CodexModal, LedgerModal, SavesModal, SettingsModal, SummaryModal } from './Modals';
+import { VaarPage } from './VaarPage';
+import { DarbarModal } from './DarbarModal';
+import { SarbatModal } from './SarbatModal';
 import { RegionPanel } from './RegionPanel';
 import { TopBar } from './TopBar';
+import { EventModal } from './EventModal';
 import { Tutorial } from './Tutorial';
 
 function HoverCard() {
@@ -99,8 +103,8 @@ export function GameScreen() {
   };
 
   useEffect(() => {
-    if (game.phase === 'sarbat' && !modal && battleQueue.length === 0) openModal('sarbat');
-  }, [game.phase, modal, battleQueue.length]);
+    if (game.phase === 'sarbat' && !modal && battleQueue.length === 0 && game.pendingEvents.length === 0) openModal('sarbat');
+  }, [game.phase, modal, battleQueue.length, game.pendingEvents.length]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -124,6 +128,7 @@ export function GameScreen() {
       else if (k === 'l') openModal('ledger');
       else if (k === 'k') openModal('sarbat');
       else if (k === 'c') openModal('codex');
+      else if (k === 'b') openModal('darbar');
       else if (k === 'h') {
         const home = Object.values(game.regions).find((r) => r.owner === game.playerFaction);
         if (home) map?.focusOn(home.id, 1.4);
@@ -194,7 +199,9 @@ export function GameScreen() {
           {modal === 'saves' && <SavesModal />}
           {modal === 'codex' && <CodexModal />}
           {modal === 'sarbat' && <SarbatModal />}
-          {modal === 'vaar' && <VaarModal />}
+          {modal === 'vaar' && <VaarPage />}
+          {modal === 'darbar' && <DarbarModal />}
+          {!modal && game.pendingEvents.length > 0 && <EventModal />}
         </>
       )}
     </div>

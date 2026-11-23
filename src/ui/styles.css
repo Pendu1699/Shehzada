@@ -829,7 +829,7 @@ table.ledger td.num {
   margin-bottom: 4px;
 }
 
-.tip .tip-row {
+.tip-row {
   display: flex;
   justify-content: space-between;
   gap: 12px;

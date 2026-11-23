@@ -18,13 +18,13 @@ import type { FactionId, GameState, RegionId } from './state';
 /** How readily each power would desecrate a captured shrine (0 = never). Reflects history, not prejudice:
  * the Marathas, the hill rajas and the Company never did; the Durrani and some Mughal governors did. */
 const DESECRATION_PROPENSITY: Record<string, number> = {
-  durrani: 0.6,
-  mughal: 0.45,
-  peshawar: 0.25,
-  kasur: 0.15,
-  multan: 0.1,
-  malerkotla: 0.05,
-  bahawalpur: 0.05,
+  durrani: 0.3,
+  mughal: 0.18,
+  peshawar: 0.12,
+  kasur: 0.06,
+  multan: 0.04,
+  malerkotla: 0.02,
+  bahawalpur: 0.02,
 };
 
 export const JOSH_TURNS = 4;
@@ -47,7 +47,9 @@ export function onCapture(s: GameState, region: RegionId, captor: FactionId, opt
     if (s.josh.vow && captor === s.playerFaction && region === 'amritsar') fulfilVow(s);
     return false;
   }
-  const p = opts.forceDesecrate ? 1 : DESECRATION_PROPENSITY[captor] ?? 0;
+  let p = opts.forceDesecrate ? 1 : DESECRATION_PROPENSITY[captor] ?? 0;
+  // Such acts were rare and terrible; they do not repeat while the memory is fresh.
+  if (s.josh.active || s.josh.rebuild || s.regions[region].desecrated.length) p = opts.forceDesecrate ? p : 0;
   const hostileToPanth = aliveFactions(s).some((f) => isSikh(f) && s.factions[captor]?.relations[f] === 'war');
   if (!opts.forceDesecrate && (!hostileToPanth || rand(s) >= p)) return false;
   desecrate(s, region, captor);

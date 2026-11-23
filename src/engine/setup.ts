@@ -8,6 +8,7 @@ import { seedFromString } from './rng';
 import { SAVE_VERSION, type FactionState, type GameState, type Leader, type RegionState } from './state';
 import { refreshExploration } from './explore';
 import { updateMiri } from './miripiri';
+import { newCourt } from './court';
 import { generateSummaryOpening } from '../narrative/dhadi';
 
 export interface NewGameOptions {
@@ -170,6 +171,10 @@ export function newGame(opts: NewGameOptions): GameState {
   }
   if (!factions[opts.playerFaction]?.alive) throw new Error(`${opts.playerFaction} is not present in ${sc.id}`);
 
+  if (sc.sarkar === opts.playerFaction) {
+    s.court = newCourt(s, opts.playerFaction);
+    if (sc.year >= 1839) s.court.crisis = true;
+  }
   for (const f of Object.keys(factions)) updateMiri(s, f);
   refreshExploration(s);
   s.summary = { turn: 0, dhadi: generateSummaryOpening(s), income: [], notes: [], piri: [] };

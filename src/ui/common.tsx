@@ -75,15 +75,17 @@ export function Heading({ en, pa, right }: { en: string; pa?: string; right?: Re
   );
 }
 
-export function Modal({ children, onClose, wide, className }: { children: ReactNode; onClose?: () => void; wide?: boolean; className?: string }) {
+export function Modal({ children, onClose, wide, className, hideClose }: { children: ReactNode; onClose?: () => void; wide?: boolean; className?: string; hideClose?: boolean }) {
   const close = useStore((s) => s.closeModal);
   const doClose = onClose ?? close;
   return (
     <div className="modal-backdrop" onPointerDown={(e) => e.target === e.currentTarget && doClose()}>
       <div className={`modal folio ${className ?? ''}`} style={wide ? { width: 'min(1100px, 96vw)' } : undefined} role="dialog" aria-modal="true">
-        <button className="btn small neela modal-close" onClick={doClose} aria-label="Close">
-          ✕
-        </button>
+        {!hideClose && (
+          <button className="btn small neela modal-close" onClick={doClose} aria-label="Close">
+            ✕
+          </button>
+        )}
         <div className="folio-inner">{children}</div>
       </div>
     </div>

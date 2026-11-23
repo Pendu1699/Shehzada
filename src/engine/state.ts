@@ -2,6 +2,7 @@
 
 import type { Festival } from './calendar';
 import type { TraitId } from '../data/leaders';
+import type { Court } from './court';
 
 export const SAVE_VERSION = 1;
 
@@ -263,6 +264,8 @@ export interface GameState {
   /** Set when the game ends. */
   ending?: { kind: 'sovereign' | 'protected' | 'annexation' | 'ghallughara'; turn: number };
   settings: { difficulty: 'gentle' | 'standard' | 'hard' };
+  /** The player's darbar, once they rule as the Sarkar-i-Khalsa. */
+  court?: Court;
 }
 
 export function newId(s: GameState, prefix: string): string {

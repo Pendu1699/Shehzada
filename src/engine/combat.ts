@@ -248,11 +248,12 @@ export function resolveBattle(s: GameState, o: BattleOptions): BattleReport {
   let betrayal: string | undefined;
   const checkTreachery = (side: Side, which: 'A' | 'D') => {
     const bal = balanceOf(s, side.faction);
-    if (bal.state !== 'brittle' && bal.state !== 'very_brittle') return;
+    const crisis = !!s.factions[side.faction]?.flags.court_crisis;
+    if (bal.state !== 'brittle' && bal.state !== 'very_brittle' && !crisis) return;
     for (const army of side.armies) {
       const L = army.leader ? s.leaders[army.leader] : undefined;
       if (!L || L.loyalty >= 40) continue;
-      const p = ((40 - L.loyalty) / 100) * (bal.state === 'very_brittle' ? 1.6 : 1) * (L.traits.includes('schemer') ? 1.4 : 1);
+      const p = ((40 - L.loyalty) / 100) * (bal.state === 'very_brittle' || crisis ? 1.6 : 1) * (L.traits.includes('schemer') ? 1.6 : 1);
       if (rand(s) < p) {
         const share = armyMen(army) / Math.max(1, which === 'A' ? a.men : d.men);
         if (which === 'A') {

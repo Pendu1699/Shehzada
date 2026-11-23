@@ -24,9 +24,11 @@ import { canEnter, movementPoints, stepCost } from './movement';
 import { armiesIn, armyMen, atWar, clamp, date, factionName, friendly, isSikh, polityName } from './query';
 import { chance, rand, shuffle } from './rng';
 import type { Army, BattleReport, GameState } from './state';
-import { runEvents } from './events';
-import { runSarbatKhalsa } from './sarbat';
+import { resolveEventChoice, runEvents } from './events';
+import { EVENT_BY_ID } from '../data/events/index';
+import { finishSarbat, runSarbatKhalsa } from './sarbat';
 import { checkEnding } from './endings';
+import { courtTurn } from './court';
 
 export interface ResolutionLog {
   dhadi: string[];
@@ -322,6 +324,8 @@ function langarAndPiri(s: GameState) {
     if (!f.alive) continue;
     const langars = Object.values(s.regions).filter((r) => r.owner === f.id && r.langar).length;
     if (langars && isSikh(f.id)) changePiri(s, f.id, Math.min(2.5, 0.35 * langars + 0.3), 'Langar kept open for all who come');
+    // High standing must be kept up: the Panth expects more of those it honours most.
+    if (f.piri > 60) changePiri(s, f.id, -(f.piri - 60) * 0.04, 'The Panth expects more of those it honours');
     // Just leaders as governors.
     for (const L of Object.values(s.leaders)) if (L.alive && L.faction === f.id && L.jagir && L.traits.includes('just')) changePiri(s, f.id, 0.2, `The just rule of ${L.name}`);
     if (f.treasury < 0) {
@@ -339,6 +343,14 @@ function langarAndPiri(s: GameState) {
 export function endTurn(prev: GameState): GameState {
   const s = structuredClone(prev);
   if (s.phase === 'ended') return s;
+  // Decisions the player left open are taken by the current of history.
+  for (const p of [...s.pendingEvents]) {
+    const ev = EVENT_BY_ID[p.eventId];
+    const order = [ev?.aiChoice ?? 0, ...(ev?.choices ?? []).map((_, i) => i)];
+    for (const c of order) if (resolveEventChoice(s, p.id, c) !== null) break;
+  }
+  s.pendingEvents = [];
+  if (s.gurmatas.some((g) => g.passed === undefined)) finishSarbat(s);
   const log: ResolutionLog = { dhadi: [], notes: [], battles: [] };
 
   runAI(s);
@@ -358,6 +370,7 @@ export function endTurn(prev: GameState): GameState {
   s.turn += 1;
   s.lastBattles = log.battles.map((b) => b.id);
   log.notes.push(...leaderTurn(s));
+  log.notes.push(...courtTurn(s));
   log.notes.push(...spawnInvasions(s));
   log.notes.push(...joshTurn(s));
   regionTurn(s);

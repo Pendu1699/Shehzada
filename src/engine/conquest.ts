@@ -231,3 +231,31 @@ export function checkRakhiObligations(s: GameState): string[] {
   }
   return notes;
 }
+
+/** A scripted or negotiated transfer of a region (no battle, no plunder). */
+export function transferRegion(s: GameState, region: RegionId, to: FactionId | null, control = 50): void {
+  const st = s.regions[region];
+  const prev = st.owner;
+  if (prev === to) return;
+  st.owner = to;
+  st.control = control;
+  st.siege = undefined;
+  if (st.rakhi === to) st.rakhi = null;
+  if (st.jagir) {
+    const L = s.leaders[st.jagir];
+    if (L) L.jagir = undefined;
+    st.jagir = undefined;
+  }
+  st.langar = to ? st.langar && isSikh(to) : false;
+  if (to === 'company' && st.inkSince === undefined) st.inkSince = s.turn;
+  // Garrisons of the old owner withdraw.
+  if (prev) {
+    for (const a of armiesIn(s, region)) {
+      if (a.owner !== prev || !to || !atWar(s, a.owner, to)) continue;
+      const back = retreatTarget(s, a);
+      if (back) a.region = back;
+    }
+    checkElimination(s, prev, to ?? undefined);
+  }
+  if (to) onCapture(s, region, to);
+}

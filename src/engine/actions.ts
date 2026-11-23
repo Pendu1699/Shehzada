@@ -16,7 +16,8 @@ import { chance } from './rng';
 import type { Army, GameState, Stance } from './state';
 import { newId } from './state';
 import { endTurn } from './turn';
-import { castVote } from './sarbat';
+import { breaksUnity, castVote, finishSarbat } from './sarbat';
+import { courtAction, type CourtAction } from './court';
 import { resolveEventChoice } from './events';
 
 export type Action =
@@ -43,6 +44,8 @@ export type Action =
   | { type: 'propose'; kind: string; target?: string }
   | { type: 'eventChoice'; pendingId: string; choice: number }
   | { type: 'finishSarbat' }
+  | { type: 'court'; act: CourtAction; target?: string }
+  | { type: 'setConvenes'; on: boolean }
   | { type: 'endTurn' };
 
 export type BuildingKind = 'gurdwara' | 'temple' | 'mosque' | 'sarai' | 'canal' | 'school' | 'bagh';
@@ -277,6 +280,7 @@ export function applyAction(prev: GameState, action: Action): Result {
       if (isSikh(t) && isSikh(p)) pAccept += 0.25;
       pAccept = Math.max(0.05, Math.min(0.95, pAccept));
       if (chance(s, pAccept)) {
+        if (breaksUnity(s, t)) changePiri(s, p, -6, 'Breaking the gurmata of unity');
         fs.relations[t] = 'peace';
         them.relations[p] = 'peace';
         chronicle(s, 'treaty', `${polityName(s, p)} made peace with ${polityName(s, t)}.`, { faction: p, weight: 2 });
@@ -305,9 +309,21 @@ export function applyAction(prev: GameState, action: Action): Result {
       return castVote(s, action.gurmataId, action.yes) ? { state: s } : err('That vote cannot be cast.');
     case 'propose':
       return castVote(s, '', true, action.kind, action.target) ? { state: s } : err('That gurmata cannot be proposed now.');
-    case 'finishSarbat':
-      if (s.phase === 'sarbat') s.phase = 'orders';
+    case 'finishSarbat': {
+      const out = finishSarbat(s);
+      return { state: s, info: out.join(' ') || undefined };
+    }
+    case 'court': {
+      const r = courtAction(s, action.act, action.target);
+      return r ? { state: s, info: r } : err('That cannot be done at court this season.');
+    }
+    case 'setConvenes': {
+      if (!fs.sarkar) return err('Only the Sarkar decides whether to call the Sarbat Khalsa.');
+      if (fs.convenesSarbat === action.on) return { state: s };
+      fs.convenesSarbat = action.on;
+      changePiri(s, p, action.on ? 3 : -4, action.on ? 'Calling the Sarbat Khalsa again' : 'Letting the Sarbat Khalsa lapse');
       return { state: s };
+    }
     case 'eventChoice': {
       const r = resolveEventChoice(s, action.pendingId, action.choice);
       return r ? { state: s, info: r } : err('That choice is not available.');

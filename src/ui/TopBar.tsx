@@ -133,6 +133,11 @@ export function TopBar() {
         <button className="btn small" onClick={() => openModal('sarbat')} title="Sarbat Khalsa (K)">
           Sarbat Khalsa
         </button>
+        {fs.sarkar && (
+          <button className="btn small kesri" onClick={() => openModal('darbar')} title="Darbar (B)">
+            Darbar
+          </button>
+        )}
         <button className="btn small" onClick={() => openModal('codex')} title="Codex (C)">
           Codex
         </button>
