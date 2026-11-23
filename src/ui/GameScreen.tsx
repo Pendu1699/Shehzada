@@ -87,6 +87,7 @@ export function GameScreen() {
   const selectArmy = useStore((s) => s.selectArmy);
   const selectRegion = useStore((s) => s.selectRegion);
   const settings = useStore((s) => s.settings);
+  const tutorialRun = useStore((s) => s.tutorialRun);
   const [moveMode, setMoveMode] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -129,6 +130,7 @@ export function GameScreen() {
       else if (k === 'k') openModal('sarbat');
       else if (k === 'c') openModal('codex');
       else if (k === 'b') openModal('darbar');
+      else if (e.key === '?') st.restartTutorial();
       else if (k === 'h') {
         const home = Object.values(game.regions).find((r) => r.owner === game.playerFaction);
         if (home) map?.focusOn(home.id, 1.4);
@@ -188,7 +190,7 @@ export function GameScreen() {
           )}
         </button>
       </div>
-      {settings.tutorial && <Tutorial />}
+      {settings.tutorial && <Tutorial key={tutorialRun} />}
       {battle ? (
         <BattleVignette key={battle.id} report={battle} />
       ) : (

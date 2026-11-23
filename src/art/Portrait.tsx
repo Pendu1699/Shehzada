@@ -87,6 +87,19 @@ export function Portrait({ id, faction, female, age = 40, royal, size = 96, mute
             )}
           </>
         )}
+        {!female && !company && (
+          // A full, upswept mustache: across the upper lip, sweeping back over the
+          // cheek and curling up at the end.
+          <g>
+            <path
+              d="M38.4 54.4 C41 52.4 45.5 52.6 49 53.8 C52.5 55 56 53.6 58 50 C59.4 47.4 58.6 44.4 56.2 44.6 C54.4 44.8 54.2 47 55.6 47.4 C56.6 47.6 57 46.6 56.6 46 C57.4 48.8 55.6 52.4 52 54.8 C48 57.4 43 57.6 40.2 56.8 C38.8 56.4 38 55.4 38.4 54.4 Z"
+              fill={beard === '#1B1712' ? '#2E2219' : beard}
+              stroke="#000000aa"
+              strokeWidth="0.6"
+            />
+            <path d="M41.5 54.6 C45 54 49 55.4 52.6 54 C55 53 56.6 51 57 48.6" stroke="#ffffff55" strokeWidth="0.7" fill="none" />
+          </g>
+        )}
         {!female && !company && <path d="M52 88 L62 118" stroke="#C9A13B" strokeWidth="2" />}
       </g>
       <ellipse cx="50" cy="60" rx="46" ry="57" fill="none" stroke="#E6C766" strokeWidth="1" />

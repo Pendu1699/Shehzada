@@ -72,8 +72,8 @@ export function ArmyPanel({ id, moveMode, setMoveMode }: { id: string; moveMode:
           {fmt(armyMen(a))} men {isCavalryArmy(a) ? '· a horse army' : ''}
         </div>
         {a.units.map((u) => (
-          <Tip key={u.type} title={UNIT_TYPES[u.type]?.name} content={<span>{UNIT_TYPES[u.type]?.gloss} Experience {Math.round(u.xp * 100)}%.</span>}>
-            <div className="unit-row" style={{ width: '100%' }}>
+          <Tip key={u.type} block title={UNIT_TYPES[u.type]?.name} content={<span>{UNIT_TYPES[u.type]?.gloss} Experience {Math.round(u.xp * 100)}%.</span>}>
+            <div className="unit-row">
               <span>{UNIT_TYPES[u.type]?.name ?? u.type}</span>
               <span>{fmt(u.men)}</span>
             </div>
@@ -115,7 +115,7 @@ export function ArmyPanel({ id, moveMode, setMoveMode }: { id: string; moveMode:
           <div className="section">
             <div className="section-title">Orders</div>
             <div className="row">
-              <button className={`btn small ${moveMode ? 'kesri' : ''}`} onClick={() => setMoveMode(!moveMode)} title="M">
+              <button data-tut="move" className={`btn small ${moveMode ? 'kesri' : ''}`} onClick={() => setMoveMode(!moveMode)} title="M">
                 {moveMode ? 'Choose a destination…' : 'Move'}
               </button>
               {a.path.length > 0 && (
