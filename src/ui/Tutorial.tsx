@@ -60,9 +60,11 @@ export function Tutorial() {
   });
   if (!step || state.modal || state.battleQueue.length) return null;
   return (
-    <div className="folio" style={{ position: 'absolute', left: '50%', bottom: 18, transform: 'translateX(-50%)', width: 'min(620px, calc(100vw - 150px))', zIndex: 12 }}>
+    <div className="folio tutorial-card">
       <div className="folio-inner" style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '8px 12px' }}>
-        <Portrait id="kapur_singh" faction="faizullapuria" age={55} size={56} />
+        <span className="tutorial-portrait">
+          <Portrait id="kapur_singh" faction="faizullapuria" age={55} size={56} />
+        </span>
         <div style={{ flex: 1 }}>
           <div className="small" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--sindoor)' }}>
             The counsel of Nawab Kapur Singh

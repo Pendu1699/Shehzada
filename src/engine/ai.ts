@@ -15,7 +15,8 @@ import { neighbors, within } from './map';
 import { findPath } from './movement';
 import { armiesIn, armiesOf, armyMen, atWar, factionMen, isCavalryArmy, isSikh, mislPeaceInForce, regionsOf, year } from './query';
 import { chance, rand, shuffle } from './rng';
-import { offerRakhi } from './conquest';
+import { offerRakhi, transferRegion } from './conquest';
+import { chronicle } from './chronicle';
 import { changePiri } from './miripiri';
 import type { Army, FactionId, GameState, RegionId } from './state';
 import { newId } from './state';
@@ -175,7 +176,9 @@ function regionValue(s: GameState, f: FactionId, r: RegionId): number {
 }
 
 function aiArmies(s: GameState, f: FactionId) {
-  const pers = FACTION_BY_ID[f]?.personality ?? { aggression: 0.5, caution: 0.5, zeal: 0.5, greed: 0.5, honour: 0.5 };
+  let pers = FACTION_BY_ID[f]?.personality ?? { aggression: 0.5, caution: 0.5, zeal: 0.5, greed: 0.5, honour: 0.5 };
+  // Once the Company has decided on war it prosecutes it without hesitation.
+  if (f === 'company' && Object.values(s.factions).some((x) => x.alive && atWar(s, x.id, 'company'))) pers = { ...pers, caution: 0.2, aggression: 0.9 };
   const myRegions = new Set(regionsOf(s, f));
   const armies = armiesOf(s, f).sort((a, b) => armyMen(b) - armyMen(a));
   const claimed = new Set<string>();
@@ -189,7 +192,19 @@ function aiArmies(s: GameState, f: FactionId) {
     }
     if (a.path.length) continue;
     const power = armyPower(a);
-    if (power < 8 && !a.withdrawTurn) continue; // too small to campaign; garrison duty
+    // Small detachments rejoin the main army instead of wandering into battle alone.
+    const main = armies[0];
+    if (power < 40 && !a.withdrawTurn && main && main.id !== a.id && armyPower(main) > power * 2) {
+      const threatened = armiesIn(s, a.region).some((x) => atWar(s, x.owner, f));
+      if (!threatened && main.region !== a.region) {
+        const path = findPath(s, a, main.region);
+        if (path && path.length <= 4) {
+          a.path = path;
+          continue;
+        }
+      }
+      if (power < 12) continue;
+    }
     // Threats to own land nearby.
     let best: { target: RegionId; score: number; stance: Army['stance']; task?: Army['task'] } | null = null;
     const reach = within(a.region, a.withdrawTurn !== undefined ? 3 : 2);
@@ -210,6 +225,15 @@ function aiArmies(s: GameState, f: FactionId) {
           if (!best || score > best.score) best = { target: r, score, stance: 'dhai_phat' };
         }
         continue;
+      }
+      // Subjugate land held by no great power.
+      if (!st.owner && enemyArmies.length === 0 && f !== 'durrani' && a.withdrawTurn === undefined) {
+        const def = (garrisonOf(s, r) / 100) * 4;
+        const ratio = power / Math.max(1, def);
+        if (ratio > 2) {
+          const score = (regionValue(s, f, r) / 12) * (0.4 + pers.aggression) - dist * 6;
+          if (!best || score > best.score) best = { target: r, score, stance: 'pitched', task: 'capture' };
+        }
       }
       // Attack hostile land.
       if (st.owner && atWar(s, f, st.owner)) {
@@ -277,26 +301,55 @@ function aiDiplomacy(s: GameState, f: FactionId) {
       gs.relations[f] = 'peace';
     }
   }
-  // Misl rivalry: after the Afghan tide recedes, misls turn on each other.
-  if (isSikh(f) && y >= 1765 && !s.josh.active && !mislPeaceInForce(s) && !fs.sarkar) {
+  // Expansion: after the Afghan tide recedes, misls turn on weaker neighbours —
+  // fellow misls (at a Piri cost) and the small non-Sikh powers around them.
+  const ambitious = isSikh(f) && (y >= 1790 ? 1.6 : 1) * (FACTION_BY_ID[f]?.mods.growth ?? 1);
+  if (isSikh(f) && y >= 1765 && !s.josh.active) {
     const borders = new Set<string>();
     for (const r of regionsOf(s, f)) for (const e of neighbors(r)) borders.add(s.regions[e.to].owner ?? '');
     for (const g of borders) {
-      if (!g || g === f || !isSikh(g) || !s.factions[g]?.alive) continue;
+      if (!g || g === f || !s.factions[g]?.alive) continue;
       if (fs.relations[g] !== 'peace') continue;
+      if (s.factions[g].flags.company_protection || g === 'company') continue;
+      const sikhTarget = isSikh(g);
+      if (sikhTarget && (mislPeaceInForce(s) || fs.sarkar === false && s.factions[g].sarkar)) continue;
       const ratio = fs.miri / Math.max(1, s.factions[g].miri);
       const attitude = fs.attitude[g] ?? 0;
-      const p = pers.aggression * 0.05 * Math.min(2, ratio) * (1 - pers.honour * 0.5) * (attitude < 0 ? 1.5 : attitude > 40 ? 0.3 : 1);
-      if (ratio > 1.15 && chance(s, p)) {
+      const base = sikhTarget ? 0.05 : 0.09;
+      const p = pers.aggression * base * Math.min(2.5, ratio) * Number(ambitious) * (1 - pers.honour * (sikhTarget ? 0.5 : 0.2)) * (attitude < 0 ? 1.5 : attitude > 40 ? 0.3 : 1);
+      if (ratio > (sikhTarget ? 1.15 : 1.4) && chance(s, p)) {
         fs.relations[g] = 'war';
         s.factions[g].relations[f] = 'war';
         fs.attitude[g] = (fs.attitude[g] ?? 0) - 30;
         s.factions[g].attitude[f] = (s.factions[g].attitude[f] ?? 0) - 40;
-        changePiri(s, f, -3, 'War on fellow Sikhs');
+        if (sikhTarget) changePiri(s, f, -3, 'War on fellow Sikhs');
         break;
       }
     }
   }
+}
+
+/** The Company's patient encroachment: subsidiary alliances and lapse, one district at a time. */
+export function companyTurn(s: GameState): void {
+  const c = s.factions.company;
+  if (!c?.alive || year(s) < 1805 || s.turn % 5 !== 2) return;
+  const owned = new Set(regionsOf(s, 'company'));
+  const cands: string[] = [];
+  for (const r of owned)
+    for (const e of neighbors(r)) {
+      const st = s.regions[e.to];
+      if (owned.has(e.to) || st.owner === s.playerFaction) continue;
+      // The Sutlej line holds unless there is war.
+      if (e.river === 'sutlej' && !Object.values(s.factions).some((f) => f.alive && atWar(s, f.id, 'company'))) continue;
+      const o = st.owner;
+      const weakNonSikh = !o || ['hill_states', 'gurkha', 'maratha', 'mughal', 'bahawalpur', 'malerkotla', 'kangra'].includes(o);
+      const protectedSikh = !!o && !!s.factions[o]?.flags.company_protection && year(s) >= 1830;
+      if ((weakNonSikh || protectedSikh) && !armiesIn(s, e.to).some((a) => a.owner !== 'company')) cands.push(e.to);
+    }
+  if (!cands.length) return;
+  const r = cands[Math.floor(rand(s) * cands.length)];
+  transferRegion(s, r, 'company', 55);
+  chronicle(s, 'treaty', `By treaty, lapse or subsidiary alliance, ${REGION_BY_ID[r].name} passed under the East India Company.`, { region: r, weight: 3 });
 }
 
 function aiRakhi(s: GameState, f: FactionId) {

@@ -651,7 +651,7 @@ export const HISTORICAL: EventDef[] = [
     ctx: (s) => {
       if (Object.values(s.factions).some((f) => f.sarkar)) return null;
       const cand = strongestSikh(s);
-      if (!cand || regionCount(s, cand) < 12 || !owns(s, cand, 'lahore')) return null;
+      if (!cand || regionCount(s, cand) < 9 || !owns(s, cand, 'lahore')) return null;
       return { faction: cand };
     },
     text: (s, ctx) => `At Vaisakhi the sardars and the people of Lahore gather. The chief of ${polityName(s, String(ctx.faction))} is proclaimed Maharaja. The coin is struck in the name of the Gurus, and the government is called not by any man’s name but the Sarkar-i-Khalsa.`,

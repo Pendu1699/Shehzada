@@ -5,19 +5,36 @@
 
 import { chronicle } from '../../engine/chronicle';
 import { collapseRisk, courtStability, newCourt } from '../../engine/court';
-import { armiesOf, armyMen, atWar, polityName, regionsOf } from '../../engine/query';
+import { armiesOf, armyMen, atWar, isSikh, polityName, regionsOf } from '../../engine/query';
 import { chance } from '../../engine/rng';
 import type { GameState } from '../../engine/state';
 import { alive, fx, leaderAlive, owns, P } from './fx';
 import type { EventDef } from './types';
 
-const sarkar = (s: GameState) => Object.values(s.factions).find((f) => f.sarkar && f.alive)?.id;
+/** The Sarkar-i-Khalsa — or, if no one has united the Punjab, the Sikh power that holds Lahore. */
+const sarkar = (s: GameState) => {
+  const sk = Object.values(s.factions).find((f) => f.sarkar && f.alive)?.id;
+  if (sk) return sk;
+  const l = s.regions.lahore.owner;
+  return l && isSikh(l) ? l : undefined;
+};
 const playerIsSarkar = (s: GameState) => sarkar(s) === P(s);
 const CORE = ['lahore', 'amritsar', 'kasur', 'jalandhar', 'kapurthala', 'hoshiarpur', 'gujranwala', 'sialkot'];
 
 function crisisOn(s: GameState, f: string) {
   fx.flag(s, f, 'court_crisis', true);
   if (f === P(s) && s.court) s.court.crisis = true;
+}
+
+/** Did the Sarkar win the war? It must beat the Company in the field, or be clearly the stronger. */
+function warWon(s: GameState, f: string, since: number): boolean {
+  const score = warScore(s, f, since);
+  if (score > 0) return true;
+  if (score < 0) return false;
+  const mine = armiesOf(s, f).reduce((t, a) => t + armyMen(a), 0);
+  const theirs = armiesOf(s, 'company').reduce((t, a) => t + armyMen(a), 0);
+  const brittle = !!s.factions[f].flags.court_crisis || s.factions[f].miri - s.factions[f].piri > 25;
+  return mine > theirs * (brittle ? 1.6 : 1.25);
 }
 
 function warScore(s: GameState, f: string, since: number): number {
@@ -278,13 +295,13 @@ export const LATE: EventDef[] = [
     when: (s) => !!sarkar(s) && atWar(s, sarkar(s)!, 'company') && !!s.factions[sarkar(s)!].flags.war_started,
     text: (s) => {
       const f = sarkar(s)!;
-      return warScore(s, f, Number(s.factions[f].flags.war_started)) >= 0
+      return warWon(s, f, Number(s.factions[f].flags.war_started))
         ? 'On the Sutlej at Sobraon the Khalsa’s entrenchments hold. The Company’s regiments break on them again and again. The Governor-General sends to ask for terms.'
         : 'At Sobraon, in February, the Khalsa stands with its back to the swollen Sutlej. The bridge of boats behind it is broken — some say on its own commander’s order. Sham Singh Attariwala, an old man dressed all in white, rides into the Company’s line at the head of fifty horsemen and does not come back. The river runs red.';
     },
     effect: (s) => {
       const f = sarkar(s)!;
-      const won = warScore(s, f, Number(s.factions[f].flags.war_started)) >= 0;
+      const won = warWon(s, f, Number(s.factions[f].flags.war_started));
       fx.relation(s, f, 'company', 'peace');
       if (won) {
         s.factions[f].foothold = Math.max(0, s.factions[f].foothold - 20);
@@ -356,13 +373,13 @@ export const LATE: EventDef[] = [
     when: (s) => !!sarkar(s) && atWar(s, sarkar(s)!, 'company'),
     text: (s) => {
       const f = sarkar(s)!;
-      return warScore(s, f, Number(s.factions[f].flags.war_started)) >= 0
+      return warWon(s, f, Number(s.factions[f].flags.war_started))
         ? 'At Chillianwala, in the jungle by the Jhelum, the Khalsa fights the Company to a bloody standstill, and at Gujrat it holds again. Dalhousie’s letters to London grow careful. The Punjab is not to be swallowed this year.'
         : 'At Chillianwala, in January, the Khalsa fights the Company to a standstill in the jungle by the Jhelum; the Company’s losses shock London. But at Gujrat in February the Company’s guns, a hundred of them, do what its bayonets could not. The Khalsa soldiers lay down their arms; it is said each veteran kissed his sword before he gave it up.';
     },
     effect: (s) => {
       const f = sarkar(s)!;
-      const won = warScore(s, f, Number(s.factions[f].flags.war_started)) >= 0;
+      const won = warWon(s, f, Number(s.factions[f].flags.war_started));
       fx.relation(s, f, 'company', 'peace');
       if (won) {
         fx.flag(s, f, 'second_war_won', true);

@@ -42,8 +42,9 @@ export function diploChance(s: GameState, kind: DiploKind, target: FactionId): n
       if (Object.keys(me.relations).some((x) => me.relations[x] === 'war' && them.relations[x] === 'war')) c += 0.25;
       break;
     case 'marriage':
+      // Marriage alliances joined Sikh houses with each other and with the hill rajas.
+      if (!isSikh(target) && !['hill_states', 'kangra', 'jammu'].includes(target)) return 0;
       c = (0.35 + att / 200 + kin) * (FACTION_BY_ID[p]?.mods.marriage ?? 1);
-      if (target === 'company' || target === 'durrani') c = 0;
       break;
     case 'tribute':
       if (!borders(s, p, target) || ratio < 1.5) return 0;

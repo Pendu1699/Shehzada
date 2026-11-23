@@ -30,7 +30,7 @@ export function composeVaar(s: GameState): Vaar {
   );
 
   // The great deeds, in order.
-  const mine = s.chronicle.filter((c) => c.faction === p || c.weight >= 8);
+  const mine = s.chronicle.filter((c) => c.faction === p || (!c.faction && c.weight >= 6) || ['desecration', 'josh', 'rebuilding'].includes(c.kind));
   const chosen = [...mine].sort((a, b) => b.weight - a.weight).slice(0, 12).sort((a, b) => a.turn - b.turn);
   for (const c of chosen) {
     const refrain = c.region ? hpick([` And the ${riverNear(c.region)} remembers.`, ` The dust of ${REGION_BY_ID[c.region].name} remembers.`, ''], c.text) : '';

@@ -8,7 +8,7 @@
 
 import { REGION_BY_ID } from '../data/regions';
 import { battleVerdict, seasonLine } from '../narrative/dhadi';
-import { runAI } from './ai';
+import { companyTurn, runAI } from './ai';
 import { FINAL_FESTIVAL, FINAL_YEAR } from './calendar';
 import { chronicle } from './chronicle';
 import { garrisonOf, resolveBattle, siegeProgress, type Side } from './combat';
@@ -324,9 +324,9 @@ function langarAndPiri(s: GameState) {
   for (const f of Object.values(s.factions)) {
     if (!f.alive) continue;
     const langars = Object.values(s.regions).filter((r) => r.owner === f.id && r.langar).length;
-    if (langars && isSikh(f.id)) changePiri(s, f.id, Math.min(2.5, 0.35 * langars + 0.3), 'Langar kept open for all who come');
+    if (langars && isSikh(f.id)) changePiri(s, f.id, Math.min(1.2, 0.15 * langars + 0.2), 'Langar kept open for all who come');
     // High standing must be kept up: the Panth expects more of those it honours most.
-    if (f.piri > 60) changePiri(s, f.id, -(f.piri - 60) * 0.04, 'The Panth expects more of those it honours');
+    if (f.piri > 60) changePiri(s, f.id, -((f.piri - 60) * 0.05 + Math.max(0, f.piri - 80) * 0.05), 'The Panth expects more of those it honours');
     // Just leaders as governors.
     for (const L of Object.values(s.leaders)) if (L.alive && L.faction === f.id && L.jagir && L.traits.includes('just')) changePiri(s, f.id, 0.2, `The just rule of ${L.name}`);
     if (f.treasury < 0) {
@@ -355,6 +355,7 @@ export function endTurn(prev: GameState): GameState {
   const log: ResolutionLog = { dhadi: [], notes: [], battles: [] };
 
   runAI(s);
+  companyTurn(s);
   moveArmies(s, log);
   resolveBattles(s, log);
   resolveOccupation(s, log);

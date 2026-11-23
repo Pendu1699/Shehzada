@@ -99,7 +99,7 @@ export function resolveEventChoice(s: GameState, pendingId: string, choice: numb
   const res = c.effect(s, p.ctx) ?? '';
   const label = typeof c.label === 'function' ? c.label(s, p.ctx) : c.label;
   if (ev.chronicle !== false)
-    chronicle(s, 'event', `${ev.chronicleText?.(s, p.ctx) ?? ev.title}: ${label}. ${res}`.trim(), {
+    chronicle(s, 'event', `${(ev.chronicleText?.(s, p.ctx) ?? ev.title).replace(/[?.]$/, '')} — ${label.replace(/\.$/, '')}. ${res}`.trim(), {
       faction: s.playerFaction,
       weight: ev.weight ?? (ev.kind === 'historical' ? 5 : 1),
       region: typeof p.ctx.region === 'string' ? p.ctx.region : undefined,

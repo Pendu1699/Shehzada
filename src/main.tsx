@@ -14,9 +14,13 @@ import { createRoot } from 'react-dom/client';
 import { App } from './ui/App';
 import { paperDataUrl } from './art/paper';
 import { goldBorder } from './art/phulkari';
+import { useStore } from './store';
 
 const root = document.documentElement;
 root.style.setProperty('--paper-tex', `url(${paperDataUrl()})`);
 root.style.setProperty('--gold-border', goldBorder());
 
 createRoot(document.getElementById('root')!).render(<App />);
+
+// Development hook for automated screenshots and debugging.
+if (import.meta.env.DEV) (window as unknown as { __store: typeof useStore }).__store = useStore;
