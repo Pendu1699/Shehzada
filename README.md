@@ -23,6 +23,24 @@ npm run build-map  # regenerate src/data/generated/mapGeometry.json
 See `PLAN.md` for the architecture and milestone status, `HISTORY.md` for sources and
 simplifications, and `AUDIO.md` for the musical choices.
 
+## Design overview
+
+- **The two swords.** Miri (temporal power) is computed from land, revenue, armies and forts. Piri (the
+  Panth's trust) only moves through costly choices: langar, sparing cities, keeping rakhi, honouring
+  gurmatas, tolerance of every faith. Let Miri run far ahead and your polity grows brittle — commanders
+  waver and may betray you in battle.
+- **The dhadi.** Every turn is sung as a short vaar passage; the game ends with your own Vaar, generated
+  from what actually happened, on an illuminated page you can save as an image.
+- **The Painted Punjab.** Unseen land is pencil underdrawing; explored land takes colour washes; your land
+  is gilded; the Company's red ink seeps in from the south-east.
+- **History by default, bendable.** Scripted events from Ram Rauni (1748) to annexation (1849) fire unless
+  their conditions have been changed — the succession tragedies and the treachery of 1845–46 can be averted.
+- **Respect.** The Gurus are never depicted; no Gurbani is quoted or invented; no Sikh faction can
+  desecrate a sacred site (enforced and tested).
+
+Four scenarios: 1748 *The Age of Ghallugharas*, 1767 *The Misl Raj*, 1799 *The Lion of Lahore*,
+1839 *Twilight of the Sarkar*.
+
 ## Controls
 
 | Action | Mouse / touch | Keys |

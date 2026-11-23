@@ -105,6 +105,27 @@ Static data (regions, unit types, leader templates, events) lives in `src/data` 
 
 ## 6. Status
 
-| Milestone | Status |
-|-----------|--------|
-| 1 Foundation | in progress |
+| Milestone | Status | Notes |
+|-----------|--------|-------|
+| 1 Foundation | done | Engine, RNG, generated map, painted renderer, turns, save/load/export |
+| 2 Economy and control | done | Revenue breakdowns, rakhi, jagirs, langar, Miri/Piri, recruitment, river/monsoon movement |
+| 3 Combat | done | Six stances, rounds, sieges and storming, battle vignette, supply, commander treachery |
+| 4 Factions and AI | done, needs tuning | All misls and powers; Durrani invasions; Company encroachment; `scripts/simulate.ts` |
+| 5 Sarbat Khalsa and diplomacy | done | Gurmatas with weighted votes; alliances, marriages, tribute, passage; Company treaties |
+| 6 Events and narrative | done | ~40 scripted historical events, 55 generic events, Josh/Vow/rebuilding, dhadi text, HISTORY.md |
+| 7 Court and succession | done | Darbar factions, heir, army, averted-or-not 1839–46 chain, both wars, endings, the Vaar + PNG |
+| 8 Art and audio polish | mostly done | All screens styled; ink-bleed, river shimmer, banners, diyas, clouds; procedural music |
+| 9 Balance, tutorial, accessibility | partly done | Tutorial (Nawab Kapur Singh), tooltips, colour-blind mode, keys, UI scale, reduced motion. Balance: see below |
+| 10 Final QA | partly done | 56 tests green; no console errors in scripted browser runs; full 1748→1849 runs complete headless |
+
+### Known gaps / next steps
+
+- **Balance.** AI-vs-AI runs (`npm run simulate`) give historical-ish but uncertain outcomes from 1767 and 1799
+  (roughly half annexation, half survival) and mostly annexation from 1839. Unification from 1748/1767 is
+  rare unless the Bhangis hold Lahore; the autoplayed player keeps Piri high because its event choices
+  favour virtue. More tuning runs are needed.
+- **Performance.** Headless Chromium uses software WebGL (~12 fps); on a GPU the cached static painting
+  should hold 60 fps, but this has not been measured on real hardware yet.
+- **Dal Khalsa combined army.** United gurmatas ally the misls and raise morale, but the player does not
+  yet command the joint army directly.
+- **Gurmukhi** needs a native reader's review (`GURMUKHI_REVIEW.md`).
