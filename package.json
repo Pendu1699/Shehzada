@@ -1,0 +1,37 @@
+{
+  "name": "raj-karega-khalsa",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A Sikh misl-era grand strategy game, 1748-1849",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build-map": "tsx scripts/build-map.ts",
+    "simulate": "tsx scripts/simulate.ts"
+  },
+  "dependencies": {
+    "@fontsource/cormorant-garamond": "^5.3.0",
+    "@fontsource/eb-garamond": "^5.3.0",
+    "@fontsource/noto-serif-gurmukhi": "^5.3.0",
+    "@fontsource/rozha-one": "^5.3.0",
+    "@fontsource/tiro-gurmukhi": "^5.3.0",
+    "pixi.js": "^8.23.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "tsx": "^4.23.15",
+    "typescript": "~5.6.3",
+    "vite": "^6.4.6",
+    "vitest": "^3.2.7"
+  }
+}
