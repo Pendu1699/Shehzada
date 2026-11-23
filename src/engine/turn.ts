@@ -29,6 +29,7 @@ import { EVENT_BY_ID } from '../data/events/index';
 import { finishSarbat, runSarbatKhalsa } from './sarbat';
 import { checkEnding } from './endings';
 import { courtTurn } from './court';
+import { tributeTurn } from './diplomacy';
 
 export interface ResolutionLog {
   dhadi: string[];
@@ -374,6 +375,7 @@ export function endTurn(prev: GameState): GameState {
   log.notes.push(...spawnInvasions(s));
   log.notes.push(...joshTurn(s));
   regionTurn(s);
+  tributeTurn(s);
   const incomeParts: { label: string; value: number }[] = [];
   for (const f of Object.values(s.factions)) {
     if (!f.alive) continue;

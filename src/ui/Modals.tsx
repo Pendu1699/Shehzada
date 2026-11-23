@@ -6,6 +6,7 @@ import { GLOSSARY } from '../data/glossary';
 import { LEADER_BY_ID, TRAITS } from '../data/leaders';
 import { REGIONS, REGION_BY_ID } from '../data/regions';
 import { factionIncome, regionRevenue, langarCost } from '../engine/economy';
+import { DIPLO_INFO, diploChance, type DiploKind } from '../engine/diplomacy';
 import { armiesOf, armyMen, date, isSikh, polityName, regionsOf, relation, year } from '../engine/query';
 import { deleteSlot, listSlots, loadFromSlot, saveToSlot, serialize } from '../engine/save';
 import { useStore } from '../store';
@@ -318,7 +319,16 @@ export function LedgerModal() {
                           <td style={{ color: rel === 'war' ? 'var(--sindoor)' : rel === 'alliance' ? 'var(--mehndi)' : undefined, fontWeight: 600 }}>{rel}</td>
                           <td>{Math.round(f.attitude[p] ?? 0)}</td>
                           <td>{regionsOf(game, f.id).length}</td>
-                          <td>
+                          <td style={{ whiteSpace: 'nowrap' }}>
+                            {(['alliance', 'marriage', 'tribute', 'passage', 'break_alliance'] as DiploKind[])
+                              .filter((k) => diploChance(game, k, f.id) > 0)
+                              .map((k) => (
+                                <Tip key={k} title={DIPLO_INFO[k].name} content={<span>{DIPLO_INFO[k].detail} {k !== 'break_alliance' && `Chance about ${Math.round(diploChance(game, k, f.id) * 100)}%.`} {DIPLO_INFO[k].cost ? `Costs ${rs(DIPLO_INFO[k].cost)}.` : ''}</span>}>
+                                  <button className="btn small" style={{ marginRight: 3 }} onClick={() => dispatch({ type: 'diplo', kind: k, target: f.id })}>
+                                    {DIPLO_INFO[k].name.replace('Propose ', '').replace('Demand ', '').replace('Ask ', '')}
+                                  </button>
+                                </Tip>
+                              ))}
                             {rel === 'war' ? (
                               <button className="btn small ghost" onClick={() => dispatch({ type: 'proposePeace', target: f.id })}>
                                 Seek peace

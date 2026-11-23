@@ -18,6 +18,7 @@ import { newId } from './state';
 import { endTurn } from './turn';
 import { breaksUnity, castVote, finishSarbat } from './sarbat';
 import { courtAction, type CourtAction } from './court';
+import { diplomacy, type DiploKind } from './diplomacy';
 import { resolveEventChoice } from './events';
 
 export type Action =
@@ -46,6 +47,7 @@ export type Action =
   | { type: 'finishSarbat' }
   | { type: 'court'; act: CourtAction; target?: string }
   | { type: 'setConvenes'; on: boolean }
+  | { type: 'diplo'; kind: DiploKind; target: string }
   | { type: 'endTurn' };
 
 export type BuildingKind = 'gurdwara' | 'temple' | 'mosque' | 'sarai' | 'canal' | 'school' | 'bagh';
@@ -312,6 +314,10 @@ export function applyAction(prev: GameState, action: Action): Result {
     case 'finishSarbat': {
       const out = finishSarbat(s);
       return { state: s, info: out.join(' ') || undefined };
+    }
+    case 'diplo': {
+      const r = diplomacy(s, action.kind, action.target);
+      return r ? { state: s, info: r.text } : err('Your envoys cannot be sent on that errand now.');
     }
     case 'court': {
       const r = courtAction(s, action.act, action.target);

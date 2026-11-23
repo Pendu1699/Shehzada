@@ -79,6 +79,8 @@ interface Token {
 export class PaintedMap {
   app = new Application();
   world = new Container();
+  private staticLayer = new Container();
+  private staticDirty = false;
   private el: HTMLElement;
   private cb: MapCallbacks;
   private regionGfx: Record<string, RegionGfx> = {};
@@ -86,6 +88,7 @@ export class PaintedMap {
     paper: new Container(),
     frame: new Container(),
     terrain: new Container(),
+    bleed: new Graphics(),
     decor: new Container(),
     rivers: new Graphics(),
     shimmer: new Graphics(),
@@ -119,13 +122,14 @@ export class PaintedMap {
   private regionLabels: Record<string, Text> = {};
   private cityLabels: Text[] = [];
   private riverLabels: Text[] = [];
-  private inkRegions: Record<string, { g: Graphics; mask: Graphics; since: number }> = {};
+  private inkRegions: Record<string, { g: Graphics; since: number }> = {};
   private destroyed = false;
   private dragging: { x: number; y: number; wx: number; wy: number; moved: boolean } | null = null;
   private pinch: Map<number, { x: number; y: number }> = new Map();
   private pinchDist = 0;
   private hovered: string | null = null;
   private moodAlpha = 0;
+  private bleeds: { id: string; t: number }[] = [];
 
   constructor(el: HTMLElement, cb: MapCallbacks) {
     this.el = el;
@@ -133,19 +137,26 @@ export class PaintedMap {
   }
 
   async init(): Promise<void> {
-    await this.app.init({ resizeTo: this.el, antialias: true, background: '#d9c79c', resolution: Math.min(2, window.devicePixelRatio || 1), autoDensity: true });
+    await this.app.init({ resizeTo: this.el, antialias: (window.devicePixelRatio || 1) < 1.5 && !navigator.webdriver, background: '#d9c79c', resolution: Math.min(2, window.devicePixelRatio || 1), autoDensity: true });
     if (this.destroyed) return;
     this.el.appendChild(this.app.canvas);
     this.app.stage.addChild(this.world);
     const L = this.layers;
-    for (const layer of Object.values(L)) this.world.addChild(layer);
-    this.world.removeChild(L.clouds);
-    this.world.removeChild(L.mood);
+    // Static painting (paper, frame, landscape, rivers) is cached as one texture.
+    this.world.addChild(this.staticLayer);
+    const statics = new Set<Container>([L.paper, L.frame, L.terrain, L.decor, L.rivers]);
+    for (const layer of Object.values(L)) {
+      if (layer === L.clouds || layer === L.mood) continue;
+      if (statics.has(layer)) this.staticLayer.addChild(layer);
+      else this.world.addChild(layer);
+    }
     this.app.stage.addChild(L.clouds);
     this.app.stage.addChild(L.mood);
     this.buildPaper();
     this.buildFrame();
     this.buildRegions();
+    // The painted landscape is static between turns: render it once to a texture.
+    this.staticLayer.cacheAsTexture({ resolution: 2 });
     this.buildHits();
     this.buildLabels();
     this.buildClouds();
@@ -270,32 +281,27 @@ export class PaintedMap {
         const jitter = pts.map((v) => v + (rnd() - 0.5) * 1.4);
         pencil.poly(jitter).stroke({ width: 0.7, color: 0x6b6257, alpha: 0.42 - pass * 0.12 });
       }
-      // Watercolour wash: base fill, blotchy overlays, darker pooled edge.
+      // Watercolour wash: a base fill, then lighter and darker washes laid in smaller
+      // concentric passes (pigment pools toward the middle), then a darker pooled edge.
       const base = TERRAIN_WASH[r.terrain];
       wash.poly(pts).fill({ color: base, alpha: 0.5 });
-      const bb = bbox(pts);
-      for (let i = 0; i < 9; i++) {
-        const x = bb.x0 + rnd() * (bb.x1 - bb.x0);
-        const y = bb.y0 + rnd() * (bb.y1 - bb.y0);
-        if (!pointInPoly(x, y, pts)) continue;
-        const col = mix(base, rnd() < 0.5 ? '#ffffff' : '#5e6b2e', 0.25);
-        wash.circle(x, y, 18 + rnd() * 30).fill({ color: col, alpha: 0.1 });
+      const [ax, ay] = geo.anchor;
+      const shrink = (k: number, dx: number, dy: number) => pts.map((v, i) => (i % 2 === 0 ? ax + (v - ax) * k + dx : ay + (v - ay) * k + dy));
+      for (let i = 0; i < 4; i++) {
+        const k = 0.82 - i * 0.16;
+        const col = mix(base, i % 2 ? '#ffffff' : '#5e6b2e', 0.22);
+        wash.poly(shrink(k, (rnd() - 0.5) * 8, (rnd() - 0.5) * 8)).fill({ color: col, alpha: 0.09 });
       }
       wash.poly(pts).stroke({ width: 5, color: mix(base, '#3a2a14', 0.45), alpha: 0.16 });
       wash.poly(pts).stroke({ width: 1.2, color: mix(base, '#3a2a14', 0.6), alpha: 0.28 });
-      // Use a mask so the blotches stay inside the region.
-      const m = new Graphics();
-      m.poly(pts).fill(0xffffff);
-      wash.mask = m;
-      this.layers.terrain.addChild(m);
       this.drawDecor(r.id, decor, false);
       this.drawDecor(r.id, decorPencil, true);
       this.layers.terrain.addChild(pencil);
       this.layers.terrain.addChild(wash);
       this.layers.decor.addChild(decorPencil);
       this.layers.decor.addChild(decor);
-      wash.alpha = 0;
-      decor.alpha = 0;
+      wash.visible = false;
+      decor.visible = false;
       this.regionGfx[r.id] = { pencil, wash, decor, decorPencil, washAlpha: 0 };
     }
   }
@@ -461,7 +467,9 @@ export class PaintedMap {
       const t = new Text({ text: name, style: { fontFamily: 'Cormorant Garamond, serif', fontSize: 13, fontWeight: '700', fill: PALETTE.ink, letterSpacing: 0.5, stroke: { color: PALETTE.wasli, width: 3 } } });
       t.anchor.set(0.5);
       t.x = geo.anchor[0];
-      t.y = geo.anchor[1] + 14;
+      // Keep the name clear of the fort and the army tokens beside the seat.
+      const near = Math.hypot(geo.anchor[0] - geo.seat[0], geo.anchor[1] - geo.seat[1]) < 30;
+      t.y = geo.anchor[1] + (near ? 30 : 14);
       this.regionLabels[r.id] = t;
       this.layers.labels.addChild(t);
     }
@@ -486,7 +494,7 @@ export class PaintedMap {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 256, 256);
     const tex = Texture.from(cv);
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 3; i++) {
       const s = new Sprite(tex);
       s.anchor.set(0.5);
       s.scale.set(2.5 + i * 0.6, 1.6 + (i % 2) * 0.5);
@@ -572,21 +580,29 @@ export class PaintedMap {
     const d = date(state);
     if (this.monsoonDrawn !== d.monsoon) {
       this.drawRivers(d.monsoon);
+      this.staticDirty = true;
       this.monsoonDrawn = d.monsoon;
     }
-    // Exploration: fade washes in.
+    // Exploration: colour washes replace the pencil underdrawing.
+    let changed = false;
     for (const r of REGIONS) {
       const gfx = this.regionGfx[r.id];
-      gfx.washAlpha = (state.explored[r.id] ?? 0) > 0 ? 1 : 0;
-      if (!prevState) {
-        gfx.wash.alpha = gfx.washAlpha;
-        gfx.decor.alpha = gfx.washAlpha;
-        gfx.decorPencil.alpha = 1 - gfx.washAlpha;
+      const seen = (state.explored[r.id] ?? 0) > 0;
+      if (gfx.wash.visible !== seen) {
+        gfx.wash.visible = seen;
+        gfx.decor.visible = seen;
+        gfx.decorPencil.visible = !seen;
+        gfx.washAlpha = seen ? 1 : 0;
+        changed = true;
+        if (prevState) this.bleeds.push({ id: r.id, t: 0 });
       }
       const lbl = this.regionLabels[r.id];
-      const seen = (state.explored[r.id] ?? 0) > 0;
       lbl.style.fill = seen ? PALETTE.ink : 0x7a7064;
       lbl.alpha = seen ? 1 : 0.7;
+    }
+    if (changed || this.staticDirty) {
+      this.staticLayer.updateCacheTexture();
+      this.staticDirty = false;
     }
     this.drawOwners(state);
     this.drawSites(state);
@@ -636,28 +652,21 @@ export class PaintedMap {
       const existing = this.inkRegions[r.id];
       if (has && !existing) {
         const geo = GEO.regions[r.id];
-        const mask = new Graphics().poly(geo.poly).fill(0xffffff);
         const ig = new Graphics();
-        const rnd = mulberry(r.id.length * 131 + 7);
         const bb = bbox(geo.poly);
-        // Ink bleeds from the south-east edge: blots weighted toward the lower right.
-        for (let i = 0; i < 26; i++) {
-          const u = Math.pow(rnd(), 0.6),
-            v = Math.pow(rnd(), 0.6);
-          const x = bb.x0 + u * (bb.x1 - bb.x0);
-          const y = bb.y0 + v * (bb.y1 - bb.y0);
-          ig.circle(x, y, 14 + rnd() * 34).fill({ color: PALETTE.company, alpha: 0.12 + rnd() * 0.1 });
-        }
+        // Red ink seeps in from the south-east: washes laid in from that corner.
+        const px = bb.x1,
+          py = bb.y1;
+        const toward = (k: number) => geo.poly.map((v, i) => (i % 2 === 0 ? px + (v - px) * k : py + (v - py) * k));
+        ig.poly(geo.poly).fill({ color: PALETTE.company, alpha: 0.16 });
+        for (const k of [0.9, 0.72, 0.55, 0.38]) ig.poly(toward(k)).fill({ color: PALETTE.company, alpha: 0.1 });
         ig.poly(geo.poly).stroke({ width: 6, color: 0x7a1010, alpha: 0.3 });
         ig.poly(geo.poly).stroke({ width: 1.2, color: 0x6a0c0c, alpha: 0.6 });
-        ig.mask = mask;
         ig.alpha = 0;
-        this.layers.ink.addChild(mask);
         this.layers.ink.addChild(ig);
-        this.inkRegions[r.id] = { g: ig, mask, since: this.time };
+        this.inkRegions[r.id] = { g: ig, since: this.time };
       } else if (!has && existing) {
         existing.g.destroy();
-        existing.mask.destroy();
         delete this.inkRegions[r.id];
       }
     }
@@ -712,6 +721,13 @@ export class PaintedMap {
       if ((s.explored[town.region] ?? 0) === 0) continue;
       g.circle(town.pos[0], town.pos[1], 1.5).fill({ color: PALETTE.ink, alpha: 0.7 });
     }
+  }
+
+  /** Light update while the pointer moves: only the march preview. */
+  setPreview(preview: MapView['preview']) {
+    if (!this.state) return;
+    this.view = { ...this.view, preview };
+    this.drawPaths(this.state);
   }
 
   private drawPaths(s: GameState) {
@@ -852,16 +868,18 @@ export class PaintedMap {
     if (!this.state) return;
     this.time += dt;
     const reduced = !!this.view.reducedMotion;
-    // Wash fade-ins (ink bleeding into paper).
-    for (const gfx of Object.values(this.regionGfx)) {
-      const target = gfx.washAlpha;
-      if (Math.abs(gfx.wash.alpha - target) > 0.002) {
-        const k = reduced ? 1 : Math.min(1, dt / 900);
-        gfx.wash.alpha += (target - gfx.wash.alpha) * k;
-        gfx.decor.alpha = gfx.wash.alpha;
-        gfx.decorPencil.alpha = 1 - gfx.wash.alpha;
+    // Newly seen country: a wash of colour spreads outward like ink into wet paper.
+    const bg = this.layers.bleed;
+    bg.clear();
+    this.bleeds = this.bleeds.filter((b) => (b.t += dt / 1400) < 1);
+    if (!reduced)
+      for (const b of this.bleeds) {
+        const geo = GEO.regions[b.id];
+        const [ax, ay] = geo.anchor;
+        const k = b.t;
+        bg.poly(geo.poly.map((v, i) => (i % 2 === 0 ? ax + (v - ax) * k : ay + (v - ay) * k))).fill({ color: TERRAIN_WASH[REGION_BY_ID[b.id].terrain], alpha: 0.5 * (1 - k) });
+        bg.poly(geo.poly).fill({ color: PALETTE.wasli, alpha: 0.55 * (1 - k) * (1 - k) });
       }
-    }
     for (const ink of Object.values(this.inkRegions)) {
       const age = (this.time - ink.since) / 4000;
       ink.g.alpha = reduced ? 1 : Math.min(1, age);
@@ -908,7 +926,11 @@ export class PaintedMap {
     }
     // Labels by zoom.
     const showTowns = this.zoom > 1.25;
-    for (const t of this.cityLabels) t.alpha = showTowns ? Math.min(1, (this.zoom - 1.25) * 3) : 0;
+    const st = this.state;
+    this.cityLabels.forEach((t, i) => {
+      const seen = (st.explored[GEO.towns[i].region] ?? 0) > 0;
+      t.alpha = showTowns && seen ? Math.min(1, (this.zoom - 1.25) * 3) : 0;
+    });
     for (const t of Object.values(this.regionLabels)) t.scale.set(Math.max(0.75, Math.min(1.4, 1 / Math.sqrt(this.zoom))));
   }
 

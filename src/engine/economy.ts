@@ -114,10 +114,10 @@ export function factionIncome(s: GameState, f: FactionId): Breakdown {
   if (rk) parts.push({ label: 'Rakhi received', value: rk });
   if (rakhiPaid) parts.push({ label: 'Rakhi paid to others', value: rakhiPaid });
   if (jagir) parts.push({ label: 'Revenue held by jagirdars', value: jagir });
-  const tribute = Number(s.factions[f].flags.tribute_in ?? 0);
-  if (tribute) parts.push({ label: 'Tribute received', value: tribute });
-  const tributeOut = Number(s.factions[f].flags.tribute_out ?? 0);
-  if (tributeOut) parts.push({ label: 'Tribute paid', value: -tributeOut });
+  for (const [k, v] of Object.entries(s.factions[f].flags)) {
+    if (k.startsWith('tribute_from_') && s.factions[k.slice(13)]?.alive) parts.push({ label: `Tribute from ${FACTION_BY_ID[k.slice(13)]?.name ?? k.slice(13)}`, value: Number(v) });
+    if (k.startsWith('tribute_to_') && s.factions[k.slice(11)]?.alive) parts.push({ label: `Tribute to ${FACTION_BY_ID[k.slice(11)]?.name ?? k.slice(11)}`, value: -Number(v) });
+  }
   parts.push({ label: 'Army pay and fodder', value: -armyUpkeep(s, f) });
   if (forts) parts.push({ label: 'Fort garrisons and repair', value: -forts });
   if (langar) parts.push({ label: 'Langar', value: -langar });

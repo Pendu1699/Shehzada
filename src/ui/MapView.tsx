@@ -54,6 +54,7 @@ export function MapView({ moveMode, onMoveIssued }: { moveMode: boolean; onMoveI
       onHover: (id) => useStore.getState().setHover(id),
     });
     mapInstance = map;
+    (window as unknown as { __map: PaintedMap }).__map = map;
     let alive = true;
     void (async () => {
       await document.fonts.ready;
@@ -84,7 +85,12 @@ export function MapView({ moveMode, onMoveIssued }: { moveMode: boolean; onMoveI
       reducedMotion: settings.reducedMotion,
       mourning: game.josh.active && game.josh.turnsLeft >= 3,
     });
-  }, [game, selRegion, selArmy, hover, settings.colorBlind, settings.reducedMotion]);
+  }, [game, selRegion, selArmy, settings.colorBlind, settings.reducedMotion]);
+
+  useEffect(() => {
+    if (!mapInstance) return;
+    mapInstance.setPreview(useStore.getState().preview());
+  }, [hover, selArmy, game]);
 
   return <div className="map-host" ref={host} />;
 }
