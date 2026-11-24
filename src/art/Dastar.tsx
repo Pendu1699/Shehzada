@@ -25,7 +25,9 @@ interface Look {
 
 const LOOKS: Record<string, Look> = {
   shaheedan: { style: 'dumalla', colors: ['#1E3FA0', '#22307A'], mark: ['farla', 'chakar'] },
-  nishanwalia: { style: 'dumalla', colors: ['#1E3FA0', '#E8870E'], mark: ['pennant', 'chakar'] },
+  // Standard-bearers: a saffron court dastaar with a white under-wrap, a gold band
+  // and a small nishan on a staff rising from the crown.
+  nishanwalia: { style: 'pagg', colors: ['#E8870E', '#F08A1C'], mark: ['twotone', 'band', 'pennant'] },
   ramgarhia: { style: 'pagg', colors: ['#5E6B2E', '#1F3A68', '#F2E6C9'], mark: ['chakar', 'band'] },
   ahluwalia: { style: 'pagg', colors: ['#1F3A68', '#E8870E', '#F2E6C9'], mark: ['kalgi', 'sarpech'] },
   bhangi: { style: 'pagg', colors: ['#22305A', '#1F3A68'], mark: ['band', 'shamla'] },
@@ -60,7 +62,7 @@ function Pagg({ look, turban, id, royal }: { look: Look; turban: string; id: str
   const dark = shade(turban, -0.38);
   const light = shade(turban, 0.3);
   const m = new Set(look.mark);
-  const second = hpick(['#E8870E', '#1F3A68', '#F2E6C9', '#B83A2B'].filter((c) => c !== turban), id, 'tt');
+  const second = m.has('pennant') ? '#F7F1E3' : hpick(['#E8870E', '#1F3A68', '#F2E6C9', '#B83A2B'].filter((c) => c !== turban), id, 'tt');
   return (
     <g>
       {m.has('shamla') && <path d="M73 38 C79 44 80.5 55 78.5 66 L74.5 65 C75.5 55 73.5 47 69.5 42 Z" fill={turban} stroke={dark} strokeWidth="0.7" />}
@@ -92,6 +94,14 @@ function Pagg({ look, turban, id, royal }: { look: Look; turban: string; id: str
         <g>
           <path d="M52 9 C49 -2 54 -10 59 -13 C57 -5 59 0 55 9 Z" fill="#F7F1E3" stroke="#C9A13B" strokeWidth="0.4" />
           <circle cx="53.5" cy="10" r="2" fill="#B83A2B" stroke="#C9A13B" strokeWidth="0.8" />
+        </g>
+      )}
+      {m.has('pennant') && (
+        <g>
+          <path d="M60 7 L66 -15" stroke="#5A3A1E" strokeWidth="1.2" />
+          <circle cx="66.2" cy="-15.6" r="1.1" fill="#C9A13B" />
+          <path d="M65.6 -13.5 L79 -9.5 L63.8 -5.4 Z" fill="#E8870E" stroke="#8C4A06" strokeWidth="0.5" />
+          <path d="M64.4 -8 L72 -9.4" stroke="#1F3A68" strokeWidth="1.2" />
         </g>
       )}
       {m.has('jigha') && !royal && (
