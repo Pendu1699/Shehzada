@@ -133,7 +133,7 @@ export function GameScreen() {
       else if (e.key === '?') st.restartTutorial();
       else if (k === 'h') {
         const home = Object.values(game.regions).find((r) => r.owner === game.playerFaction);
-        if (home) map?.focusOn(home.id, 1.4);
+        if (home) map?.focusOn(home.id, 2.2);
       } else if (e.key === 'Tab') {
         e.preventDefault();
         const mine = armiesOf(game, game.playerFaction);
@@ -142,7 +142,7 @@ export function GameScreen() {
         const next = mine[(i + 1) % mine.length];
         selectArmy(next.id);
         selectRegion(next.region);
-        map?.focusOn(next.region, 1.5);
+        map?.focusOn(next.region, 2.2);
       } else if (k === 'w' || e.key === 'ArrowUp') map?.panBy(0, 60);
       else if (k === 's' || e.key === 'ArrowDown') map?.panBy(0, -60);
       else if (k === 'a' || e.key === 'ArrowLeft') map?.panBy(60, 0);

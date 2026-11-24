@@ -65,7 +65,7 @@ export function MapView({ moveMode, onMoveIssued }: { moveMode: boolean; onMoveI
         map.update(s.game, { selectedRegion: s.selRegion, selectedArmy: s.selArmy, colorBlind: s.settings.colorBlind, reducedMotion: s.settings.reducedMotion });
         const army = Object.values(s.game.armies).find((a) => a.owner === s.game!.playerFaction);
         const home = army?.region ?? Object.values(s.game.regions).find((r) => r.owner === s.game!.playerFaction)?.id;
-        if (home) map.focusOn(home, 1.5);
+        if (home) map.focusOn(home, 2.2);
       }
     })();
     return () => {

@@ -77,7 +77,7 @@ interface Token {
 }
 
 /** Army figures are drawn larger than life so they read clearly on the map. */
-const ARMY_SCALE = 1.35;
+const ARMY_SCALE = 0.75;
 
 export class PaintedMap {
   app = new Application();
@@ -810,9 +810,10 @@ export class PaintedMap {
       const seat = GEO.regions[region].seat;
       list.forEach((a, i) => {
         seen.add(a.id);
-        const ang = -Math.PI / 2 + i * 1.25;
-        const tx = seat[0] + (i === 0 ? 26 : Math.cos(ang) * 40);
-        const ty = seat[1] + (i === 0 ? 20 : Math.sin(ang) * 30 + 14);
+        // Spread several armies in one region side by side in a row below the seat.
+        const n = list.length;
+        const tx = seat[0] + 14 + (i - (n - 1) / 2) * 20;
+        const ty = seat[1] + 16 + (i % 2) * 6;
         let tok = this.tokens.get(a.id);
         const fig = this.figureFor(a);
         const key = `${a.owner}|${fig.uid}`;
