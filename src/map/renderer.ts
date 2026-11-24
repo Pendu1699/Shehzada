@@ -386,31 +386,45 @@ export class PaintedMap {
     items.sort((a, b) => a.y - b.y).forEach((it) => it.draw());
   }
 
-  private buildHits() {
+  /**
+   * Region picking. Region outlines are smoothed, which leaves hairline gaps
+   * along borders, so clicks are resolved by point-in-polygon on the raw world
+   * point with a fallback to the nearest region edge. One handler on the stage
+   * means a click always does something.
+   */
+  private buildHits() {}
+
+  regionAt(gx: number, gy: number): string | null {
+    const x = (gx - this.world.x) / this.zoom,
+      y = (gy - this.world.y) / this.zoom;
+    let best: string | null = null,
+      bestD = 22 * 22;
     for (const r of REGIONS) {
-      const c = new Container();
-      c.hitArea = new Polygon(GEO.regions[r.id].poly);
-      c.eventMode = 'static';
-      c.cursor = 'pointer';
-      c.on('pointerover', () => {
-        this.hovered = r.id;
-        this.cb.onHover(r.id);
-      });
-      c.on('pointerout', () => {
-        if (this.hovered === r.id) {
-          this.hovered = null;
-          this.cb.onHover(null);
+      const poly = GEO.regions[r.id].poly;
+      let inside = false;
+      for (let i = 0, j = poly.length - 2; i < poly.length; j = i, i += 2) {
+        const xi = poly[i], yi = poly[i + 1], xj = poly[j], yj = poly[j + 1];
+        if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+        // distance to this edge, for the near-border fallback
+        const dx = xj - xi, dy = yj - yi;
+        const t = Math.max(0, Math.min(1, ((x - xi) * dx + (y - yi) * dy) / (dx * dx + dy * dy || 1)));
+        const ex = xi + dx * t - x, ey = yi + dy * t - y;
+        const d = ex * ex + ey * ey;
+        if (d < bestD) {
+          bestD = d;
+          best = r.id;
         }
-      });
-      c.on('pointertap', (e: FederatedPointerEvent) => {
-        if (this.dragging?.moved) return;
-        this.cb.onRegionClick(r.id, { shift: e.shiftKey, right: e.button === 2 });
-      });
-      c.on('rightclick', (e: FederatedPointerEvent) => {
-        this.cb.onRegionClick(r.id, { shift: e.shiftKey, right: true });
-      });
-      this.layers.hits.addChild(c);
+      }
+      if (inside) return r.id;
     }
+    return best;
+  }
+
+  private setHover(id: string | null) {
+    if (id === this.hovered) return;
+    this.hovered = id;
+    this.cb.onHover(id);
+    this.app.canvas.style.cursor = id ? 'pointer' : 'grab';
   }
 
   private buildLabels() {
@@ -829,12 +843,18 @@ export class PaintedMap {
           c.scale.set(ARMY_SCALE);
           c.eventMode = 'static';
           c.cursor = 'pointer';
-          c.hitArea = new Polygon([-20, -46, 22, -46, 22, 18, -20, 18]);
+          c.hitArea = new Polygon([-12, -40, 15, -40, 15, 16, -12, 16]);
           c.on('pointertap', (e: FederatedPointerEvent) => {
             e.stopPropagation();
-            if (this.dragging?.moved) return;
+            if (this.dragging?.moved || e.button === 2) return;
             this.cb.onArmyClick(a.id);
           });
+          c.on('rightclick', (e: FederatedPointerEvent) => {
+            e.stopPropagation();
+            const cur = this.state?.armies[a.id];
+            if (cur) this.cb.onRegionClick(cur.region, { shift: e.shiftKey, right: true });
+          });
+          c.on('pointerover', () => this.setHover(null));
           c.x = tx;
           c.y = ty;
           this.layers.armies.addChild(c);
@@ -1049,10 +1069,13 @@ export class PaintedMap {
         if (this.dragging) this.dragging.moved = true;
         return;
       }
-      if (!this.dragging) return;
+      if (!this.dragging) {
+        if (e.target === stage) this.setHover(this.regionAt(e.global.x, e.global.y));
+        return;
+      }
       const dx = e.global.x - this.dragging.x,
         dy = e.global.y - this.dragging.y;
-      if (!this.dragging.moved && Math.hypot(dx, dy) > 5) this.dragging.moved = true;
+      if (!this.dragging.moved && Math.hypot(dx, dy) > 8) this.dragging.moved = true;
       if (this.dragging.moved) {
         this.world.x = this.dragging.wx + dx;
         this.world.y = this.dragging.wy + dy;
@@ -1063,6 +1086,16 @@ export class PaintedMap {
       if (this.pinch.size < 2) this.pinchDist = 0;
       setTimeout(() => (this.dragging = null), 0);
     };
+    stage.on('pointertap', (e: FederatedPointerEvent) => {
+      if (e.target !== stage || this.dragging?.moved || e.button === 2) return;
+      const id = this.regionAt(e.global.x, e.global.y);
+      if (id) this.cb.onRegionClick(id, { shift: e.shiftKey, right: false });
+    });
+    stage.on('rightclick', (e: FederatedPointerEvent) => {
+      if (e.target !== stage) return;
+      const id = this.regionAt(e.global.x, e.global.y);
+      if (id) this.cb.onRegionClick(id, { shift: e.shiftKey, right: true });
+    });
     stage.on('pointerup', end);
     stage.on('pointerupoutside', end);
     canvas.addEventListener(

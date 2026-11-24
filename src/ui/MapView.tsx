@@ -32,10 +32,9 @@ export function MapView({ moveMode, onMoveIssued }: { moveMode: boolean; onMoveI
           return;
         }
         audio.rustle();
+        // Clicking land selects the land. Armies are selected only by clicking them.
+        st.selectArmy(null);
         st.selectRegion(id);
-        // Selecting a region with your own army selects that army.
-        const mine = Object.values(st.game?.armies ?? {}).find((x) => x.region === id && x.owner === st.game?.playerFaction);
-        st.selectArmy(mine ? mine.id : null);
       },
       onArmyClick: (id) => {
         const st = useStore.getState();
