@@ -1268,7 +1268,13 @@ export class PaintedMap {
         }
         return;
       }
-      if (e.target !== canvas) return;
+      // Over a panel, button or tooltip: the map is not being hovered, so its
+      // card must not cover the UI's own tooltips.
+      if (e.target !== canvas) {
+        this.setHover(null);
+        canvas.style.cursor = '';
+        return;
+      }
       if (this.tokenAt(p.x, p.y)) {
         this.setHover(null);
         canvas.style.cursor = 'pointer';
@@ -1301,6 +1307,9 @@ export class PaintedMap {
       if (id) this.cb.onRegionClick(id, { shift: e.shiftKey, right: false, x: e.clientX, y: e.clientY });
     };
     on(window, 'pointerup', up);
+    on(canvas, 'pointerleave', () => {
+      if (!this.armyDrag && !this.dragging) this.setHover(null);
+    });
     on(window, 'pointercancel', (e) => {
       this.pinch.delete(e.pointerId);
       this.dragging = null;
