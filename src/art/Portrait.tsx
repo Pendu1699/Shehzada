@@ -5,6 +5,7 @@
 
 import { FACTION_BY_ID } from '../data/factions';
 import { hpick } from '../narrative/dhadi';
+import { Dastar, DastarCrest } from './Dastar';
 
 export interface PortraitProps {
   id: string;
@@ -30,10 +31,10 @@ export function Portrait({ id, faction, female, age = 40, royal, size = 96, mute
   const skin = hpick(SKIN, id, 's');
   const beard = age >= 65 ? '#EDE8DD' : age >= 50 ? '#8E8A84' : '#1B1712';
   const w = size,
-    h = size * 1.2;
+    h = size * 1.32;
   const filter = muted ? 'grayscale(0.7) sepia(0.3)' : undefined;
   return (
-    <svg width={w} height={h} viewBox="0 0 100 120" style={{ filter }} role="img" aria-label="portrait">
+    <svg width={w} height={h} viewBox="0 -12 100 132" style={{ filter }} role="img" aria-label="portrait">
       <defs>
         <clipPath id={`oval-${id}`}>
           <ellipse cx="50" cy="60" rx="44" ry="55" />
@@ -74,22 +75,27 @@ export function Portrait({ id, faction, female, age = 40, royal, size = 96, mute
                 <path d="M40 30 L36 14 L48 26 Z" fill="#F2E6C9" />
               </>
             ) : (
-              <>
-                <path d={sikh ? 'M41 36 C40 22 52 14 64 16 C74 18 76 30 72 42 C70 46 66 46 64 42 C62 36 52 34 41 36 Z' : 'M41 37 C38 26 48 18 60 18 C72 18 76 28 72 40 C68 46 64 42 62 38 C56 34 48 36 41 37 Z'} fill={turban} />
-                <path d="M43 33 C52 28 62 26 72 32 M44 28 C52 22 62 21 70 25" stroke="#00000030" strokeWidth="1.3" fill="none" />
-                {royal && (
-                  <>
-                    <path d="M58 18 C56 8 62 2 66 0 C64 8 66 12 62 18 Z" fill="#F2E6C9" />
-                    <circle cx="58" cy="22" r="2.2" fill="#B83A2B" stroke="#C9A13B" strokeWidth="0.8" />
-                  </>
-                )}
-              </>
+              <Dastar faction={faction} id={id} color={turban} royal={royal} />
             )}
           </>
+        )}
+        {!female && !company && (
+          // A full, upswept mustache: across the upper lip, sweeping back over the
+          // cheek and curling up at the end.
+          <g>
+            <path
+              d="M38.4 54.4 C41 52.4 45.5 52.6 49 53.8 C52.5 55 56 53.6 58 50 C59.4 47.4 58.6 44.4 56.2 44.6 C54.4 44.8 54.2 47 55.6 47.4 C56.6 47.6 57 46.6 56.6 46 C57.4 48.8 55.6 52.4 52 54.8 C48 57.4 43 57.6 40.2 56.8 C38.8 56.4 38 55.4 38.4 54.4 Z"
+              fill={beard === '#1B1712' ? '#2E2219' : beard}
+              stroke="#000000aa"
+              strokeWidth="0.6"
+            />
+            <path d="M41.5 54.6 C45 54 49 55.4 52.6 54 C55 53 56.6 51 57 48.6" stroke="#ffffff55" strokeWidth="0.7" fill="none" />
+          </g>
         )}
         {!female && !company && <path d="M52 88 L62 118" stroke="#C9A13B" strokeWidth="2" />}
       </g>
       <ellipse cx="50" cy="60" rx="46" ry="57" fill="none" stroke="#E6C766" strokeWidth="1" />
+      {!female && !company && <DastarCrest faction={faction} id={id} color={turban} />}
     </svg>
   );
 }

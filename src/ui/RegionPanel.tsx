@@ -77,7 +77,7 @@ function Recruit({ region }: { region: string }) {
         <span className="small">
           Cost {rs(cost)} · upkeep {fmt(((u?.upkeep ?? 1) * n) / 100, 1)}k/turn
         </span>
-        <button className="btn small kesri" disabled={n < 100 || cost > fs.treasury} onClick={() => dispatch({ type: 'recruit', region, unit, men: n })}>
+        <button data-tut="recruit" className="btn small kesri" disabled={n < 100 || cost > fs.treasury} onClick={() => dispatch({ type: 'recruit', region, unit, men: n })}>
           Raise
         </button>
       </div>
@@ -212,7 +212,7 @@ export function RegionPanel({ id }: { id: string }) {
             <div className="row" style={{ justifyContent: 'space-between' }}>
               <Tip title="Langar" content={<span>Keep the community kitchen open to all. Costs {rs(langarCost(game, id))} a turn (twice that in famine). Raises Piri, stability and recruitment.</span>}>
                 <label className="row" style={{ cursor: 'pointer' }}>
-                  <input type="checkbox" checked={st.langar} onChange={() => dispatch({ type: 'toggleLangar', region: id })} /> Langar ({rs(langarCost(game, id))}/turn)
+                  <input data-tut="langar" type="checkbox" checked={st.langar} onChange={() => dispatch({ type: 'toggleLangar', region: id })} /> Langar ({rs(langarCost(game, id))}/turn)
                 </label>
               </Tip>
               <button className="btn small" disabled={st.fort >= 5 || fs.treasury < fortCost(game, id)} onClick={() => dispatch({ type: 'buildFort', region: id })}>
@@ -263,7 +263,7 @@ export function RegionPanel({ id }: { id: string }) {
           <div className="row">
             {rakhiP > 0 && (
               <Tip title="Offer rakhi" content={<span>Offer your protection for a fifth of the produce. Chance about {Math.round(rakhiP * 100)}%. If the villages are raided and you do not ride to their aid, you lose Piri and the rakhi.</span>}>
-                <button className="btn small kesri" onClick={() => dispatch({ type: 'offerRakhi', region: id })}>
+                <button data-tut="rakhi" className="btn small kesri" onClick={() => dispatch({ type: 'offerRakhi', region: id })}>
                   Offer rakhi
                 </button>
               </Tip>

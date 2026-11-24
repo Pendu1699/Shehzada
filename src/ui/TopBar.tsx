@@ -43,6 +43,7 @@ function FestivalIcon({ festival }: { festival: 'vaisakhi' | 'diwali' }) {
 export function TopBar() {
   const game = useStore((s) => s.game)!;
   const openModal = useStore((s) => s.openModal);
+  const restartTutorial = useStore((s) => s.restartTutorial);
   const p = game.playerFaction;
   const fs = game.factions[p];
   const d = date(game);
@@ -65,7 +66,7 @@ export function TopBar() {
         </span>
       </Tip>
       <Tip title="Treasury" content={<><div className="small muted">Expected this half-year:</div><BreakdownView b={inc} unit="k" /></>}>
-        <div className="stat" tabIndex={0}>
+        <div className="stat" data-tut="treasury" tabIndex={0}>
           <span className="label">Treasury</span>
           <span className="value">
             {rs(fs.treasury)} <span className="small" style={{ color: inc.total >= 0 ? '#b8e08a' : '#ff9a7a' }}>({inc.total >= 0 ? '+' : ''}{fmt(inc.total)})</span>
@@ -127,10 +128,10 @@ export function TopBar() {
       )}
       <span className="spacer" />
       <div className="actions">
-        <button className="btn small" onClick={() => openModal('ledger')} title="Ledger (L)">
+        <button className="btn small" data-tut="ledger" onClick={() => openModal('ledger')} title="Ledger (L)">
           Bahi-khata
         </button>
-        <button className="btn small" onClick={() => openModal('sarbat')} title="Sarbat Khalsa (K)">
+        <button className="btn small" data-tut="sarbat" onClick={() => openModal('sarbat')} title="Sarbat Khalsa (K)">
           Sarbat Khalsa
         </button>
         {fs.sarkar && (
@@ -138,6 +139,9 @@ export function TopBar() {
             Darbar
           </button>
         )}
+        <button className="btn small kesri" data-tut="counsel" onClick={() => restartTutorial()} title="Replay the tutorial (?)">
+          ? Counsel
+        </button>
         <button className="btn small" onClick={() => openModal('codex')} title="Codex (C)">
           Codex
         </button>

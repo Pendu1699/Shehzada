@@ -63,6 +63,8 @@ interface Store {
   toasts: Toast[];
   settings: Settings;
   ledgerTab: string;
+  tutorialRun: number;
+  restartTutorial(): void;
   setScreen(s: Screen): void;
   start(opts: NewGameOptions): void;
   load(json: string): void;
@@ -103,6 +105,12 @@ export const useStore = create<Store>((set, get) => ({
   toasts: [],
   settings: loadSettings(),
   ledgerTab: 'treasury',
+  tutorialRun: 0,
+  restartTutorial: () => {
+    const s = get();
+    s.updateSettings({ tutorial: true });
+    set({ tutorialRun: s.tutorialRun + 1, modal: null });
+  },
 
   setScreen: (screen) => set({ screen }),
 

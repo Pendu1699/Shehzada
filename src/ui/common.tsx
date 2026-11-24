@@ -7,7 +7,7 @@ export const rs = (n: number) => `₹${fmt(n)}k`;
 export const signed = (n: number, d = 1) => `${n >= 0 ? '+' : '−'}${fmt(Math.abs(n), d)}`;
 
 /** Hover tooltip that follows the pointer. Content can be any node. */
-export function Tip({ title, content, children, className }: { title?: string; content: ReactNode; children: ReactNode; className?: string }) {
+export function Tip({ title, content, children, className, block }: { title?: string; content: ReactNode; children: ReactNode; className?: string; block?: boolean }) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   return (
     <span
@@ -20,7 +20,7 @@ export function Tip({ title, content, children, className }: { title?: string; c
         setPos({ x: r.left, y: r.bottom });
       }}
       onBlur={() => setPos(null)}
-      style={{ display: 'inline-flex' }}
+      style={{ display: block ? 'block' : 'inline-flex' }}
     >
       {children}
       {pos && (

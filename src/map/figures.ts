@@ -37,6 +37,8 @@ export function horsemanContext(turban: string, cloth: string, coat = 0, sikh = 
   else g.ellipse(0.4, -27.4, 2.8, 1.9).fill(hexToNum(turban));
   // beard
   if (sikh) g.poly([1.6, -26, 2.6, -24, 1, -23.2]).fill(INK);
+  // mustache
+  g.moveTo(1.4, -25.6).bezierCurveTo(2.6, -25.2, 3.4, -25.8, 3.2, -26.8).stroke({ width: 0.7, color: INK });
   // spear
   g.moveTo(-6, -13).lineTo(12, -38).stroke({ width: 0.9, color: 0x5a3a1e });
   g.poly([12, -38, 13.8, -42.5, 10.6, -39]).fill(0x8c8c8c);
@@ -58,6 +60,7 @@ export function footContext(turban: string, cloth: string, sikh = true): Graphic
   g.circle(0.4, -21.2, 2.1).fill(0xc68b59);
   g.ellipse(0.2, -22.7, 2.6, 2).fill(hexToNum(turban));
   if (sikh) g.poly([1.6, -21, 2.6, -19, 1, -18.4]).fill(INK);
+  g.moveTo(1.4, -20.6).bezierCurveTo(2.6, -20.2, 3.4, -20.8, 3.2, -21.8).stroke({ width: 0.7, color: INK });
   // matchlock at the shoulder
   g.moveTo(-1, -14).lineTo(13, -25).stroke({ width: 1.3, color: 0x4a3018 });
   g.moveTo(9, -22).lineTo(13, -25).stroke({ width: 1, color: 0x6b6b6b });

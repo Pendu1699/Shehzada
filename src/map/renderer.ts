@@ -76,6 +76,9 @@ interface Token {
   key: string;
 }
 
+/** Army figures are drawn larger than life so they read clearly on the map. */
+const ARMY_SCALE = 0.75;
+
 export class PaintedMap {
   app = new Application();
   world = new Container();
@@ -807,9 +810,10 @@ export class PaintedMap {
       const seat = GEO.regions[region].seat;
       list.forEach((a, i) => {
         seen.add(a.id);
-        const ang = -Math.PI / 2 + i * 1.25;
-        const tx = seat[0] + (i === 0 ? 18 : Math.cos(ang) * 26);
-        const ty = seat[1] + (i === 0 ? 14 : Math.sin(ang) * 20 + 10);
+        // Spread several armies in one region side by side in a row below the seat.
+        const n = list.length;
+        const tx = seat[0] + 14 + (i - (n - 1) / 2) * 20;
+        const ty = seat[1] + 16 + (i % 2) * 6;
         let tok = this.tokens.get(a.id);
         const fig = this.figureFor(a);
         const key = `${a.owner}|${fig.uid}`;
@@ -818,13 +822,14 @@ export class PaintedMap {
           const glow = new Graphics();
           const ring = new Graphics();
           const g = new Graphics(fig);
-          const label = new Text({ text: '', style: { fontFamily: 'EB Garamond, serif', fontSize: 9, fontWeight: '700', fill: PALETTE.ink } });
+          const label = new Text({ text: '', style: { fontFamily: 'EB Garamond, serif', fontSize: 11, fontWeight: '700', fill: PALETTE.ink } });
           label.anchor.set(0.5, 0);
           label.y = 3;
           c.addChild(glow, ring, g, label);
+          c.scale.set(ARMY_SCALE);
           c.eventMode = 'static';
           c.cursor = 'pointer';
-          c.hitArea = new Polygon([-14, -42, 16, -42, 16, 14, -14, 14]);
+          c.hitArea = new Polygon([-20, -46, 22, -46, 22, 18, -20, 18]);
           c.on('pointertap', (e: FederatedPointerEvent) => {
             e.stopPropagation();
             if (this.dragging?.moved) return;
@@ -846,9 +851,11 @@ export class PaintedMap {
         tok.fig.scale.set(Math.min(1.35, 0.8 + Math.sqrt(men) / 160));
         const mine = a.owner === s.playerFaction;
         tok.ring.clear();
-        const plateW = 22;
-        tok.ring.roundRect(-plateW / 2, 2.5, plateW, 11, 3).fill({ color: mine ? PALETTE.wasli : 0xe8dcc0 }).stroke({ width: mine ? 1.2 : 0.8, color: mine ? PALETTE.gold : this.factionColor(a.owner) });
-        if (a.id === this.view.selectedArmy) tok.ring.ellipse(0, 0, 18, 6).stroke({ width: 2, color: PALETTE.goldLight });
+        const plateW = 28;
+        tok.ring.roundRect(-plateW / 2, 2.5, plateW, 13, 3).fill({ color: mine ? PALETTE.wasli : 0xe8dcc0 }).stroke({ width: mine ? 1.2 : 0.8, color: mine ? PALETTE.gold : this.factionColor(a.owner) });
+        if (a.id === this.view.selectedArmy) {
+          tok.ring.ellipse(0, 0, 20, 7).fill({ color: PALETTE.goldLight, alpha: 0.35 }).stroke({ width: 2.5, color: PALETTE.kesri });
+        } else if (mine) tok.ring.ellipse(0, 0, 15, 5).stroke({ width: 1.2, color: PALETTE.gold, alpha: 0.8 });
         tok.glow.clear();
         if (a.josh && a.josh > 0) tok.glow.ellipse(0, -14, 20, 24).fill({ color: PALETTE.kesri, alpha: 0.28 });
         if (a.baggage && a.baggage.captives > 0) tok.glow.roundRect(-24, -10, 8, 8, 1).fill({ color: 0x8a6a3a }).stroke({ width: 0.6, color: PALETTE.ink });
@@ -1001,7 +1008,7 @@ export class PaintedMap {
   }
 
   private setZoom(z: number) {
-    this.zoom = Math.max(0.35, Math.min(4, z));
+    this.zoom = Math.max(0.35, Math.min(6, z));
     this.world.scale.set(this.zoom);
   }
 
