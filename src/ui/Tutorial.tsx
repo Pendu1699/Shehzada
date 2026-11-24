@@ -40,9 +40,15 @@ const STEPS: Step[] = [
   {
     title: 'Riding out',
     text: 'Rivers slow you, and in the monsoon only ferries are safe. A dashed red line shows the road before you commit, with the number of turns it will take.',
-    todo: 'Press Move (or M), then click a neighbouring region. Right-click also moves.',
+    todo: 'Right-click a neighbouring region — or drag your army onto it. (The Move button works too.)',
     target: '[data-tut="move"]',
     done: (s) => !!s.game && armiesOf(s.game, s.game.playerFaction).some((a) => a.path.length > 0),
+  },
+  {
+    title: 'Orders at hand',
+    text: 'Right-click your own army for its orders: divide it, join it with another jatha, halt its march, or choose how it fights. Hold Ctrl while dragging it to divide it and send half away at once. Right-click your land for the langar, the fort and recruiting.',
+    todo: 'Right-click your army.',
+    done: (s) => s.menu?.kind === 'army',
   },
   {
     title: 'How to fight',

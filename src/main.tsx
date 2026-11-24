@@ -14,11 +14,13 @@ import { createRoot } from 'react-dom/client';
 import { App } from './ui/App';
 import { paperDataUrl } from './art/paper';
 import { goldBorder } from './art/phulkari';
+import { installOrnament } from './art/ornament';
 import { useStore } from './store';
 
 const root = document.documentElement;
 root.style.setProperty('--paper-tex', `url(${paperDataUrl()})`);
 root.style.setProperty('--gold-border', goldBorder());
+installOrnament(root);
 
 createRoot(document.getElementById('root')!).render(<App />);
 

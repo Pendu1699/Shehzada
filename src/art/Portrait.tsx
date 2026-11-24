@@ -5,7 +5,7 @@
 
 import { FACTION_BY_ID } from '../data/factions';
 import { hpick } from '../narrative/dhadi';
-import { Dastar, DastarCrest } from './Dastar';
+import { Dastar } from './Dastar';
 
 export interface PortraitProps {
   id: string;
@@ -31,10 +31,10 @@ export function Portrait({ id, faction, female, age = 40, royal, size = 96, mute
   const skin = hpick(SKIN, id, 's');
   const beard = age >= 65 ? '#EDE8DD' : age >= 50 ? '#8E8A84' : '#1B1712';
   const w = size,
-    h = size * 1.32;
+    h = size * 1.36;
   const filter = muted ? 'grayscale(0.7) sepia(0.3)' : undefined;
   return (
-    <svg width={w} height={h} viewBox="0 -12 100 132" style={{ filter }} role="img" aria-label="portrait">
+    <svg width={w} height={h} viewBox="0 -16 100 136" style={{ filter }} role="img" aria-label="portrait">
       <defs>
         <clipPath id={`oval-${id}`}>
           <ellipse cx="50" cy="60" rx="44" ry="55" />
@@ -75,7 +75,7 @@ export function Portrait({ id, faction, female, age = 40, royal, size = 96, mute
                 <path d="M40 30 L36 14 L48 26 Z" fill="#F2E6C9" />
               </>
             ) : (
-              <Dastar faction={faction} id={id} color={turban} royal={royal} />
+              null
             )}
           </>
         )}
@@ -95,7 +95,7 @@ export function Portrait({ id, faction, female, age = 40, royal, size = 96, mute
         {!female && !company && <path d="M52 88 L62 118" stroke="#C9A13B" strokeWidth="2" />}
       </g>
       <ellipse cx="50" cy="60" rx="46" ry="57" fill="none" stroke="#E6C766" strokeWidth="1" />
-      {!female && !company && <DastarCrest faction={faction} id={id} color={turban} />}
+      {!female && !company && <Dastar faction={faction} id={id} color={turban} royal={royal} />}
     </svg>
   );
 }

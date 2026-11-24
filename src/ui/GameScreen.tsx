@@ -15,6 +15,7 @@ import { RegionPanel } from './RegionPanel';
 import { TopBar } from './TopBar';
 import { EventModal } from './EventModal';
 import { Tutorial } from './Tutorial';
+import { MapMenu, MouseHints } from './MapMenu';
 
 function HoverCard() {
   const game = useStore((s) => s.game)!;
@@ -165,6 +166,8 @@ export function GameScreen() {
       {selArmy && game.armies[selArmy] ? <ArmyPanel id={selArmy} moveMode={moveMode} setMoveMode={setMoveMode} /> : selRegion ? <RegionPanel id={selRegion} /> : null}
       <DhadiPanel />
       <HoverCard />
+      <MouseHints moveMode={moveMode} />
+      <MapMenu />
       <div className="zoom-ctl">
         <button className="btn small neela" onClick={() => getMap()?.zoomBy(1.25)} aria-label="Zoom in">
           +
@@ -177,8 +180,8 @@ export function GameScreen() {
         </button>
       </div>
       <div className="endturn">
-        <span className="small" style={{ color: '#f2e6c9', textShadow: '0 1px 2px #000' }}>
-          {myArmies.length} armies · {fmt(myArmies.reduce((t, a) => t + armyMen(a), 0))} men · {idle} awaiting orders
+        <span className="small endturn-status">
+          {myArmies.length} {myArmies.length === 1 ? 'army' : 'armies'} · {fmt(myArmies.reduce((t, a) => t + armyMen(a), 0))} men · {idle === 0 ? 'all have orders' : `${idle} awaiting orders`}
         </span>
         <button className="nagara-btn" onClick={endTurn} disabled={busy || game.phase === 'ended'} title="End turn (Enter)">
           {busy ? '…' : (

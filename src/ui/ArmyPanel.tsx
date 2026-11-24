@@ -138,7 +138,7 @@ export function ArmyPanel({ id, moveMode, setMoveMode }: { id: string; moveMode:
               </p>
             )}
             <p className="small muted" style={{ margin: '4px 0' }}>
-              Right-click (or shift-click) a region to march there, or press Move and tap it.
+              Right-click a region or drag the army there to march. Ctrl + drag divides it and sends half. Right-click the army for more orders.
             </p>
           </div>
           <div className="section">

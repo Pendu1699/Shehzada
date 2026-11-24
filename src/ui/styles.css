@@ -1185,3 +1185,308 @@ input[type='checkbox'] {
   width: min(600px, calc(100vw - 520px));
   min-width: 420px;
 }
+
+/* ══ Manuscript pass ═════════════════════════════════════════════════════════
+   Album-page dress for every surface: an illuminated hashiya margin, jadwal
+   rules, flat pigment buttons like painted cartouches, lotus dividers, a
+   kangura border under the top bar and a drawn nagara. */
+
+.folio {
+  border: 18px solid transparent;
+  border-image: var(--hashiya) 32 round;
+  border-radius: 0;
+  box-shadow: 0 1px 0 rgba(255, 240, 200, 0.15), 0 14px 34px rgba(16, 10, 4, 0.5);
+}
+.folio-inner {
+  border: none;
+  outline: none;
+}
+.bahi .folio,
+.modal.folio {
+  border-image: var(--hashiya) 32 round;
+}
+
+.rule {
+  height: 22px;
+  margin: 8px 0;
+  background:
+    var(--lotus-rule) center / 260px 22px no-repeat,
+    linear-gradient(var(--gold), var(--gold)) left 0 top 10px / calc(50% - 130px) 1px no-repeat,
+    linear-gradient(var(--sindoor), var(--sindoor)) left 0 top 12.5px / calc(50% - 130px) 0.5px no-repeat,
+    linear-gradient(var(--gold), var(--gold)) right 0 top 10px / calc(50% - 130px) 1px no-repeat,
+    linear-gradient(var(--sindoor), var(--sindoor)) right 0 top 12.5px / calc(50% - 130px) 0.5px no-repeat;
+}
+
+.heading-band {
+  border-bottom: none;
+  padding-bottom: 6px;
+  background:
+    linear-gradient(var(--gold), var(--gold)) left bottom 2px / 100% 1px no-repeat,
+    linear-gradient(var(--sindoor), var(--sindoor)) left bottom 0 / 100% 0.5px no-repeat;
+}
+
+/* Buttons: flat pigment in a ruled cartouche. */
+.btn,
+.btn.small {
+  background: #ecd9a2;
+  background-image: var(--paper-tex);
+  background-size: 512px 512px;
+  background-blend-mode: multiply;
+  color: var(--ink);
+  border: 1px solid #6e5216;
+  border-radius: 1px;
+  box-shadow: inset 0 0 0 2px #f6ecd0, inset 0 0 0 3px rgba(140, 106, 30, 0.75), 0 1px 0 rgba(0, 0, 0, 0.35);
+  text-shadow: none;
+  filter: none;
+}
+.btn.kesri {
+  background-color: #e08a22;
+  box-shadow: inset 0 0 0 2px #f4c27a, inset 0 0 0 3px #9a5208, 0 1px 0 rgba(0, 0, 0, 0.35);
+  border-color: #7a3e04;
+}
+.btn.neela {
+  background-color: #2a467f;
+  color: #f2dc9a;
+  box-shadow: inset 0 0 0 2px #1b2f58, inset 0 0 0 3px var(--gold), 0 1px 0 rgba(0, 0, 0, 0.35);
+  border-color: #0f1d3a;
+}
+.btn.ghost {
+  background-color: #f6ecd2;
+  box-shadow: inset 0 0 0 2px #fbf4e2, inset 0 0 0 3px rgba(140, 106, 30, 0.45);
+}
+.btn:hover:not(:disabled) {
+  filter: none;
+  background-color: #f4e3b0;
+  box-shadow: inset 0 0 0 2px #fbf2d8, inset 0 0 0 3px var(--sindoor), 0 0 0 2px rgba(232, 135, 14, 0.45);
+}
+.btn.kesri:hover:not(:disabled) {
+  background-color: #ec9a34;
+  box-shadow: inset 0 0 0 2px #f8d398, inset 0 0 0 3px var(--sindoor), 0 0 0 2px rgba(232, 135, 14, 0.45);
+}
+.btn.neela:hover:not(:disabled) {
+  background-color: #33559a;
+  box-shadow: inset 0 0 0 2px #1b2f58, inset 0 0 0 3px var(--gold-light), 0 0 0 2px rgba(230, 199, 102, 0.45);
+}
+button.chip {
+  border-radius: 2px;
+}
+
+/* The top bar: lapis cloth with a buta print and a kangura edge. */
+.topbar {
+  background-color: #16244a;
+  background-image: var(--buta);
+  background-size: 44px 44px;
+  border-bottom: none;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
+  padding-bottom: 13px;
+}
+.topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 9px;
+  background: var(--kangura) repeat-x;
+  background-size: 16px 9px;
+  border-top: 1px solid var(--gold);
+}
+
+/* The nagara: a drum, not a glossy orb. */
+.nagara-btn {
+  width: 104px;
+  height: 104px;
+  border: none;
+  border-radius: 0;
+  background: var(--nagara) center / contain no-repeat;
+  box-shadow: none;
+  padding: 0 0 22px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+  color: #5e120e;
+  font-size: 0.9em;
+}
+.nagara-btn:hover:not(:disabled) {
+  transform: rotate(-3deg) scale(1.04);
+}
+.nagara-btn:disabled {
+  opacity: 0.6;
+}
+
+/* Bahi tabs: cloth tabs with a fine gold edge. */
+.tab {
+  border-radius: 1px 1px 0 0;
+  box-shadow: inset 0 0 0 1px rgba(230, 199, 102, 0.5);
+}
+
+/* Drop caps in the manner of an illuminated initial. */
+.dropcap::first-letter,
+.dhadi-panel p:first-of-type::first-letter {
+  color: var(--sindoor);
+}
+
+.modal-close {
+  top: -12px;
+  right: -12px;
+}
+
+/* Title: the painting framed as an album page. */
+.title-screen {
+  border: 26px solid transparent;
+  border-image: var(--hashiya) 32 round;
+  background: #1c2d5c;
+}
+.title-card {
+  background-color: rgba(245, 233, 204, 0.96);
+}
+.btn.kesri,
+.btn.neela,
+.btn.ghost {
+  background-image: var(--paper-tex);
+  background-size: 512px 512px;
+  background-blend-mode: multiply;
+}
+.title-screen {
+  justify-content: flex-start;
+  padding-left: max(3vw, 12px);
+}
+.title-card {
+  min-width: 0;
+  width: min(440px, 88vw);
+}
+.title-card .folio-inner {
+  padding: 10px 14px;
+}
+@media (max-width: 900px) {
+  .title-screen {
+    justify-content: center;
+    padding-left: 0;
+  }
+}
+.endturn-status {
+  background: rgba(242, 230, 201, 0.95);
+  color: var(--ink);
+  padding: 3px 10px;
+  border: 1px solid var(--gold-dark);
+  box-shadow: inset 0 0 0 2px #fbf4e2, inset 0 0 0 3px rgba(140, 106, 30, 0.45);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+/* ── Quick-actions menu and mouse hints ──────────────────────────────────── */
+
+.map-menu {
+  position: fixed;
+  z-index: 40;
+  width: 240px;
+  border-width: 12px;
+  animation: fadein 0.12s ease;
+}
+.map-menu .folio-inner {
+  padding: 6px 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.menu-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.08em;
+  padding: 2px 6px 4px;
+  border-bottom: 1px solid var(--gold);
+  margin-bottom: 3px;
+  display: flex;
+  flex-direction: column;
+}
+.menu-sub {
+  font-weight: 500;
+  font-size: 0.78em;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+.menu-tip {
+  font-size: 0.78em;
+  color: var(--sindoor);
+  padding: 0 6px 4px;
+}
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-left: 3px solid transparent;
+  padding: 5px 8px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.98em;
+  color: var(--ink);
+  cursor: pointer;
+}
+.menu-item:hover:not(:disabled) {
+  background: rgba(232, 135, 14, 0.16);
+  border-left-color: var(--kesri);
+}
+.menu-item.on {
+  border-left-color: var(--mehndi);
+}
+.menu-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.menu-hint {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 0.78em;
+  color: var(--ink-soft);
+}
+.menu-sep {
+  font-size: 0.72em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-dark);
+  padding: 4px 8px 2px;
+  border-top: 1px solid rgba(140, 106, 30, 0.35);
+  margin-top: 3px;
+}
+.menu-stances {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 2px 6px 4px;
+}
+.menu-stances .chip {
+  font-size: 0.8em;
+  padding: 2px 7px;
+}
+
+.mouse-hints {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  z-index: 7;
+  display: flex;
+  gap: 14px;
+  padding: 4px 14px;
+  background: rgba(242, 230, 201, 0.94);
+  border: 1px solid var(--gold-dark);
+  box-shadow: inset 0 0 0 2px #fbf4e2, inset 0 0 0 3px rgba(140, 106, 30, 0.45);
+  font-size: 0.82em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.mouse-hints b {
+  font-family: var(--font-display);
+  color: var(--sindoor);
+}
+@media (max-width: 900px) {
+  .mouse-hints {
+    display: none;
+  }
+}
+.tutorial-card {
+  bottom: 52px;
+}

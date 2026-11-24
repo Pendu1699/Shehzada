@@ -41,8 +41,15 @@ const H = GEO.meta.height;
 const MARGIN = 140;
 
 export interface MapCallbacks {
-  onRegionClick(id: string, e: { shift: boolean; right: boolean }): void;
+  /** Left-click on land selects; right-click gives an order or opens quick actions. */
+  onRegionClick(id: string, e: { shift: boolean; right: boolean; x: number; y: number }): void;
   onArmyClick(id: string): void;
+  /** Right-click on an army token (screen coordinates for a menu). */
+  onArmyContext(id: string, x: number, y: number): void;
+  /** An army was dragged; returns whether it may be dragged (only your own). */
+  onArmyDragStart(id: string): boolean;
+  /** The dragged army was dropped on a region. split: Ctrl/Alt was held. */
+  onArmyDrop(id: string, region: string | null, split: boolean): void;
   onHover(id: string | null): void;
 }
 
@@ -74,7 +81,13 @@ interface Token {
   tx: number;
   ty: number;
   key: string;
+  badge: Text;
 }
+
+/** Armies in one region stand in rows this far apart (world units); below this zoom they gather into one token. */
+const ARMY_SPACING = 36;
+const ARMY_ROW = 3;
+const GATHER_BELOW_ZOOM = 1.3;
 
 /** Army figures are drawn larger than life so they read clearly on the map. */
 const ARMY_SCALE = 0.75;
@@ -104,9 +117,10 @@ export class PaintedMap {
     labels: new Container(),
     banners: new Graphics(),
     paths: new Graphics(),
+    drag: new Graphics(),
     select: new Graphics(),
     hits: new Container(),
-    armies: new Container(),
+    armies: Object.assign(new Container(), { sortableChildren: true }),
     dust: new Graphics(),
     clouds: new Container(),
     mood: new Graphics(),
@@ -128,6 +142,7 @@ export class PaintedMap {
   private inkRegions: Record<string, { g: Graphics; since: number }> = {};
   private destroyed = false;
   private dragging: { x: number; y: number; wx: number; wy: number; moved: boolean } | null = null;
+  private armyDrag: { id: string; x: number; y: number; moved: boolean; ok: boolean } | null = null;
   private pinch: Map<number, { x: number; y: number }> = new Map();
   private pinchDist = 0;
   private hovered: string | null = null;
@@ -170,6 +185,8 @@ export class PaintedMap {
 
   destroy() {
     this.destroyed = true;
+    for (const off of this.domOff) off();
+    this.domOff = [];
     try {
       this.app.destroy(true, { children: true, texture: true });
     } catch {
@@ -386,31 +403,45 @@ export class PaintedMap {
     items.sort((a, b) => a.y - b.y).forEach((it) => it.draw());
   }
 
-  private buildHits() {
+  /**
+   * Region picking. Region outlines are smoothed, which leaves hairline gaps
+   * along borders, so clicks are resolved by point-in-polygon on the raw world
+   * point with a fallback to the nearest region edge. One handler on the stage
+   * means a click always does something.
+   */
+  private buildHits() {}
+
+  regionAt(gx: number, gy: number): string | null {
+    const x = (gx - this.world.x) / this.zoom,
+      y = (gy - this.world.y) / this.zoom;
+    let best: string | null = null,
+      bestD = 22 * 22;
     for (const r of REGIONS) {
-      const c = new Container();
-      c.hitArea = new Polygon(GEO.regions[r.id].poly);
-      c.eventMode = 'static';
-      c.cursor = 'pointer';
-      c.on('pointerover', () => {
-        this.hovered = r.id;
-        this.cb.onHover(r.id);
-      });
-      c.on('pointerout', () => {
-        if (this.hovered === r.id) {
-          this.hovered = null;
-          this.cb.onHover(null);
+      const poly = GEO.regions[r.id].poly;
+      let inside = false;
+      for (let i = 0, j = poly.length - 2; i < poly.length; j = i, i += 2) {
+        const xi = poly[i], yi = poly[i + 1], xj = poly[j], yj = poly[j + 1];
+        if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+        // distance to this edge, for the near-border fallback
+        const dx = xj - xi, dy = yj - yi;
+        const t = Math.max(0, Math.min(1, ((x - xi) * dx + (y - yi) * dy) / (dx * dx + dy * dy || 1)));
+        const ex = xi + dx * t - x, ey = yi + dy * t - y;
+        const d = ex * ex + ey * ey;
+        if (d < bestD) {
+          bestD = d;
+          best = r.id;
         }
-      });
-      c.on('pointertap', (e: FederatedPointerEvent) => {
-        if (this.dragging?.moved) return;
-        this.cb.onRegionClick(r.id, { shift: e.shiftKey, right: e.button === 2 });
-      });
-      c.on('rightclick', (e: FederatedPointerEvent) => {
-        this.cb.onRegionClick(r.id, { shift: e.shiftKey, right: true });
-      });
-      this.layers.hits.addChild(c);
+      }
+      if (inside) return r.id;
     }
+    return best;
+  }
+
+  private setHover(id: string | null) {
+    if (id === this.hovered) return;
+    this.hovered = id;
+    this.cb.onHover(id);
+    this.app.canvas.style.cursor = id ? 'pointer' : 'grab';
   }
 
   private buildLabels() {
@@ -464,15 +495,47 @@ export class PaintedMap {
       this.layers.labels.addChild(t);
     }
     // Region names at anchors; cities at seats.
+    const placed: { x: number; y: number; w: number }[] = [];
     for (const r of REGIONS) {
       const geo = GEO.regions[r.id];
       const name = r.name.replace(/ \(.*\)$/, '');
       const t = new Text({ text: name, style: { fontFamily: 'Cormorant Garamond, serif', fontSize: 13, fontWeight: '700', fill: PALETTE.ink, letterSpacing: 0.5, stroke: { color: PALETTE.wasli, width: 3 } } });
       t.anchor.set(0.5);
       t.x = geo.anchor[0];
-      // Keep the name clear of the fort and the army tokens beside the seat.
-      const near = Math.hypot(geo.anchor[0] - geo.seat[0], geo.anchor[1] - geo.seat[1]) < 30;
-      t.y = geo.anchor[1] + (near ? 30 : 14);
+      // Armies stand in a row just below the seat (and the fort and banner just
+      // above it). Put the name at the region's centre if that is clear of them;
+      // otherwise below the army row, or above the banner — whichever stays
+      // inside the region.
+      const [sx, sy] = geo.seat;
+      // Any region's fort/army zone counts, not just this one's: towns can be
+      // close. Names already placed count too, but armies matter more.
+      const nearSeat = (x: number, y: number) =>
+        REGIONS.some((o) => {
+          const [ox, oy] = GEO.regions[o.id].seat;
+          return Math.abs(x - ox) < (o.id === r.id ? 70 : 50) && y > oy - 34 && y < oy + 52;
+        });
+      const nearName = (x: number, y: number) => placed.some((b) => Math.abs(x - b.x) < (t.width + b.w) / 2 + 4 && Math.abs(y - b.y) < 15);
+      const busy = (x: number, y: number) => nearSeat(x, y) || nearName(x, y);
+      const w = t.width / 2;
+      const inside = (x: number, y: number) => pointInPoly(x - w * 0.8, y, geo.poly) && pointInPoly(x + w * 0.8, y, geo.poly);
+      const spots: [number, number][] = [geo.anchor as [number, number], [sx, sy + 62], [sx, sy - 46], [geo.anchor[0], sy + 62], [geo.anchor[0], sy - 46]];
+      // Also try a ring of points around the centre, nearest first.
+      for (const rad of [24, 44, 64]) for (let k = 0; k < 8; k++) spots.push([geo.anchor[0] + Math.cos((k * Math.PI) / 4) * rad, geo.anchor[1] + Math.sin((k * Math.PI) / 4) * rad * 0.7]);
+      let spot = spots.find(([x, y]) => !busy(x, y) && inside(x, y));
+      // A narrow region: try the short name ("Kapurthala" for "Kapurthala & Sultanpur").
+      if (!spot && name.includes(' & ')) {
+        t.text = name.split(' & ')[0];
+        const w2 = t.width / 2;
+        spot = spots.find(([x, y]) => !busy(x, y) && pointInPoly(x - w2 * 0.8, y, geo.poly) && pointInPoly(x + w2 * 0.8, y, geo.poly));
+      }
+      spot ??=
+        spots.find(([x, y]) => !busy(x, y) && pointInPoly(x, y, geo.poly)) ??
+        spots.find(([x, y]) => !nearSeat(x, y) && pointInPoly(x, y, geo.poly)) ??
+        spots.find(([x, y]) => !nearSeat(x, y)) ??
+        [geo.anchor[0], sy + 62];
+      t.x = spot[0];
+      t.y = spot[1];
+      placed.push({ x: t.x, y: t.y, w: t.width });
       this.regionLabels[r.id] = t;
       this.layers.labels.addChild(t);
     }
@@ -811,9 +874,16 @@ export class PaintedMap {
       list.forEach((a, i) => {
         seen.add(a.id);
         // Spread several armies in one region side by side in a row below the seat.
+        // Close up, every army gets its own place in a row below the town, with
+        // clear space between plates; far out they gather into one token with a
+        // count, so the map never turns into a pile.
         const n = list.length;
-        const tx = seat[0] + 14 + (i - (n - 1) / 2) * 20;
-        const ty = seat[1] + 16 + (i % 2) * 6;
+        const gathered = n > 1 && this.zoom < GATHER_BELOW_ZOOM;
+        const row = Math.floor(i / ARMY_ROW),
+          col = i % ARMY_ROW;
+        const inRow = Math.min(ARMY_ROW, n - row * ARMY_ROW);
+        const tx = gathered ? seat[0] : seat[0] + (col - (inRow - 1) / 2) * ARMY_SPACING;
+        const ty = gathered ? seat[1] + 26 : seat[1] + 26 + row * 40;
         let tok = this.tokens.get(a.id);
         const fig = this.figureFor(a);
         const key = `${a.owner}|${fig.uid}`;
@@ -824,21 +894,30 @@ export class PaintedMap {
           const g = new Graphics(fig);
           const label = new Text({ text: '', style: { fontFamily: 'EB Garamond, serif', fontSize: 11, fontWeight: '700', fill: PALETTE.ink } });
           label.anchor.set(0.5, 0);
-          label.y = 3;
-          c.addChild(glow, ring, g, label);
+          label.y = 3.5;
+          const badge = new Text({ text: '', style: { fontFamily: 'EB Garamond, serif', fontSize: 10, fontWeight: '700', fill: '#fff8e6' } });
+          badge.anchor.set(0.5, 0.5);
+          badge.position.set(18, 3);
+          c.addChild(glow, ring, g, label, badge);
           c.scale.set(ARMY_SCALE);
           c.eventMode = 'static';
           c.cursor = 'pointer';
-          c.hitArea = new Polygon([-20, -46, 22, -46, 22, 18, -20, 18]);
-          c.on('pointertap', (e: FederatedPointerEvent) => {
+          c.hitArea = new Polygon([-12, -40, 15, -40, 15, 16, -12, 16]);
+          // Left button: press and release selects; press and drag gives a march order.
+          c.on('pointerdown', (e: FederatedPointerEvent) => {
+            if (e.button !== 0 || this.pinch.size > 0) return;
             e.stopPropagation();
-            if (this.dragging?.moved) return;
-            this.cb.onArmyClick(a.id);
+            this.armyDrag = { id: a.id, x: e.global.x, y: e.global.y, moved: false, ok: false };
           });
+          c.on('rightclick', (e: FederatedPointerEvent) => {
+            e.stopPropagation();
+            this.cb.onArmyContext(a.id, e.clientX, e.clientY);
+          });
+          c.on('pointerover', () => this.setHover(null));
           c.x = tx;
           c.y = ty;
           this.layers.armies.addChild(c);
-          tok = { c, fig: g, label, ring, glow, x: tx, y: ty, tx, ty, key };
+          tok = { c, fig: g, label, ring, glow, x: tx, y: ty, tx, ty, key, badge };
           this.tokens.set(a.id, tok);
         } else if (tok.key !== key) {
           tok.fig.context = fig;
@@ -848,24 +927,76 @@ export class PaintedMap {
         tok.ty = ty;
         const men = armyMen(a);
         tok.label.text = men >= 1000 ? `${(men / 1000).toFixed(men >= 10000 ? 0 : 1)}k` : `${men}`;
-        tok.fig.scale.set(Math.min(1.35, 0.8 + Math.sqrt(men) / 160));
+        tok.fig.scale.set(Math.min(1.1, 0.85 + Math.sqrt(men) / 260));
         const mine = a.owner === s.playerFaction;
+        const selected = a.id === this.view.selectedArmy;
+        // Hidden behind the lead token when gathered.
+        tok.c.visible = !(gathered && i > 0);
+        tok.c.zIndex = selected ? 10 : mine ? 2 : 1;
+        tok.badge.text = gathered && i === 0 ? `+${n - 1}` : '';
+        // The plate carries the owner's colour; yours has a gold double border.
+        const own = this.factionColor(a.owner);
         tok.ring.clear();
-        const plateW = 28;
-        tok.ring.roundRect(-plateW / 2, 2.5, plateW, 13, 3).fill({ color: mine ? PALETTE.wasli : 0xe8dcc0 }).stroke({ width: mine ? 1.2 : 0.8, color: mine ? PALETTE.gold : this.factionColor(a.owner) });
-        if (a.id === this.view.selectedArmy) {
-          tok.ring.ellipse(0, 0, 20, 7).fill({ color: PALETTE.goldLight, alpha: 0.35 }).stroke({ width: 2.5, color: PALETTE.kesri });
-        } else if (mine) tok.ring.ellipse(0, 0, 15, 5).stroke({ width: 1.2, color: PALETTE.gold, alpha: 0.8 });
+        const plateW = Math.max(28, tok.label.width + 10);
+        if (selected) tok.ring.ellipse(0, 0, 21, 7.5).fill({ color: PALETTE.goldLight, alpha: 0.45 }).stroke({ width: 3, color: PALETTE.kesri });
+        else tok.ring.ellipse(0, 0, 15, 5).fill({ color: own, alpha: 0.35 });
+        if (mine) {
+          tok.ring.roundRect(-plateW / 2 - 2, 0.5, plateW + 4, 17, 4).fill({ color: PALETTE.gold });
+          tok.ring.roundRect(-plateW / 2, 2.5, plateW, 13, 3).fill({ color: PALETTE.wasli }).stroke({ width: 1, color: 0x8c6a1e });
+        } else {
+          tok.ring.roundRect(-plateW / 2, 2.5, plateW, 13, 3).fill({ color: mix(own, '#ffffff', 0.62) }).stroke({ width: 1.8, color: own });
+        }
+        if (tok.badge.text) tok.ring.circle(18, 3, 7).fill({ color: PALETTE.sindoor }).stroke({ width: 1, color: PALETTE.goldLight });
+        // Selected army stands a little forward so it is never hidden.
+        tok.c.scale.set(ARMY_SCALE * (selected ? 1.12 : 1));
         tok.glow.clear();
         if (a.josh && a.josh > 0) tok.glow.ellipse(0, -14, 20, 24).fill({ color: PALETTE.kesri, alpha: 0.28 });
         if (a.baggage && a.baggage.captives > 0) tok.glow.roundRect(-24, -10, 8, 8, 1).fill({ color: 0x8a6a3a }).stroke({ width: 0.6, color: PALETTE.ink });
       });
     }
+    this.separateTokens();
     for (const [id, tok] of this.tokens) {
       if (!seen.has(id)) {
         tok.c.destroy({ children: true });
         this.tokens.delete(id);
       }
+    }
+  }
+
+  /**
+   * Keep visible army tokens apart across neighbouring regions too: towns can
+   * sit close together, so after each region lays out its own row, any two
+   * tokens closer than a plate's width are pushed apart (a few relaxation
+   * passes, each pair moved equally).
+   */
+  private separateTokens() {
+    const toks = [...this.tokens.values()].filter((t) => t.c.visible);
+    const minX = ARMY_SPACING * 0.92,
+      minY = 34;
+    for (let pass = 0; pass < 24; pass++) {
+      let moved = false;
+      for (let i = 0; i < toks.length; i++)
+        for (let j = i + 1; j < toks.length; j++) {
+          const a = toks[i],
+            b = toks[j];
+          const dx = b.tx - a.tx,
+            dy = b.ty - a.ty;
+          // Overlap measured on an ellipse: plates are wider than tall.
+          const nx = dx / minX,
+            ny = dy / minY;
+          const d = Math.hypot(nx, ny);
+          if (d >= 1) continue;
+          moved = true;
+          const push = (1 - d) / 2 + 0.01;
+          // Prefer sideways separation; nearly-coincident tokens split left/right.
+          const ux = d < 1e-3 ? (i % 2 ? 1 : -1) : nx / d,
+            uy = d < 1e-3 ? 0 : ny / d;
+          a.tx -= ux * push * minX;
+          a.ty -= uy * push * minY;
+          b.tx += ux * push * minX;
+          b.ty += uy * push * minY;
+        }
+      if (!moved) break;
     }
   }
 
@@ -1008,8 +1139,11 @@ export class PaintedMap {
   }
 
   private setZoom(z: number) {
+    const wasGathered = this.zoom < GATHER_BELOW_ZOOM;
     this.zoom = Math.max(0.35, Math.min(6, z));
     this.world.scale.set(this.zoom);
+    // Crossing the gathering threshold re-lays out the army tokens.
+    if (wasGathered !== this.zoom < GATHER_BELOW_ZOOM && this.state) this.syncTokens(this.state);
   }
 
   zoomBy(f: number, cx = this.app.screen.width / 2, cy = this.app.screen.height / 2) {
@@ -1025,22 +1159,84 @@ export class PaintedMap {
     this.world.y += dy;
   }
 
+  /** The arrow drawn while an army is dragged: from the army to the pointer. */
+  private drawDragArrow(id: string, gx: number, gy: number, split: boolean) {
+    const tok = this.tokens.get(id);
+    const g = this.layers.drag;
+    g.clear();
+    if (!tok) return;
+    const x0 = tok.c.x,
+      y0 = tok.c.y - 12;
+    const x1 = (gx - this.world.x) / this.zoom,
+      y1 = (gy - this.world.y) / this.zoom;
+    const color = split ? 0x1f3a68 : PALETTE.sindoor;
+    const ang = Math.atan2(y1 - y0, x1 - x0);
+    g.moveTo(x0, y0).lineTo(x1 - Math.cos(ang) * 6, y1 - Math.sin(ang) * 6).stroke({ width: 3 / Math.sqrt(this.zoom), color, alpha: 0.85, cap: 'round' });
+    const s = 11 / Math.sqrt(this.zoom);
+    g.poly([x1, y1, x1 - Math.cos(ang - 0.45) * s, y1 - Math.sin(ang - 0.45) * s, x1 - Math.cos(ang + 0.45) * s, y1 - Math.sin(ang + 0.45) * s]).fill({ color, alpha: 0.95 });
+    g.circle(x0, y0 + 12, 9).stroke({ width: 2, color, alpha: 0.8 });
+  }
+
+  /**
+   * Input. Army tokens are the only Pixi-interactive objects (the stage stays
+   * 'passive', because a 'static' ancestor makes every overlay and label
+   * hit-testable in Pixi 8 and they would swallow clicks). Everything else —
+   * clicks on land, right-clicks, panning, army drags, pinch and wheel zoom — is
+   * read from plain DOM pointer events on the canvas.
+   *
+   *   left click on land      → select the region
+   *   left click on an army   → select the army      (token pointerdown, below)
+   *   left drag on land       → pan
+   *   left drag on your army  → march order (Ctrl/Alt: divide and send half)
+   *   right click on land     → order / quick actions
+   *   right click on an army  → army orders          (token rightclick)
+   */
+  private domOff: (() => void)[] = [];
+
+  private tokenAt(x: number, y: number): boolean {
+    const hit = this.app.renderer.events.rootBoundary.hitTest(x, y);
+    for (let c = hit as Container | null; c; c = c.parent) if (c.parent === this.layers.armies) return true;
+    return false;
+  }
+
   private setupInput() {
-    const stage = this.app.stage;
-    stage.eventMode = 'static';
-    stage.hitArea = this.app.screen;
+    this.app.stage.eventMode = 'passive';
     const canvas = this.app.canvas;
-    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-    stage.on('pointerdown', (e: FederatedPointerEvent) => {
-      this.pinch.set(e.pointerId, { x: e.global.x, y: e.global.y });
+    const local = (e: PointerEvent | MouseEvent) => {
+      const r = canvas.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    };
+    const on = <K extends keyof WindowEventMap>(t: Window | HTMLElement, type: K, fn: (e: WindowEventMap[K]) => void, opts?: AddEventListenerOptions) => {
+      t.addEventListener(type, fn as EventListener, opts);
+      this.domOff.push(() => t.removeEventListener(type, fn as EventListener, opts));
+    };
+
+    on(canvas, 'contextmenu', (e) => {
+      e.preventDefault();
+      const p = local(e);
+      if (this.tokenAt(p.x, p.y)) return; // the token's own rightclick handles it
+      const id = this.regionAt(p.x, p.y);
+      if (id) this.cb.onRegionClick(id, { shift: e.shiftKey, right: true, x: e.clientX, y: e.clientY });
+    });
+
+    // Pixi's own canvas listener runs first, so a press on a token has already
+    // set armyDrag by the time this runs.
+    on(canvas, 'pointerdown', (e) => {
+      const p = local(e);
+      this.pinch.set(e.pointerId, p);
       if (this.pinch.size === 2) {
         const [a, b] = [...this.pinch.values()];
         this.pinchDist = Math.hypot(a.x - b.x, a.y - b.y);
+        this.armyDrag = null;
+        this.layers.drag.clear();
       }
-      this.dragging = { x: e.global.x, y: e.global.y, wx: this.world.x, wy: this.world.y, moved: false };
+      if (e.button !== 0 || this.armyDrag) return;
+      this.dragging = { x: p.x, y: p.y, wx: this.world.x, wy: this.world.y, moved: false };
     });
-    stage.on('pointermove', (e: FederatedPointerEvent) => {
-      if (this.pinch.has(e.pointerId)) this.pinch.set(e.pointerId, { x: e.global.x, y: e.global.y });
+
+    on(window, 'pointermove', (e) => {
+      const p = local(e);
+      if (this.pinch.has(e.pointerId)) this.pinch.set(e.pointerId, p);
       if (this.pinch.size === 2) {
         const [a, b] = [...this.pinch.values()];
         const d = Math.hypot(a.x - b.x, a.y - b.y);
@@ -1049,28 +1245,84 @@ export class PaintedMap {
         if (this.dragging) this.dragging.moved = true;
         return;
       }
-      if (!this.dragging) return;
-      const dx = e.global.x - this.dragging.x,
-        dy = e.global.y - this.dragging.y;
-      if (!this.dragging.moved && Math.hypot(dx, dy) > 5) this.dragging.moved = true;
-      if (this.dragging.moved) {
-        this.world.x = this.dragging.wx + dx;
-        this.world.y = this.dragging.wy + dy;
+      if (this.armyDrag) {
+        const d = this.armyDrag;
+        if (!d.moved && Math.hypot(p.x - d.x, p.y - d.y) > 8) {
+          d.moved = true;
+          d.ok = this.cb.onArmyDragStart(d.id);
+        }
+        if (d.moved && d.ok) {
+          this.setHover(this.regionAt(p.x, p.y));
+          this.drawDragArrow(d.id, p.x, p.y, e.ctrlKey || e.altKey);
+        }
+        return;
       }
+      if (this.dragging) {
+        const dx = p.x - this.dragging.x,
+          dy = p.y - this.dragging.y;
+        if (!this.dragging.moved && Math.hypot(dx, dy) > 8) this.dragging.moved = true;
+        if (this.dragging.moved) {
+          this.world.x = this.dragging.wx + dx;
+          this.world.y = this.dragging.wy + dy;
+          canvas.style.cursor = 'grabbing';
+        }
+        return;
+      }
+      // Over a panel, button or tooltip: the map is not being hovered, so its
+      // card must not cover the UI's own tooltips.
+      if (e.target !== canvas) {
+        this.setHover(null);
+        canvas.style.cursor = '';
+        return;
+      }
+      if (this.tokenAt(p.x, p.y)) {
+        this.setHover(null);
+        canvas.style.cursor = 'pointer';
+      } else this.setHover(this.regionAt(p.x, p.y));
     });
-    const end = (e: FederatedPointerEvent) => {
+
+    const up = (e: PointerEvent) => {
+      const p = local(e);
       this.pinch.delete(e.pointerId);
       if (this.pinch.size < 2) this.pinchDist = 0;
-      setTimeout(() => (this.dragging = null), 0);
+      const d = this.armyDrag;
+      if (d) {
+        this.armyDrag = null;
+        this.layers.drag.clear();
+        if (!d.moved) {
+          // A gathered stack: come closer so its armies spread out.
+          const tok = this.tokens.get(d.id);
+          const army = this.state?.armies[d.id];
+          if (tok?.badge.text && army) this.focusOn(army.region, Math.max(GATHER_BELOW_ZOOM + 0.5, this.zoom * 1.6));
+          this.cb.onArmyClick(d.id);
+        } else if (d.ok) this.cb.onArmyDrop(d.id, this.regionAt(p.x, p.y), e.ctrlKey || e.altKey);
+        return;
+      }
+      const g = this.dragging;
+      this.dragging = null;
+      if (!g || e.button !== 0) return;
+      canvas.style.cursor = '';
+      if (g.moved || e.target !== canvas) return;
+      const id = this.regionAt(p.x, p.y);
+      if (id) this.cb.onRegionClick(id, { shift: e.shiftKey, right: false, x: e.clientX, y: e.clientY });
     };
-    stage.on('pointerup', end);
-    stage.on('pointerupoutside', end);
-    canvas.addEventListener(
+    on(window, 'pointerup', up);
+    on(canvas, 'pointerleave', () => {
+      if (!this.armyDrag && !this.dragging) this.setHover(null);
+    });
+    on(window, 'pointercancel', (e) => {
+      this.pinch.delete(e.pointerId);
+      this.dragging = null;
+      this.armyDrag = null;
+      this.layers.drag.clear();
+    });
+    on(
+      canvas,
       'wheel',
       (e) => {
         e.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        this.zoomBy(Math.exp(-e.deltaY * 0.0015), e.clientX - rect.left, e.clientY - rect.top);
+        const p = local(e);
+        this.zoomBy(Math.exp(-e.deltaY * 0.0015), p.x, p.y);
       },
       { passive: false },
     );

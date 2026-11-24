@@ -28,7 +28,7 @@ export type Action =
   | { type: 'setPolicy'; armyId: string; policy: Army['policy'] }
   | { type: 'setTask'; armyId: string; task: Army['task'] | null }
   | { type: 'recruit'; region: string; unit: string; men: number }
-  | { type: 'split'; armyId: string }
+  | { type: 'split'; armyId: string; fraction?: number }
   | { type: 'merge'; armyId: string; intoId: string }
   | { type: 'assignLeader'; armyId: string; leaderId: string | null }
   | { type: 'toggleLangar'; region: string }
@@ -156,12 +156,15 @@ export function applyAction(prev: GameState, action: Action): Result {
       if (!a) return err('No such army.');
       if (armyMen(a) < 200) return err('Too few men to divide.');
       const id = newId(s, 'A');
+      // Detach a share of every unit (half by default), in hundreds.
+      const f = Math.max(0.1, Math.min(0.9, action.fraction ?? 0.5));
       const units = a.units.map((u) => {
-        const half = Math.floor(u.men / 200) * 100;
+        const half = Math.floor((u.men * f) / 100) * 100;
         u.men -= half;
         return { ...u, men: half };
       });
       a.units = a.units.filter((u) => u.men > 0);
+      if (!units.some((u) => u.men > 0)) return err('Too few men to divide.');
       s.armies[id] = { id, owner: p, region: a.region, units: units.filter((u) => u.men > 0), path: [], stance: a.stance, morale: a.morale, supply: a.supply, policy: a.policy, josh: a.josh };
       return { state: s };
     }
