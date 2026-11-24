@@ -25,13 +25,14 @@ const DOAB_NAMES: Record<string, string> = {
   doab_ganga: 'Ganga–Yamuna Doab',
 };
 
-function FaithBar({ sikh, hindu, muslim }: { sikh: number; hindu: number; muslim: number }) {
+function FaithBar({ sikh, hindu, muslim, other = 0 }: { sikh: number; hindu: number; muslim: number; other?: number }) {
   return (
-    <Tip title="Faith of the people" content={<span>Sikh {sikh}% · Hindu {hindu}% · Muslim {muslim}%. Just and tolerant rule of all of them raises stability and Piri.</span>}>
+    <Tip title="Faith of the people" content={<span>Sikh {sikh}% · Hindu {hindu}% · Muslim {muslim}%{other ? ` · Buddhist, Jain and others ${other}%` : ''}. Just and tolerant rule of all of them raises stability and Piri.</span>}>
       <div style={{ display: 'flex', height: 8, width: 160, border: '1px solid var(--gold-dark)' }}>
         <div style={{ width: `${sikh}%`, background: '#E8870E' }} />
         <div style={{ width: `${hindu}%`, background: '#C9A13B' }} />
         <div style={{ width: `${muslim}%`, background: '#5E6B2E' }} />
+        {other > 0 && <div style={{ width: `${other}%`, background: '#7A6A9A' }} />}
       </div>
     </Tip>
   );

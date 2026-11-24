@@ -13,7 +13,7 @@ import { deserialize, serialize } from '../src/engine/save';
 import { newGame } from '../src/engine/setup';
 import type { Army, GameState } from '../src/engine/state';
 import { endTurn } from '../src/engine/turn';
-import { REGIONS } from '../src/data/regions';
+import { PUNJAB_REGION_IDS, REGIONS } from '../src/data/regions';
 import { FACTIONS } from '../src/data/factions';
 import { SCENARIOS } from '../src/data/scenarios';
 
@@ -54,9 +54,10 @@ describe('calendar', () => {
 });
 
 describe('map', () => {
-  it('has 45–61 regions, every one connected', () => {
-    expect(REGIONS.length).toBeGreaterThanOrEqual(45);
-    expect(REGIONS.length).toBeLessThanOrEqual(61);
+  it('has a detailed Punjab and the wider subcontinent, every region connected', () => {
+    expect(PUNJAB_REGION_IDS.size).toBeGreaterThanOrEqual(45);
+    expect(PUNJAB_REGION_IDS.size).toBeLessThanOrEqual(61);
+    expect(REGIONS.length).toBeGreaterThan(130);
     for (const r of REGIONS) {
       expect(GEO.regions[r.id], r.id).toBeDefined();
       expect(GRAPH[r.id].length, r.id).toBeGreaterThan(0);
@@ -68,7 +69,7 @@ describe('map', () => {
     expect(GRAPH.ramnagar.some((e) => e.ford === 'ramnagar_ford' && e.river === 'chenab')).toBe(true);
   });
   it('faith mixes sum to 100', () => {
-    for (const r of REGIONS) expect(r.faith.sikh + r.faith.hindu + r.faith.muslim, r.id).toBe(100);
+    for (const r of REGIONS) expect(r.faith.sikh + r.faith.hindu + r.faith.muslim + (r.faith.other ?? 0), r.id).toBe(100);
   });
 });
 
@@ -81,10 +82,11 @@ describe('new game', () => {
         expect(Object.values(s.armies).some((a) => a.owner === f)).toBe(true);
       }
   });
-  it('reveals the player’s own land and keeps the rest in pencil', () => {
+  it('knows the whole map by report and the player’s own land in detail', () => {
     const s = fresh();
     expect(s.explored.kapurthala).toBe(2);
-    expect(s.explored.peshawar).toBe(0);
+    expect(s.explored.peshawar).toBe(1);
+    expect(s.explored.lhasa).toBe(1);
   });
 });
 

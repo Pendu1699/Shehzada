@@ -17,7 +17,8 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { REGIONS } from '../src/data/regions';
+import { PUNJAB_REGION_IDS, REGIONS } from '../src/data/regions';
+import { LAND } from '../src/data/coast';
 import { RIVERS, FORDS } from '../src/data/rivers';
 import { project, WORLD_W, WORLD_H } from '../src/data/projection';
 
@@ -54,6 +55,37 @@ for (const r of barrierRivers) {
   }
 }
 
+// ── 1b. Land ─────────────────────────────────────────────────────────────────
+// Cells whose centre lies in the sea can never be claimed. Seats are forced to
+// land (a port's seat can sit a hair off the traced coast).
+const landPolys = LAND.map((poly) => poly.map(([la, lo]) => project(la, lo)));
+const land = new Uint8Array(N);
+{
+  // Scanline fill: for each grid row, intersect every coastline edge.
+  for (let j = 0; j < GH; j++) {
+    const y = (j + 0.5) * CELL;
+    const xs: number[] = [];
+    for (const poly of landPolys)
+      for (let a = 0, b = poly.length - 1; a < poly.length; b = a++) {
+        const [x1, y1] = poly[a],
+          [x2, y2] = poly[b];
+        if (y1 > y !== y2 > y) xs.push(x1 + ((y - y1) * (x2 - x1)) / (y2 - y1));
+      }
+    xs.sort((p, q) => p - q);
+    for (let t = 0; t + 1 < xs.length; t += 2) {
+      const i0 = Math.max(0, Math.ceil(xs[t] / CELL - 0.5)),
+        i1 = Math.min(GW - 1, Math.floor(xs[t + 1] / CELL - 0.5));
+      for (let i = i0; i <= i1; i++) land[idx(i, j)] = 1;
+    }
+  }
+  for (const r of REGIONS) {
+    const [x, y] = project(r.seat[0], r.seat[1]);
+    const ci = Math.floor(x / CELL),
+      cj = Math.floor(y / CELL);
+    for (let dj = -3; dj <= 3; dj++) for (let di = -3; di <= 3; di++) if (ci + di >= 0 && cj + dj >= 0 && ci + di < GW && cj + dj < GH) land[idx(ci + di, cj + dj)] = 1;
+  }
+}
+
 // ── 2–3. Dijkstra flood ──────────────────────────────────────────────────────
 const REACH: Record<string, number> = {
   plains: 150,
@@ -63,6 +95,23 @@ const REACH: Record<string, number> = {
   bar: 170,
   desert: 185,
   mountain: 130,
+};
+// The regions beyond the Punjab are drawn at a coarser grain: they reach much
+// further from their seats, and the Dijkstra frontier lets the Punjab's own
+// seats keep their small regions.
+const OUTER_REACH: Record<string, number> = {
+  plains: 560,
+  bela: 470,
+  jungle: 520,
+  hills: 520,
+  bar: 520,
+  desert: 620,
+  mountain: 520,
+};
+const reachOf = (k: number) => {
+  const r = REGIONS[k];
+  if (PUNJAB_REGION_IDS.has(r.id)) return REACH[r.terrain] ?? 120;
+  return (OUTER_REACH[r.terrain] ?? 500) * (r.doab === 'tibet' ? 1.3 : 1);
 };
 // Smooth deterministic wobble so the blank edge of the painting looks organic:
 // each region's reach varies gently with the bearing from its seat.
@@ -145,12 +194,13 @@ for (let item = heap.pop(); item; item = heap.pop()) {
   const i = c % GW,
     j = (c / GW) | 0;
   const k = label[c];
-  const reach = REACH[REGIONS[k].terrain] ?? 120;
+  const reach = reachOf(k);
   for (const [di, dj, w] of NB8) {
     const ni = i + di,
       nj = j + dj;
     if (ni < 0 || nj < 0 || ni >= GW || nj >= GH) continue;
     const n = idx(ni, nj);
+    if (!land[n]) continue;
     const [si, sj] = seatCell[k];
     const g = Math.hypot(ni - si, nj - sj) * CELL;
     if (g > reach * edgeNoise(k, ni, nj, si, sj)) continue;
@@ -457,7 +507,18 @@ for (const [kk, ct] of contacts) {
   adjacency.push({ a: REGIONS[a].id, b: REGIONS[b].id, border: ct.count, river, mid: [Math.round(mid[0]), Math.round(mid[1])] });
   adjPts.push(ct.pts);
 }
+// Crossings by sea: Ceylon is reached over the Palk Strait.
+const SEA_LINKS: [string, string, string, string][] = [['madurai', 'ceylon', 'palk', 'palk_ferry']];
+for (const [a, b, river, ford] of SEA_LINKS) {
+  const [ax, ay] = project(...REGIONS.find((r) => r.id === a)!.seat);
+  const [bx, by] = project(...REGIONS.find((r) => r.id === b)!.seat);
+  adjacency.push({ a, b, border: 3, river, ford, mid: [Math.round((ax + bx) / 2), Math.round((ay + by) / 2)] });
+  adjPts.push([]);
+}
+const PUNJAB_RIVERS = new Set(['indus', 'kabul', 'jhelum_vale', 'jhelum', 'chenab', 'ravi', 'beas', 'sutlej', 'yamuna']);
+const OUTER_FORD_IDS = new Set(['agra_ghat', 'gartok_ford', 'sukkur', 'hyderabad_ferry']);
 for (const f of FORDS) {
+  if (f.id === 'palk_ferry') continue;
   const [fx, fy] = project(f.at[0], f.at[1]);
   let bi = -1,
     bd = Infinity;
@@ -468,7 +529,9 @@ for (const f of FORDS) {
       if (d < bd) ((bd = d), (bi = t));
     }
   });
-  if (bi >= 0 && bd < 40) adjacency[bi].ford = f.id;
+  // The big rivers beyond the Punjab cross coarse regions: allow a wider match.
+  const tol = PUNJAB_RIVERS.has(f.river) && !OUTER_FORD_IDS.has(f.id) ? 40 : 170;
+  if (bi >= 0 && bd < tol) adjacency[bi].ford ??= f.id;
   else console.warn(`ford ${f.id} matched no crossing (nearest ${bd.toFixed(1)})`);
 }
 
@@ -492,7 +555,7 @@ const outPath = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/ge
 mkdirSync(dirname(outPath), { recursive: true });
 writeFileSync(
   outPath,
-  JSON.stringify({ meta: { width: WORLD_W, height: WORLD_H, cell: CELL, note: 'Generated by scripts/build-map.ts — do not edit by hand.' }, regions, adjacency, rivers, fords, towns }),
+  JSON.stringify({ meta: { width: WORLD_W, height: WORLD_H, cell: CELL, note: 'Generated by scripts/build-map.ts — do not edit by hand.' }, regions, adjacency, rivers, fords, towns, land: landPolys.map((p) => p.flat().map((v) => Math.round(v * 10) / 10)) }),
 );
 
 // Report

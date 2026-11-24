@@ -1,3 +1,4 @@
+import { PUNJAB_REGION_IDS } from '../data/regions';
 // Miri and Piri: the two swords.
 //
 // Miri (temporal power) is computed each turn from land, revenue, armies and forts.
@@ -15,8 +16,13 @@ import { bd, clamp, factionMen, regionsOf, type Breakdown } from './query';
 import type { FactionId, GameState } from './state';
 
 export function computeMiri(s: GameState, f: FactionId): Breakdown {
-  const regions = regionsOf(s, f);
-  const forts = regions.reduce((t, r) => t + s.regions[r].fort, 0);
+  // For computer-run powers Miri measures strength in the Punjab theatre:
+  // lands far beyond it count for little. The player's conquests count in full.
+  const all = regionsOf(s, f);
+  const w = (r: string) => (PUNJAB_REGION_IDS.has(r) || f === s.playerFaction ? 1 : 0.15);
+  const regionsW = all.reduce((t, r) => t + w(r), 0);
+  const regions = { length: Math.round(regionsW * 10) / 10 };
+  const forts = all.reduce((t, r) => t + s.regions[r].fort * w(r), 0);
   const men = factionMen(s, f);
   const fs = s.factions[f];
   const income = fs.lastIncome;

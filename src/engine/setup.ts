@@ -1,3 +1,4 @@
+import { outerOwnersAt, seedHistory } from './history';
 // Building a new game from a scenario.
 
 import { FACTIONS } from '../data/factions';
@@ -25,8 +26,9 @@ export function newGame(opts: NewGameOptions): GameState {
   const year = sc.year;
 
   const regions: Record<string, RegionState> = {};
+  const outer = outerOwnersAt(sc.year);
   for (const r of REGIONS) {
-    const owner = sc.owners[r.id] ?? null;
+    const owner = sc.owners[r.id] ?? outer[r.id] ?? null;
     regions[r.id] = {
       id: r.id,
       owner,
@@ -176,6 +178,7 @@ export function newGame(opts: NewGameOptions): GameState {
     if (sc.year >= 1839) s.court.crisis = true;
   }
   for (const f of Object.keys(factions)) updateMiri(s, f);
+  seedHistory(s);
   refreshExploration(s);
   s.summary = { turn: 0, dhadi: generateSummaryOpening(s), income: [], notes: [], piri: [] };
   return s;

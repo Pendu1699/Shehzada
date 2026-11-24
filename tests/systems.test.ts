@@ -185,3 +185,30 @@ describe('respect rules in the text', () => {
     }
   });
 });
+
+describe('history beyond the Punjab', () => {
+  it('starts each era with the subcontinent as it stood', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const g48 = newGame({ scenarioId: 's1748', playerFaction: 'ahluwalia', seed: 1 });
+    expect(g48.regions.murshidabad.owner).toBe('nawab_bengal');
+    expect(g48.regions.calcutta.owner).toBe('company');
+    const g99 = newGame({ scenarioId: 's1799', playerFaction: 'sukerchakia', seed: 1 });
+    expect(g99.regions.murshidabad.owner).toBe('company');
+    expect(g99.regions.agra.owner).toBe('maratha');
+    const g39 = newGame({ scenarioId: 's1839', playerFaction: 'sukerchakia', seed: 1 });
+    expect(g39.regions.pune.owner).toBe('company');
+    expect(g39.regions.ladakh.owner).toBe('jammu');
+  });
+  it('moves frontiers on time, but not over land the player holds', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { applyHistory } = await import('../src/engine/history');
+    const s = newGame({ scenarioId: 's1748', playerFaction: 'ahluwalia', seed: 2 });
+    s.regions.bihar.owner = 'ahluwalia';
+    // Jump the calendar to 1765.
+    s.turn = (1765 - s.startYear) * 2;
+    applyHistory(s);
+    expect(s.regions.murshidabad.owner).toBe('company');
+    expect(s.regions.bihar.owner).toBe('ahluwalia');
+    expect(s.chronicle.some((c) => /not where the Khalsa/.test(c.text))).toBe(true);
+  });
+});

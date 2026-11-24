@@ -38,6 +38,14 @@ export function stepCost(s: GameState, army: Army, edge: Edge): StepCost {
   if ((def.terrain === 'hills' || def.terrain === 'mountain') && hasTrait(s, army.leader, 'mountain_warrior')) t = 1;
   if (def.terrain === 'bar' && army.owner === 'nakai' && isCavalryArmy(army)) t = 1;
   parts.push({ label: `Terrain: ${def.terrain}`, value: t });
+  // The regions beyond the Punjab are wide: a march across Rajputana or the
+  // Deccan takes longer than across a doab of the Punjab.
+  const span = Math.min(4, edge.dist / 85);
+  if (span > 1.15) {
+    const extra = Math.round(t * (span - 1) * 100) / 100;
+    parts.push({ label: `A long road to ${def.name}`, value: extra });
+    t += extra;
+  }
   let risk = 0;
   if (edge.river) {
     let c: number;

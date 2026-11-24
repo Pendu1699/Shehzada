@@ -1,6 +1,7 @@
 // The player's knowledge of the map. The Painted Punjab begins as a pencil
 // underdrawing; colour washes spread as the player's riders see the land.
 
+import { REGIONS } from '../data/regions';
 import { neighbors } from './map';
 import type { GameState } from './state';
 
@@ -13,6 +14,10 @@ export function refreshExploration(s: GameState): void {
     if ((s.explored[id] ?? 0) < v) s.explored[id] = v;
   };
   for (const id of KNOWN_BY_REPUTE) mark(id, 1);
+  // Every land of the subcontinent was known by report — who held it, roughly
+  // where it lay — so the whole map shows its colours from the start. Riding
+  // through a region (level 2) is still what brings its detail to life.
+  for (const r of REGIONS) mark(r.id, 1);
   for (const r of Object.values(s.regions)) {
     if (r.owner === p) {
       mark(r.id, 2);

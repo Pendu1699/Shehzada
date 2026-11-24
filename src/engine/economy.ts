@@ -2,7 +2,7 @@
 // per half-year turn. Every figure is built as a Breakdown so tooltips can explain it.
 
 import { FACTION_BY_ID } from '../data/factions';
-import { REGION_BY_ID } from '../data/regions';
+import { PUNJAB_REGION_IDS, REGION_BY_ID } from '../data/regions';
 import { UNIT_TYPES } from '../data/units';
 import { bd, clamp, date, isSikh, type Breakdown, type Part } from './query';
 import type { FactionId, GameState, RegionId } from './state';
@@ -91,10 +91,15 @@ export function factionIncome(s: GameState, f: FactionId): Breakdown {
     jagir = 0,
     langar = 0,
     forts = 0,
-    patronage = 0;
+    patronage = 0,
+    distant = 0;
   for (const r of Object.values(s.regions)) {
     if (r.owner !== f) continue;
     const rev = regionRevenue(s, r.id);
+    // Revenues beyond the Punjab: a computer-run power spends nearly all of them
+    // on its own courts and wars far away; the player pays to govern from afar.
+    const far = PUNJAB_REGION_IDS.has(r.id) ? 1 : f === s.playerFaction ? 0.7 : 0.12;
+    if (far < 1) distant += (1 - far) * rev.parts.filter((p) => p.label.startsWith('Land') || p.label.startsWith('Trade')).reduce((t, p) => t + p.value, 0);
     for (const p of rev.parts) {
       if (p.label.startsWith('Land')) land += p.value;
       else if (p.label.startsWith('Trade')) trade += p.value;
@@ -109,6 +114,7 @@ export function factionIncome(s: GameState, f: FactionId): Breakdown {
   const adminMult = chief ? 1 + (chief.admin - 3) * 0.03 : 1;
   parts.push({ label: 'Land revenue', value: land * adminMult });
   parts.push({ label: 'Trade and mandis', value: trade });
+  if (distant) parts.push({ label: f === s.playerFaction ? 'Governing distant lands' : 'Spent on distant courts and wars', value: -distant });
   if (chief && chief.admin !== 3) parts.push({ label: `Administration of ${chief.name}`, value: 0 });
   const rk = rakhiIncome(s, f).total;
   if (rk) parts.push({ label: 'Rakhi received', value: rk });

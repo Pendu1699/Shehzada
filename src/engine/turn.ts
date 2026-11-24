@@ -1,3 +1,4 @@
+import { applyHistory } from './history';
 // Turn resolution.
 //
 // Phases (see the design brief): Sarbat Khalsa → Revenue & Rakhi → Orders →
@@ -374,6 +375,7 @@ export function endTurn(prev: GameState): GameState {
   log.notes.push(...leaderTurn(s));
   log.notes.push(...courtTurn(s));
   log.notes.push(...spawnInvasions(s));
+  log.notes.push(...applyHistory(s));
   log.notes.push(...joshTurn(s));
   regionTurn(s);
   tributeTurn(s);
