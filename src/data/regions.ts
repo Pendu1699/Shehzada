@@ -1,3 +1,4 @@
+import { OUTER_REGIONS } from './regionsOuter';
 import type { RegionDef, SacredSite } from './types';
 
 // The sixty regions of the Painted Punjab.
@@ -997,5 +998,9 @@ export const REGIONS: RegionDef[] = [
     sites: [],
   },
 ];
+
+/** The Punjab's regions (the detailed heart of the map). */
+export const PUNJAB_REGION_IDS = new Set(REGIONS.map((r) => r.id));
+REGIONS.push(...OUTER_REGIONS);
 
 export const REGION_BY_ID: Record<string, RegionDef> = Object.fromEntries(REGIONS.map((r) => [r.id, r]));

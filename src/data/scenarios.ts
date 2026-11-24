@@ -149,7 +149,7 @@ export const SCENARIOS: ScenarioDef[] = [
     ],
     treasury: { default: 15, mughal: 200, durrani: 300, phulkian: 30, bhangi: 25 },
     piri: { default: 45, ahluwalia: 60, shaheedan: 62, faizullapuria: 58, nishanwalia: 52, phulkian: 38, bhangi: 44 },
-    absent: ['company', 'maratha', 'gurkha', 'peshawar', 'multan'],
+    absent: ['peshawar', 'multan'],
     wars: [...DAL_KHALSA_AT_WAR_WITH('mughal'), ...DAL_KHALSA_AT_WAR_WITH('durrani'), ['mughal', 'durrani']],
   },
   {
@@ -248,7 +248,7 @@ export const SCENARIOS: ScenarioDef[] = [
     ],
     treasury: { default: 60, bhangi: 140, durrani: 300, mughal: 120, phulkian: 120, kanhaiya: 90 },
     piri: { default: 50, ahluwalia: 66, shaheedan: 64, bhangi: 46, phulkian: 42 },
-    absent: ['company', 'maratha', 'gurkha', 'peshawar', 'multan'],
+    absent: ['peshawar', 'multan'],
     wars: [...DAL_KHALSA_AT_WAR_WITH('durrani'), ['phulkian', 'mughal'], ['karorasinghia', 'mughal']],
   },
   {
@@ -347,7 +347,7 @@ export const SCENARIOS: ScenarioDef[] = [
     ],
     treasury: { default: 80, sukerchakia: 150, bhangi: 150, kanhaiya: 140, durrani: 250, maratha: 200, phulkian: 160 },
     piri: { default: 48, sukerchakia: 55, ahluwalia: 58, shaheedan: 64, bhangi: 38, phulkian: 42 },
-    absent: ['company', 'mughal', 'gurkha', 'peshawar'],
+    absent: ['mughal', 'peshawar'],
     wars: [],
   },
   {
@@ -408,7 +408,7 @@ export const SCENARIOS: ScenarioDef[] = [
     ],
     treasury: { default: 120, sukerchakia: 3000, company: 6000, jammu: 600, phulkian: 400 },
     piri: { default: 50, sukerchakia: 52, phulkian: 45 },
-    absent: ['mughal', 'maratha', 'gurkha', 'peshawar', 'multan', 'kasur', 'kangra', 'bhangi', 'kanhaiya', 'ramgarhia', 'nakai', 'dallewalia', 'nishanwalia', 'faizullapuria', 'karorasinghia', 'shaheedan'],
+    absent: ['mughal', 'peshawar', 'multan', 'kasur', 'kangra', 'bhangi', 'kanhaiya', 'ramgarhia', 'nakai', 'dallewalia', 'nishanwalia', 'faizullapuria', 'karorasinghia', 'shaheedan'],
     flags: { sukerchakia: { european_officers: true }, phulkian: { company_protection: true } },
     wars: [['sukerchakia', 'durrani']],
     alliances: [['phulkian', 'company'], ['bahawalpur', 'company']],

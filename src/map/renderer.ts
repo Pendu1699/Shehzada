@@ -5,12 +5,15 @@
 //   held regions     → faction wash; the player's get gold-leaf borders and banners
 //   the Company      → red ink seeping into the paper from the south-east
 
-import { Application, Container, Graphics, GraphicsContext, Polygon, Sprite, Text, Texture, type FederatedPointerEvent } from 'pixi.js';
+import { Application, Container, CullerPlugin, Graphics, GraphicsContext, Matrix, Polygon, RenderTexture, Sprite, Text, Texture, extensions, type FederatedPointerEvent } from 'pixi.js';
+
+// Off-screen regions are skipped each frame (the map is the whole subcontinent).
+extensions.add(CullerPlugin);
 import { CB_SAFE, PALETTE, TERRAIN_WASH } from '../art/palette';
 import { makePaperCanvas } from '../art/paper';
 import { hexToNum, mix, mulberry } from '../art/util';
 import { FACTIONS, FACTION_BY_ID } from '../data/factions';
-import { REGIONS, REGION_BY_ID } from '../data/regions';
+import { PUNJAB_REGION_IDS, REGIONS, REGION_BY_ID } from '../data/regions';
 import { RIVERS } from '../data/rivers';
 import { GEO } from '../engine/map';
 import { armyMen, date, isCavalryArmy } from '../engine/query';
@@ -102,6 +105,7 @@ export class PaintedMap {
   private regionGfx: Record<string, RegionGfx> = {};
   private layers = {
     paper: new Container(),
+    sea: new Graphics(),
     frame: new Container(),
     terrain: new Container(),
     bleed: new Graphics(),
@@ -130,6 +134,8 @@ export class PaintedMap {
   private state: GameState | null = null;
   private view: MapView = {};
   private zoom = 1;
+  private minZoom = 0.1;
+  private seaLabels: Text[] = [];
   private time = 0;
   private dustParticles: { x: number; y: number; life: number; r: number }[] = [];
   private riverLines: { pts: Pt[]; width: number; id: string }[] = [];
@@ -162,7 +168,7 @@ export class PaintedMap {
     const L = this.layers;
     // Static painting (paper, frame, landscape, rivers) is cached as one texture.
     this.world.addChild(this.staticLayer);
-    const statics = new Set<Container>([L.paper, L.frame, L.terrain, L.decor, L.rivers]);
+    const statics = new Set<Container>([L.paper, L.sea, L.frame, L.terrain, L.decor, L.rivers]);
     for (const layer of Object.values(L)) {
       if (layer === L.clouds || layer === L.mood) continue;
       if (statics.has(layer)) this.staticLayer.addChild(layer);
@@ -171,10 +177,13 @@ export class PaintedMap {
     this.app.stage.addChild(L.clouds);
     this.app.stage.addChild(L.mood);
     this.buildPaper();
+    this.buildSea();
     this.buildFrame();
     this.buildRegions();
-    // The painted landscape is static between turns: render it once to a texture.
-    this.staticLayer.cacheAsTexture({ resolution: 2 });
+    // The painting covers the whole subcontinent — far too large for one cached
+    // texture — so it is pre-rendered into tiles: sharp over the Punjab, softer
+    // for the wide lands beyond, which are seen from further away.
+    this.buildTiles();
     this.buildHits();
     this.buildLabels();
     this.buildClouds();
@@ -194,16 +203,94 @@ export class PaintedMap {
     }
   }
 
+  /* ── Tiled static painting ─────────────────────────────────────────────── */
+
+  private tiles: { rt: RenderTexture; x: number; y: number }[] = [];
+
+  private buildTiles() {
+    const T = 1024;
+    // The Punjab's bounds: tiles over it get full sharpness.
+    let px0 = Infinity,
+      py0 = Infinity,
+      px1 = -Infinity,
+      py1 = -Infinity;
+    for (const id of PUNJAB_REGION_IDS) {
+      const b = bbox(GEO.regions[id].poly);
+      px0 = Math.min(px0, b.x0);
+      py0 = Math.min(py0, b.y0);
+      px1 = Math.max(px1, b.x1);
+      py1 = Math.max(py1, b.y1);
+    }
+    const x0 = -MARGIN - 40,
+      y0 = -MARGIN - 40;
+    const layer = new Container();
+    layer.label = 'tiles';
+    this.world.addChildAt(layer, this.world.getChildIndex(this.staticLayer));
+    this.world.removeChild(this.staticLayer);
+    for (let y = y0; y < H + MARGIN + 40; y += T)
+      for (let x = x0; x < W + MARGIN + 40; x += T) {
+        const sharp = x < px1 + 60 && x + T > px0 - 60 && y < py1 + 60 && y + T > py0 - 60;
+        const rt = RenderTexture.create({ width: T, height: T, resolution: sharp ? 2 : 0.7, antialias: false });
+        const sp = new Sprite(rt);
+        sp.x = x;
+        sp.y = y;
+        sp.cullable = true;
+        layer.addChild(sp);
+        this.tiles.push({ rt, x, y });
+      }
+    this.renderTiles();
+  }
+
+  private renderTiles() {
+    if (!this.tiles.length) return;
+    for (const t of this.tiles)
+      this.app.renderer.render({ container: this.staticLayer, target: t.rt, clear: true, transform: new Matrix(1, 0, 0, 1, -t.x, -t.y) });
+  }
+
   /* ── Static layers ─────────────────────────────────────────────────────── */
 
   private buildPaper() {
-    const cv = makePaperCanvas({ width: Math.round((W + MARGIN * 2) / 1.5), height: Math.round((H + MARGIN * 2) / 1.5), seed: 21, foxing: 0.9, vignette: 0.55 });
+    const k = Math.max(1.5, (Math.max(W, H) + MARGIN * 2) / 2048);
+    const cv = makePaperCanvas({ width: Math.round((W + MARGIN * 2) / k), height: Math.round((H + MARGIN * 2) / k), seed: 21, foxing: 0.9, vignette: 0.55 });
     const sp = new Sprite(Texture.from(cv));
     sp.x = -MARGIN;
     sp.y = -MARGIN;
     sp.width = W + MARGIN * 2;
     sp.height = H + MARGIN * 2;
     this.layers.paper.addChild(sp);
+  }
+
+  /** The sea: a flat wash with rows of painted wavelets, the land cut out of it. */
+  private buildSea() {
+    const g = this.layers.sea;
+    const pad = 30;
+    g.rect(-pad, -pad, W + pad * 2, H + pad * 2).fill({ color: 0x7fa6a0, alpha: 0.55 });
+    for (const poly of GEO.land) g.poly(poly).cut();
+    // Coastline: a darker pooled edge, as where wet paint meets the land.
+    for (const poly of GEO.land) {
+      g.poly(poly).stroke({ width: 7, color: 0x4f7f7a, alpha: 0.25 });
+      g.poly(poly).stroke({ width: 1.4, color: 0x3a5f5c, alpha: 0.6 });
+    }
+    // Wavelets in staggered rows, only on open water.
+    const inLand = (x: number, y: number) => GEO.land.some((p) => pointInPoly(x, y, p));
+    const rnd = mulberry(1757);
+    for (let y = 40; y < H; y += 46)
+      for (let x = ((y / 46) % 2) * 34; x < W; x += 68) {
+        const jx = x + (rnd() - 0.5) * 20,
+          jy = y + (rnd() - 0.5) * 10;
+        if (inLand(jx, jy) || inLand(jx + 30, jy) || inLand(jx - 30, jy) || inLand(jx, jy + 24) || inLand(jx, jy - 24)) continue;
+        g.moveTo(jx - 12, jy).quadraticCurveTo(jx - 6, jy - 6, jx, jy).quadraticCurveTo(jx + 6, jy - 6, jx + 12, jy).stroke({ width: 1.3, color: 0x3a5f5c, alpha: 0.45 });
+      }
+    // The two seas, named in the old way.
+    for (const [name, lat, lon] of [['Bahr-i-Arab · the Arabian Sea', 15.5, 66.5], ['Khalij-i-Bangala · the Bay of Bengal', 15.5, 87.5]] as const) {
+      const t = new Text({ text: name, style: { fontFamily: 'Cormorant Garamond, serif', fontSize: 40, fontStyle: 'italic', fontWeight: '600', fill: 0x2f4f4c, letterSpacing: 4 } });
+      t.anchor.set(0.5);
+      t.alpha = 0.55;
+      this.seaLabels.push(t);
+      t.x = (lon - 60) * 0.848 * 180;
+      t.y = (37.6 - lat) * 180;
+      this.layers.labels.addChild(t);
+    }
   }
 
   /** The manuscript frame: a neela band with gold rules and rosettes, and a sindoori inner rule. */
@@ -266,10 +353,10 @@ export class PaintedMap {
       g.circle(cx, cy, 3).fill(PALETTE.sindoor).stroke({ width: 1, color: PALETTE.goldLight });
     }
     // Cartouche with the title, top centre.
-    const cw = 300;
+    const cw = 520;
     const cx = W / 2;
     g.roundRect(cx - cw / 2, y0 - band - 6, cw, band + 12, 10).fill(PALETTE.wasli).stroke({ width: 2, color: PALETTE.gold });
-    const title = new Text({ text: 'The Punjab · ਪੰਜਾਬ', style: { fontFamily: 'Cormorant Garamond, Tiro Gurmukhi, serif', fontSize: 20, fontWeight: '700', fill: PALETTE.ink, letterSpacing: 1 } });
+    const title = new Text({ text: 'Hindustan and the Punjab · ਪੰਜਾਬ', style: { fontFamily: 'Cormorant Garamond, Tiro Gurmukhi, serif', fontSize: 20, fontWeight: '700', fill: PALETTE.ink, letterSpacing: 1 } });
     title.anchor.set(0.5);
     title.x = cx;
     title.y = y0 - band / 2;
@@ -307,7 +394,10 @@ export class PaintedMap {
       wash.poly(pts).fill({ color: base, alpha: 0.5 });
       const [ax, ay] = geo.anchor;
       const shrink = (k: number, dx: number, dy: number) => pts.map((v, i) => (i % 2 === 0 ? ax + (v - ax) * k + dx : ay + (v - ay) * k + dy));
-      for (let i = 0; i < 4; i++) {
+      // Fewer pooled washes for the wide regions beyond the Punjab: they are seen
+      // from afar, and every translucent layer costs a full fill.
+      const passes = PUNJAB_REGION_IDS.has(r.id) ? 4 : 1;
+      for (let i = 0; i < passes; i++) {
         const k = 0.82 - i * 0.16;
         const col = mix(base, i % 2 ? '#ffffff' : '#5e6b2e', 0.22);
         wash.poly(shrink(k, (rnd() - 0.5) * 8, (rnd() - 0.5) * 8)).fill({ color: col, alpha: 0.09 });
@@ -339,7 +429,7 @@ export class PaintedMap {
         const x = bb.x0 + rnd() * (bb.x1 - bb.x0);
         const y = bb.y0 + rnd() * (bb.y1 - bb.y0);
         if (!pointInPoly(x, y, pts)) continue;
-        if (Math.hypot(x - seat[0], y - seat[1]) < 26) continue;
+        if (Math.hypot(x - seat[0], y - seat[1]) < 26 * S) continue;
         if (Math.hypot(x - geo.anchor[0], y - geo.anchor[1]) < 22) continue;
         // keep away from the polygon edge a little
         if (!pointInPoly(x + 6, y, pts) || !pointInPoly(x - 6, y, pts) || !pointInPoly(x, y - 10, pts)) continue;
@@ -348,29 +438,32 @@ export class PaintedMap {
       return null;
     };
     const items: { y: number; draw: () => void }[] = [];
-    const count = (per: number) => Math.max(2, Math.round(area / per));
+    // Beyond the Punjab the regions are seen from afar: fewer, larger marks.
+    const outer = !PUNJAB_REGION_IDS.has(id);
+    const S = outer ? 2.2 : 1;
+    const count = (per: number) => Math.max(2, Math.round((area / per) * (outer ? 0.16 : 1)));
     const t = r.terrain;
     if (t === 'mountain' || t === 'hills') {
       const n = count(t === 'mountain' ? 1100 : 1800);
       const fill = t === 'mountain' ? hexToNum(mix('#9a8f80', '#6f7a5a', rnd())) : hexToNum(mix('#a88f62', '#7a8a4a', rnd()));
       for (let i = 0; i < n; i++) {
         const p = sample();
-        if (p) items.push({ y: p[1], draw: () => drawHill(g, p[0], p[1], 0.8 + rnd() * 0.6, fill, pencil, t === 'mountain') });
+        if (p) items.push({ y: p[1], draw: () => drawHill(g, p[0], p[1], (0.8 + rnd() * 0.6) * S, fill, pencil, t === 'mountain') });
       }
       for (let i = 0; i < n / 2; i++) {
         const p = sample();
-        if (p) items.push({ y: p[1], draw: () => drawTree(g, p[0], p[1], 0.8, 'pipal', pencil) });
+        if (p) items.push({ y: p[1], draw: () => drawTree(g, p[0], p[1], (0.8) * S, 'pipal', pencil) });
       }
     }
     if (t === 'jungle' || t === 'bela') {
       const n = count(t === 'jungle' ? 700 : 1400);
       for (let i = 0; i < n; i++) {
         const p = sample();
-        if (p) items.push({ y: p[1], draw: () => drawTree(g, p[0], p[1], 0.9 + rnd() * 0.4, rnd() < 0.6 ? 'mango' : 'pipal', pencil) });
+        if (p) items.push({ y: p[1], draw: () => drawTree(g, p[0], p[1], (0.9 + rnd() * 0.4) * S, rnd() < 0.6 ? 'mango' : 'pipal', pencil) });
       }
       for (let i = 0; i < count(1600); i++) {
         const p = sample();
-        if (p) items.push({ y: p[1], draw: () => drawReeds(g, p[0], p[1], 1, pencil) });
+        if (p) items.push({ y: p[1], draw: () => drawReeds(g, p[0], p[1], (1) * S, pencil) });
       }
     }
     if (t === 'plains' || t === 'bela') {
@@ -379,25 +472,25 @@ export class PaintedMap {
         const p = sample();
         const col = rnd() < 0.45 ? 0xe2c23a : rnd() < 0.5 ? 0xc9a85a : 0x8aa25a; // sarson, wheat, green fields
         const ang = (rnd() - 0.5) * 0.8;
-        if (p) items.push({ y: p[1], draw: () => drawField(g, p[0], p[1], 0.9 + rnd() * 0.5, col, ang, pencil) });
+        if (p) items.push({ y: p[1], draw: () => drawField(g, p[0], p[1], (0.9 + rnd() * 0.5) * S, col, ang, pencil) });
       }
       for (let i = 0; i < count(3000); i++) {
         const p = sample();
-        if (p) items.push({ y: p[1], draw: () => drawTree(g, p[0], p[1], 1, 'mango', pencil) });
+        if (p) items.push({ y: p[1], draw: () => drawTree(g, p[0], p[1], (1) * S, 'mango', pencil) });
       }
       for (let i = 0; i < count(4500); i++) {
         const p = sample();
-        if (p) items.push({ y: p[1], draw: () => drawHut(g, p[0], p[1], 1, pencil) });
+        if (p) items.push({ y: p[1], draw: () => drawHut(g, p[0], p[1], (1) * S, pencil) });
       }
     }
     if (t === 'bar' || t === 'desert') {
       for (let i = 0; i < count(t === 'desert' ? 1200 : 2200); i++) {
         const p = sample();
-        if (p) items.push({ y: p[1], draw: () => drawDune(g, p[0], p[1], 1 + rnd() * 0.6, pencil) });
+        if (p) items.push({ y: p[1], draw: () => drawDune(g, p[0], p[1], (1 + rnd() * 0.6) * S, pencil) });
       }
       for (let i = 0; i < count(2400); i++) {
         const p = sample();
-        if (p) items.push({ y: p[1], draw: () => drawTree(g, p[0], p[1], 0.9, 'kikar', pencil) });
+        if (p) items.push({ y: p[1], draw: () => drawTree(g, p[0], p[1], (0.9) * S, 'kikar', pencil) });
       }
     }
     items.sort((a, b) => a.y - b.y).forEach((it) => it.draw());
@@ -667,7 +760,7 @@ export class PaintedMap {
       lbl.alpha = seen ? 1 : 0.7;
     }
     if (changed || this.staticDirty) {
-      this.staticLayer.updateCacheTexture();
+      this.renderTiles();
       this.staticDirty = false;
     }
     this.drawOwners(state);
@@ -1069,7 +1162,19 @@ export class PaintedMap {
       const seen = (st.explored[GEO.towns[i].region] ?? 0) > 0;
       t.alpha = showTowns && seen ? Math.min(1, (this.zoom - 1.25) * 3) : 0;
     });
-    for (const t of Object.values(this.regionLabels)) t.scale.set(Math.max(0.75, Math.min(1.4, 1 / Math.sqrt(this.zoom))));
+    // Region names: each appears once its region is big enough on screen to
+    // hold it. The wide regions beyond the Punjab keep their names readable when
+    // zoomed far out by growing in the world as the view shrinks.
+    for (const [id, t] of Object.entries(this.regionLabels)) {
+      const span = Math.sqrt(GEO.regions[id].cells) * GEO.meta.cell;
+      const onScreen = span * this.zoom;
+      t.visible = onScreen > 60;
+      if (!t.visible) continue;
+      const want = PUNJAB_REGION_IDS.has(id) ? Math.max(0.75, Math.min(1.4, 1 / Math.sqrt(this.zoom))) : Math.max(0.9, Math.min((span * 0.7) / Math.max(1, t.width / t.scale.x), 1 / this.zoom));
+      t.scale.set(want);
+    }
+    for (const t of this.seaLabels) t.scale.set(Math.max(1, 0.42 / this.zoom));
+
   }
 
   private drawBanners() {
@@ -1125,6 +1230,7 @@ export class PaintedMap {
     const sw = this.app.screen.width,
       sh = this.app.screen.height;
     const z = Math.min(sw / (W + 160), sh / (H + 160));
+    this.minZoom = z * 0.85;
     this.setZoom(z);
     this.world.x = (sw - W * z) / 2;
     this.world.y = (sh - H * z) / 2;
@@ -1140,7 +1246,7 @@ export class PaintedMap {
 
   private setZoom(z: number) {
     const wasGathered = this.zoom < GATHER_BELOW_ZOOM;
-    this.zoom = Math.max(0.35, Math.min(6, z));
+    this.zoom = Math.max(this.minZoom, Math.min(6, z));
     this.world.scale.set(this.zoom);
     // Crossing the gathering threshold re-lays out the army tokens.
     if (wasGathered !== this.zoom < GATHER_BELOW_ZOOM && this.state) this.syncTokens(this.state);

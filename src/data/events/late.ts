@@ -19,6 +19,8 @@ const sarkar = (s: GameState) => {
   return l && isSikh(l) ? l : undefined;
 };
 const playerIsSarkar = (s: GameState) => sarkar(s) === P(s);
+/** The Sarkar is Ranjit Singh's house (the succession chain below is theirs). */
+const ranjitHouse = (s: GameState) => !!sarkar(s) && s.leaders.ranjit_singh?.faction === sarkar(s);
 const CORE = ['lahore', 'amritsar', 'kasur', 'jalandhar', 'kapurthala', 'hoshiarpur', 'gujranwala', 'sialkot'];
 
 function crisisOn(s: GameState, f: string) {
@@ -132,7 +134,7 @@ export const LATE: EventDef[] = [
     to: { year: 1840, festival: 'vaisakhi' },
     mood: 'solemn',
     weight: 9,
-    when: (s) => !!sarkar(s) && s.scenarioId !== 's1839' && !leaderAlive(s, 'ranjit_singh'),
+    when: (s) => ranjitHouse(s) && s.scenarioId !== 's1839' && !leaderAlive(s, 'ranjit_singh'),
     text: () =>
       'Hush. In June, at Lahore, Maharaja Ranjit Singh has died. The man who took a city at nineteen and built an empire in forty years is carried to the pyre in the garden by the fort. Ministers weep and watch one another. Across the Sutlej, the Company counts its regiments.',
     effect: (s) => {
@@ -151,7 +153,7 @@ export const LATE: EventDef[] = [
     to: { year: 1840, festival: 'diwali' },
     mood: 'solemn',
     weight: 8,
-    when: (s) => leaderAlive(s, 'nau_nihal_singh') && !!sarkar(s),
+    when: (s) => leaderAlive(s, 'nau_nihal_singh') && !!sarkar(s) && s.leaders.nau_nihal_singh.faction === sarkar(s),
     text: () =>
       'Maharaja Kharak Singh is dead after a long illness. Returning from the cremation, his son Nau Nihal Singh — gifted, ambitious, the hope of the court — walks beneath an old gateway of the fort.',
     effect: (s) => {

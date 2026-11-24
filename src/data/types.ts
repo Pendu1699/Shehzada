@@ -15,7 +15,20 @@ export type Doab =
   | 'multan'
   | 'peshawar'
   | 'derajat'
-  | 'doab_ganga';
+  | 'doab_ganga'
+  | 'afghan'
+  | 'baluch'
+  | 'sindh'
+  | 'rajputana'
+  | 'hindustan'
+  | 'central'
+  | 'gujarat'
+  | 'deccan'
+  | 'south'
+  | 'bengal'
+  | 'himalaya'
+  | 'tibet'
+  | 'ceylon';
 
 export type Resource =
   | 'salt'
@@ -45,6 +58,8 @@ export interface FaithMix {
   sikh: number;
   hindu: number;
   muslim: number;
+  /** Buddhists, Jains, animists and others (the regions beyond the Punjab). */
+  other?: number;
 }
 
 export interface RegionDef {

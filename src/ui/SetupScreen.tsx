@@ -4,7 +4,7 @@ import { Portrait } from '../art/Portrait';
 import { TERRAIN_WASH } from '../art/palette';
 import { FACTION_BY_ID } from '../data/factions';
 import { LEADER_BY_ID } from '../data/leaders';
-import { REGIONS } from '../data/regions';
+import { PUNJAB_REGION_IDS, REGIONS } from '../data/regions';
 import { SCENARIOS } from '../data/scenarios';
 import { GEO } from '../engine/map';
 import { useStore } from '../store';
@@ -18,8 +18,13 @@ function chiefOf(scenario: (typeof SCENARIOS)[number], faction: string) {
 /** A miniature of the map with the faction's starting lands gilded. */
 function StartMap({ scenario, faction }: { scenario: (typeof SCENARIOS)[number]; faction: string }) {
   const color = FACTION_BY_ID[faction]?.color ?? '#999';
+  // Frame the Punjab, where every misl's story begins.
+  const xs: number[] = [],
+    ys: number[] = [];
+  for (const id of PUNJAB_REGION_IDS) GEO.regions[id].poly.forEach((v, i) => (i % 2 ? ys : xs).push(v));
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
   return (
-    <svg viewBox={`-20 -20 ${GEO.meta.width + 40} ${GEO.meta.height + 40}`} style={{ width: '100%', height: 'auto', background: '#e9dab4', border: '1px solid var(--gold)' }} aria-label="starting position">
+    <svg viewBox={`${x0 - 20} ${y0 - 20} ${x1 - x0 + 40} ${y1 - y0 + 40}`} style={{ width: '100%', height: 'auto', background: '#e9dab4', border: '1px solid var(--gold)' }} aria-label="starting position">
       {REGIONS.map((r) => {
         const owner = scenario.owners[r.id];
         const mine = owner === faction;

@@ -231,6 +231,8 @@ export interface TurnSummary {
   income: { label: string; value: number }[];
   notes: string[];
   piri: { delta: number; reason: string }[];
+  /** Set on the turn a new age begins. */
+  era?: import('./eras').EraPage;
 }
 
 export interface GameState {

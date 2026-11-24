@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { BannerEmblem } from '../art/Banner';
 import { Portrait } from '../art/Portrait';
+import { MiniaturePainting } from '../art/Miniature';
 import { FACTION_BY_ID } from '../data/factions';
 import { GLOSSARY } from '../data/glossary';
 import { LEADER_BY_ID, TRAITS } from '../data/leaders';
@@ -16,10 +17,35 @@ export function SummaryModal() {
   const game = useStore((s) => s.game)!;
   const close = useStore((s) => s.closeModal);
   const s = game.summary;
+  const [eraSeen, setEraSeen] = useState(false);
   if (!s) return null;
   const income = s.income.filter((p) => Math.abs(p.value) >= 0.05);
   return (
     <Modal>
+      {s.era && !eraSeen && (
+        <div className="era-page">
+          <div className="era-art">
+            <MiniaturePainting />
+          </div>
+          <div className="era-kicker">A new age begins</div>
+          <h2 className="era-title">{s.era.title}</h2>
+          <div className="era-years">{s.era.years}</div>
+          <div className="rule" />
+          {s.era.lines.map((l, i) => (
+            <p key={i} className="era-line">
+              {l}
+            </p>
+          ))}
+          {s.era.ahead && <p className="era-ahead">{s.era.ahead} But this is your century, and the Punjab may yet take another road.</p>}
+          <div className="row" style={{ justifyContent: 'center', marginTop: 10 }}>
+            <button className="btn kesri" autoFocus onClick={() => setEraSeen(true)}>
+              Hear the season’s account
+            </button>
+          </div>
+        </div>
+      )}
+      {(!s.era || eraSeen) && (
+      <>
       <Heading en="The Dhadi sings" pa="ਢਾਡੀ ਵਾਰ" right={<span className="small muted">{date(game).label}</span>} />
       <div className="dhadi-text">
         {s.dhadi.map((l, i) => (
@@ -77,6 +103,8 @@ export function SummaryModal() {
           To the orders
         </button>
       </div>
+      </>
+      )}
     </Modal>
   );
 }

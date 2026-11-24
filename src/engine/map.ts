@@ -20,6 +20,8 @@ export interface Geometry {
   rivers: { id: string; points: number[] }[];
   fords: { id: string; pos: number[] }[];
   towns: { region: string; name: string; pos: number[] }[];
+  /** Coastlines (flat x,y lists): the mainland and Ceylon. */
+  land: number[][];
 }
 
 export const GEO = geometry as unknown as Geometry;

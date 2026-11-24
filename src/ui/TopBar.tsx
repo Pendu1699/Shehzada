@@ -1,3 +1,4 @@
+import { eraTitle } from '../engine/eras';
 import { factionIncome } from '../engine/economy';
 import { balanceOf, computeMiri } from '../engine/miripiri';
 import { date, factionMen, polityName } from '../engine/query';
@@ -58,6 +59,9 @@ export function TopBar() {
         <span>{d.label}</span>
         <span className="small" style={{ fontWeight: 500, color: '#e4d2a8', fontStyle: 'italic' }}>
           {d.monsoon ? 'monsoon ahead' : 'cold season ahead'}
+        </span>
+        <span className="era-name" title="The age of the century you are in">
+          {eraTitle(game)}
         </span>
       </div>
       <Tip title={polityName(game, p)} content={<span>{fs.sarkar ? 'The Sarkar-i-Khalsa' : 'Your misl'} · Legend {fmt(fs.legend)}</span>}>

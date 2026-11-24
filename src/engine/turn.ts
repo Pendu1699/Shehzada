@@ -1,3 +1,5 @@
+import { eraTransition } from './eras';
+import { applyHistory } from './history';
 // Turn resolution.
 //
 // Phases (see the design brief): Sarbat Khalsa → Revenue & Rakhi → Orders →
@@ -374,6 +376,7 @@ export function endTurn(prev: GameState): GameState {
   log.notes.push(...leaderTurn(s));
   log.notes.push(...courtTurn(s));
   log.notes.push(...spawnInvasions(s));
+  log.notes.push(...applyHistory(s));
   log.notes.push(...joshTurn(s));
   regionTurn(s);
   tributeTurn(s);
@@ -397,6 +400,7 @@ export function endTurn(prev: GameState): GameState {
   runSarbatKhalsa(s);
   refreshExploration(s);
   checkEnding(s, endedNow);
+  const era = eraTransition(s);
 
   s.summary = {
     turn: s.turn,
@@ -404,6 +408,7 @@ export function endTurn(prev: GameState): GameState {
     income: incomeParts,
     notes: log.notes.filter(Boolean),
     piri: s.piriNotes.map((n) => ({ delta: Math.round(n.delta * 10) / 10, reason: n.reason })),
+    era: era ?? undefined,
   };
   s.piriNotes = [];
   if ((s.phase as string) !== 'ended') s.phase = s.gurmatas.some((g) => g.passed === undefined) ? 'sarbat' : 'orders';

@@ -6,7 +6,7 @@
 //   Misls    — opportunistic expansion, kinship politics, rakhi, Dhai Phat against the strong.
 
 import { FACTION_BY_ID } from '../data/factions';
-import { REGION_BY_ID } from '../data/regions';
+import { PUNJAB_REGION_IDS, REGION_BY_ID } from '../data/regions';
 import { UNIT_TYPES, canRaise } from '../data/units';
 import { garrisonOf } from './combat';
 import { recruitCost, recruitPool } from './economy';
@@ -60,6 +60,18 @@ const PREFERRED_UNITS: Record<string, [string, number][]> = {
   peshawar: [['durrani_cav', 0.6], ['jezailchi', 0.4]],
   bahawalpur: [['mughal_cav', 0.5], ['jezailchi', 0.3], ['zamburak', 0.2]],
   malerkotla: [['mughal_cav', 0.5], ['jezailchi', 0.5]],
+  rajputs: [['mughal_cav', 0.6], ['piyada', 0.3], ['top', 0.1]],
+  jats: [['mughal_cav', 0.4], ['piyada', 0.4], ['top', 0.2]],
+  rohillas: [['durrani_cav', 0.5], ['jezailchi', 0.5]],
+  nawab_awadh: [['mughal_cav', 0.4], ['piyada', 0.4], ['top', 0.2]],
+  nawab_bengal: [['mughal_cav', 0.4], ['piyada', 0.5], ['top', 0.1]],
+  nizam: [['mughal_cav', 0.5], ['piyada', 0.4], ['top', 0.1]],
+  khudadad: [['sepoy', 0.4], ['mughal_cav', 0.4], ['top', 0.2]],
+  arcot: [['mughal_cav', 0.4], ['piyada', 0.6]],
+  sindh_amirs: [['durrani_cav', 0.4], ['jezailchi', 0.6]],
+  kalat: [['durrani_cav', 0.7], ['jezailchi', 0.3]],
+  tibet: [['hill_levy', 1]],
+  kandy: [['hill_levy', 1]],
 };
 
 function unitMix(s: GameState, f: FactionId): [string, number][] {
@@ -226,6 +238,11 @@ function aiArmies(s: GameState, f: FactionId) {
         }
         continue;
       }
+      // Beyond the Punjab, frontiers follow the historical timeline
+      // (engine/history.ts): computer-run powers only fight there against you.
+      if (!PUNJAB_REGION_IDS.has(r) && st.owner !== s.playerFaction && !enemyArmies.some((x) => x.owner === s.playerFaction)) continue;
+      // The distant powers only defend, or answer you.
+      if (FACTION_BY_ID[f]?.distant && st.owner !== s.playerFaction && !enemyArmies.some((x) => x.owner === s.playerFaction)) continue;
       // Subjugate land held by no great power.
       if (!st.owner && enemyArmies.length === 0 && f !== 'durrani' && a.withdrawTurn === undefined) {
         const def = (garrisonOf(s, r) / 100) * 4;
@@ -306,7 +323,7 @@ function aiDiplomacy(s: GameState, f: FactionId) {
   const ambitious = isSikh(f) && (y >= 1790 ? 1.6 : 1) * (FACTION_BY_ID[f]?.mods.growth ?? 1);
   if (isSikh(f) && y >= 1765 && !s.josh.active) {
     const borders = new Set<string>();
-    for (const r of regionsOf(s, f)) for (const e of neighbors(r)) borders.add(s.regions[e.to].owner ?? '');
+    for (const r of regionsOf(s, f)) for (const e of neighbors(r)) if (PUNJAB_REGION_IDS.has(e.to)) borders.add(s.regions[e.to].owner ?? '');
     for (const g of borders) {
       if (!g || g === f || !s.factions[g]?.alive) continue;
       if (fs.relations[g] !== 'peace') continue;
@@ -339,6 +356,8 @@ export function companyTurn(s: GameState): void {
     for (const e of neighbors(r)) {
       const st = s.regions[e.to];
       if (owned.has(e.to) || st.owner === s.playerFaction) continue;
+      // Beyond the Punjab the Company advances by the historical timeline.
+      if (!PUNJAB_REGION_IDS.has(e.to)) continue;
       // The Sutlej line holds unless there is war.
       if (e.river === 'sutlej' && !Object.values(s.factions).some((f) => f.alive && atWar(s, f.id, 'company'))) continue;
       const o = st.owner;

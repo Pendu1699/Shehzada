@@ -68,6 +68,12 @@ export function composeVaar(s: GameState): Vaar {
   if (freed > 0) stanzas.push('Captives were taken from the baggage trains of kings, and walked home.');
   if (fallen.length) stanzas.push(`Remember the names: ${fallen.slice(0, 8).join(', ')}.`);
 
+  // The roads history did not take.
+  const fl = s.factions[p].flags;
+  if (fl.early_sarkar) stanzas.push(`The Sarkar-i-Khalsa came not from the Sukerchakias but from ${polity}, a generation before its time; and the century bent around it.`);
+  if (fl.confederacy) stanzas.push('No king was ever made. The misls swore a union before the Akal Takht and kept it, a brotherhood of equals that ruled as one Khalsa.');
+  if (s.leaders.ranjit_singh && s.leaders.ranjit_singh.faction === p && p !== 'sukerchakia') stanzas.push('Ranjit Singh, who in another telling made himself Maharaja, rode instead as a general of your house.');
+
   const koh = s.factions[p].flags.koh_i_noor;
   if (koh === true) stanzas.push('The Koh-i-Noor, the Mountain of Light, lies yet in the Toshakhana at Lahore.');
   if (koh === 'taken') stanzas.push('The Koh-i-Noor was carried across the black water to a foreign queen. A diamond is only a stone; still, the people grieved to see it go.');

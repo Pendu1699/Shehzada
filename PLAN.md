@@ -118,6 +118,16 @@ Static data (regions, unit types, leader templates, events) lives in `src/data` 
 | 9 Balance, tutorial, accessibility | partly done | Tutorial (Nawab Kapur Singh), tooltips, colour-blind mode, keys, UI scale, reduced motion. Balance: see below |
 | 10 Final QA | partly done | 56 tests green; no console errors in scripted browser runs; full 1748→1849 runs complete headless |
 
+### Expansion (after 1.0)
+
+| Step | Status | Notes |
+|------|--------|-------|
+| Map of the subcontinent | done | 145 regions, coastline, sea, 14 new rivers; tiled static painting for performance |
+| Powers beyond the Punjab | done | 12 new factions; `engine/history.ts` timeline 1751–1844 |
+| Akal Takht Sarbat Khalsa | done | era-dependent painting |
+| Ages and alternative history | done | `engine/eras.ts`, `data/events/alt.ts`, `data/events/world.ts` |
+| More figures and lore | done | ~30 leaders, codex entries, HISTORY.md sections |
+
 ### Known gaps / next steps
 
 - **Balance.** AI-vs-AI runs (`npm run simulate`) give historical-ish but uncertain outcomes from 1767 and 1799

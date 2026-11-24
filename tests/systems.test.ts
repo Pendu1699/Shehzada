@@ -185,3 +185,62 @@ describe('respect rules in the text', () => {
     }
   });
 });
+
+describe('history beyond the Punjab', () => {
+  it('starts each era with the subcontinent as it stood', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const g48 = newGame({ scenarioId: 's1748', playerFaction: 'ahluwalia', seed: 1 });
+    expect(g48.regions.murshidabad.owner).toBe('nawab_bengal');
+    expect(g48.regions.calcutta.owner).toBe('company');
+    const g99 = newGame({ scenarioId: 's1799', playerFaction: 'sukerchakia', seed: 1 });
+    expect(g99.regions.murshidabad.owner).toBe('company');
+    expect(g99.regions.agra.owner).toBe('maratha');
+    const g39 = newGame({ scenarioId: 's1839', playerFaction: 'sukerchakia', seed: 1 });
+    expect(g39.regions.pune.owner).toBe('company');
+    expect(g39.regions.ladakh.owner).toBe('jammu');
+  });
+  it('moves frontiers on time, but not over land the player holds', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { applyHistory } = await import('../src/engine/history');
+    const s = newGame({ scenarioId: 's1748', playerFaction: 'ahluwalia', seed: 2 });
+    s.regions.bihar.owner = 'ahluwalia';
+    // Jump the calendar to 1765.
+    s.turn = (1765 - s.startYear) * 2;
+    applyHistory(s);
+    expect(s.regions.murshidabad.owner).toBe('company');
+    expect(s.regions.bihar.owner).toBe('ahluwalia');
+    expect(s.chronicle.some((c) => /not where the Khalsa/.test(c.text))).toBe(true);
+  });
+});
+
+describe('ages and alternative history', () => {
+  it('opens a new age with an era page, named after the player’s own story', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { endTurn } = await import('../src/engine/turn');
+    let s = newGame({ scenarioId: 's1748', playerFaction: 'bhangi', seed: 5 });
+    expect(s.summary?.era).toBeUndefined();
+    // Jump to the last turn of 1764 and play into 1765.
+    s.turn = (1764 - s.startYear) * 2 + 1;
+    s = endTurn(s);
+    expect(s.summary?.era?.title).toBe('The Misl Raj');
+    expect(s.summary?.era?.lines.length).toBeGreaterThan(2);
+  });
+  it('lets another misl proclaim the Sarkar early, and names the age for it', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { eligible, resolveEventChoice, runEvents } = await import('../src/engine/events');
+    const { EVENT_BY_ID } = await import('../src/data/events/index');
+    const { eraTitle } = await import('../src/engine/eras');
+    const s = newGame({ scenarioId: 's1767', playerFaction: 'bhangi', seed: 9 });
+    const take = ['lahore', 'amritsar', 'kasur', 'gujranwala', 'sialkot', 'wazirabad', 'jalandhar', 'kapurthala', 'batala', 'pathankot', 'sheikhupura', 'chunian'];
+    for (const r of take) s.regions[r].owner = 'bhangi';
+    s.factions.bhangi.piri = 70;
+    expect(eligible(s, EVENT_BY_ID.khalsa_raj_early)).not.toBeNull();
+    runEvents(s);
+    const pe = s.pendingEvents.find((p) => p.eventId === 'khalsa_raj_early')!;
+    expect(pe).toBeDefined();
+    resolveEventChoice(s, pe.id, 0);
+    expect(s.factions.bhangi.sarkar).toBe(true);
+    expect(eraTitle(s, 'misl_raj')).toBe('The Sarkar of the Bhangi');
+    expect(eraTitle(s, 'sarkar')).toBe('The Bhangi Sarkar');
+  });
+});
