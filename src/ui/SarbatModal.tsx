@@ -37,7 +37,7 @@ export function SarbatModal() {
       <AkalTakhtScene members={convenes ? members : []} year={date(game).year} />
       <p className="small" style={{ margin: '6px 0 4px', fontStyle: 'italic' }}>
         {date(game).year < 1800
-          ? 'Twice a year, at Vaisakhi and Diwali, the sardars of every misl gather at Amritsar before the Akal Takht — the throne of the Timeless One, raised by Guru Hargobind facing the Harmandir. Here, before the Guru Granth Sahib, the Khalsa decides as one.'
+          ? 'Twice a year, at Vaisakhi and Diwali, the sardars of every misl gather at Amritsar before the Akal Takht — the throne of the Timeless One, raised by Guru Hargobind Ji facing the Harmandir. Here, before the Guru Granth Sahib, the Khalsa decides as one.'
           : 'The Akal Takht stands in white marble and gold, enriched in the Sarkar years. The throne of the Timeless One answers to no king.'}
       </p>
       {!convenes ? (

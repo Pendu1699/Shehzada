@@ -616,7 +616,7 @@ export const HISTORICAL: EventDef[] = [
     to: { year: 1799, festival: 'diwali' },
     weight: 8,
     mood: 'heroic',
-    when: (s) => alive(s, 'sukerchakia') && leaderAlive(s, 'ranjit_singh') && !owns(s, 'sukerchakia', 'lahore') && s.regions.lahore.owner !== s.playerFaction && strength(s, 'sukerchakia') > 4000,
+    when: (s) => alive(s, 'sukerchakia') && leaderAlive(s, 'ranjit_singh') && !owns(s, 'sukerchakia', 'lahore') && s.regions.lahore.owner !== s.playerFaction && strength(s, 'sukerchakia') > 4000 && !Object.values(s.factions).some((f) => f.sarkar),
     text: () =>
       'The citizens of Lahore — Muslim, Hindu and Sikh alike — have had enough of their quarrelling sardars. They send to the young Sukerchakia chief. In July, with Sada Kaur at his side, Ranjit Singh rides in through the Lohari Gate, and forbids his men to plunder.',
     playerOnly: (s) => P(s) === 'sukerchakia',

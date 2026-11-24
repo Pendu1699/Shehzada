@@ -1,3 +1,4 @@
+import { eraTransition } from './eras';
 import { applyHistory } from './history';
 // Turn resolution.
 //
@@ -399,6 +400,7 @@ export function endTurn(prev: GameState): GameState {
   runSarbatKhalsa(s);
   refreshExploration(s);
   checkEnding(s, endedNow);
+  const era = eraTransition(s);
 
   s.summary = {
     turn: s.turn,
@@ -406,6 +408,7 @@ export function endTurn(prev: GameState): GameState {
     income: incomeParts,
     notes: log.notes.filter(Boolean),
     piri: s.piriNotes.map((n) => ({ delta: Math.round(n.delta * 10) / 10, reason: n.reason })),
+    era: era ?? undefined,
   };
   s.piriNotes = [];
   if ((s.phase as string) !== 'ended') s.phase = s.gurmatas.some((g) => g.passed === undefined) ? 'sarbat' : 'orders';

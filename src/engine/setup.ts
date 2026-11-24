@@ -1,3 +1,4 @@
+import { eraTransition } from './eras';
 import { outerOwnersAt, seedHistory } from './history';
 // Building a new game from a scenario.
 
@@ -179,6 +180,7 @@ export function newGame(opts: NewGameOptions): GameState {
   }
   for (const f of Object.keys(factions)) updateMiri(s, f);
   seedHistory(s);
+  eraTransition(s);
   refreshExploration(s);
   s.summary = { turn: 0, dhadi: generateSummaryOpening(s), income: [], notes: [], piri: [] };
   return s;
