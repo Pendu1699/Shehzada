@@ -41,8 +41,15 @@ const H = GEO.meta.height;
 const MARGIN = 140;
 
 export interface MapCallbacks {
-  onRegionClick(id: string, e: { shift: boolean; right: boolean }): void;
+  /** Left-click on land selects; right-click gives an order or opens quick actions. */
+  onRegionClick(id: string, e: { shift: boolean; right: boolean; x: number; y: number }): void;
   onArmyClick(id: string): void;
+  /** Right-click on an army token (screen coordinates for a menu). */
+  onArmyContext(id: string, x: number, y: number): void;
+  /** An army was dragged; returns whether it may be dragged (only your own). */
+  onArmyDragStart(id: string): boolean;
+  /** The dragged army was dropped on a region. split: Ctrl/Alt was held. */
+  onArmyDrop(id: string, region: string | null, split: boolean): void;
   onHover(id: string | null): void;
 }
 
@@ -104,6 +111,7 @@ export class PaintedMap {
     labels: new Container(),
     banners: new Graphics(),
     paths: new Graphics(),
+    drag: new Graphics(),
     select: new Graphics(),
     hits: new Container(),
     armies: new Container(),
@@ -128,6 +136,7 @@ export class PaintedMap {
   private inkRegions: Record<string, { g: Graphics; since: number }> = {};
   private destroyed = false;
   private dragging: { x: number; y: number; wx: number; wy: number; moved: boolean } | null = null;
+  private armyDrag: { id: string; x: number; y: number; moved: boolean; ok: boolean } | null = null;
   private pinch: Map<number, { x: number; y: number }> = new Map();
   private pinchDist = 0;
   private hovered: string | null = null;
@@ -170,6 +179,8 @@ export class PaintedMap {
 
   destroy() {
     this.destroyed = true;
+    for (const off of this.domOff) off();
+    this.domOff = [];
     try {
       this.app.destroy(true, { children: true, texture: true });
     } catch {
@@ -844,15 +855,15 @@ export class PaintedMap {
           c.eventMode = 'static';
           c.cursor = 'pointer';
           c.hitArea = new Polygon([-12, -40, 15, -40, 15, 16, -12, 16]);
-          c.on('pointertap', (e: FederatedPointerEvent) => {
+          // Left button: press and release selects; press and drag gives a march order.
+          c.on('pointerdown', (e: FederatedPointerEvent) => {
+            if (e.button !== 0 || this.pinch.size > 0) return;
             e.stopPropagation();
-            if (this.dragging?.moved || e.button === 2) return;
-            this.cb.onArmyClick(a.id);
+            this.armyDrag = { id: a.id, x: e.global.x, y: e.global.y, moved: false, ok: false };
           });
           c.on('rightclick', (e: FederatedPointerEvent) => {
             e.stopPropagation();
-            const cur = this.state?.armies[a.id];
-            if (cur) this.cb.onRegionClick(cur.region, { shift: e.shiftKey, right: true });
+            this.cb.onArmyContext(a.id, e.clientX, e.clientY);
           });
           c.on('pointerover', () => this.setHover(null));
           c.x = tx;
@@ -1045,22 +1056,84 @@ export class PaintedMap {
     this.world.y += dy;
   }
 
+  /** The arrow drawn while an army is dragged: from the army to the pointer. */
+  private drawDragArrow(id: string, gx: number, gy: number, split: boolean) {
+    const tok = this.tokens.get(id);
+    const g = this.layers.drag;
+    g.clear();
+    if (!tok) return;
+    const x0 = tok.c.x,
+      y0 = tok.c.y - 12;
+    const x1 = (gx - this.world.x) / this.zoom,
+      y1 = (gy - this.world.y) / this.zoom;
+    const color = split ? 0x1f3a68 : PALETTE.sindoor;
+    const ang = Math.atan2(y1 - y0, x1 - x0);
+    g.moveTo(x0, y0).lineTo(x1 - Math.cos(ang) * 6, y1 - Math.sin(ang) * 6).stroke({ width: 3 / Math.sqrt(this.zoom), color, alpha: 0.85, cap: 'round' });
+    const s = 11 / Math.sqrt(this.zoom);
+    g.poly([x1, y1, x1 - Math.cos(ang - 0.45) * s, y1 - Math.sin(ang - 0.45) * s, x1 - Math.cos(ang + 0.45) * s, y1 - Math.sin(ang + 0.45) * s]).fill({ color, alpha: 0.95 });
+    g.circle(x0, y0 + 12, 9).stroke({ width: 2, color, alpha: 0.8 });
+  }
+
+  /**
+   * Input. Army tokens are the only Pixi-interactive objects (the stage stays
+   * 'passive', because a 'static' ancestor makes every overlay and label
+   * hit-testable in Pixi 8 and they would swallow clicks). Everything else —
+   * clicks on land, right-clicks, panning, army drags, pinch and wheel zoom — is
+   * read from plain DOM pointer events on the canvas.
+   *
+   *   left click on land      → select the region
+   *   left click on an army   → select the army      (token pointerdown, below)
+   *   left drag on land       → pan
+   *   left drag on your army  → march order (Ctrl/Alt: divide and send half)
+   *   right click on land     → order / quick actions
+   *   right click on an army  → army orders          (token rightclick)
+   */
+  private domOff: (() => void)[] = [];
+
+  private tokenAt(x: number, y: number): boolean {
+    const hit = this.app.renderer.events.rootBoundary.hitTest(x, y);
+    for (let c = hit as Container | null; c; c = c.parent) if (c.parent === this.layers.armies) return true;
+    return false;
+  }
+
   private setupInput() {
-    const stage = this.app.stage;
-    stage.eventMode = 'static';
-    stage.hitArea = this.app.screen;
+    this.app.stage.eventMode = 'passive';
     const canvas = this.app.canvas;
-    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-    stage.on('pointerdown', (e: FederatedPointerEvent) => {
-      this.pinch.set(e.pointerId, { x: e.global.x, y: e.global.y });
+    const local = (e: PointerEvent | MouseEvent) => {
+      const r = canvas.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    };
+    const on = <K extends keyof WindowEventMap>(t: Window | HTMLElement, type: K, fn: (e: WindowEventMap[K]) => void, opts?: AddEventListenerOptions) => {
+      t.addEventListener(type, fn as EventListener, opts);
+      this.domOff.push(() => t.removeEventListener(type, fn as EventListener, opts));
+    };
+
+    on(canvas, 'contextmenu', (e) => {
+      e.preventDefault();
+      const p = local(e);
+      if (this.tokenAt(p.x, p.y)) return; // the token's own rightclick handles it
+      const id = this.regionAt(p.x, p.y);
+      if (id) this.cb.onRegionClick(id, { shift: e.shiftKey, right: true, x: e.clientX, y: e.clientY });
+    });
+
+    // Pixi's own canvas listener runs first, so a press on a token has already
+    // set armyDrag by the time this runs.
+    on(canvas, 'pointerdown', (e) => {
+      const p = local(e);
+      this.pinch.set(e.pointerId, p);
       if (this.pinch.size === 2) {
         const [a, b] = [...this.pinch.values()];
         this.pinchDist = Math.hypot(a.x - b.x, a.y - b.y);
+        this.armyDrag = null;
+        this.layers.drag.clear();
       }
-      this.dragging = { x: e.global.x, y: e.global.y, wx: this.world.x, wy: this.world.y, moved: false };
+      if (e.button !== 0 || this.armyDrag) return;
+      this.dragging = { x: p.x, y: p.y, wx: this.world.x, wy: this.world.y, moved: false };
     });
-    stage.on('pointermove', (e: FederatedPointerEvent) => {
-      if (this.pinch.has(e.pointerId)) this.pinch.set(e.pointerId, { x: e.global.x, y: e.global.y });
+
+    on(window, 'pointermove', (e) => {
+      const p = local(e);
+      if (this.pinch.has(e.pointerId)) this.pinch.set(e.pointerId, p);
       if (this.pinch.size === 2) {
         const [a, b] = [...this.pinch.values()];
         const d = Math.hypot(a.x - b.x, a.y - b.y);
@@ -1069,41 +1142,70 @@ export class PaintedMap {
         if (this.dragging) this.dragging.moved = true;
         return;
       }
-      if (!this.dragging) {
-        if (e.target === stage) this.setHover(this.regionAt(e.global.x, e.global.y));
+      if (this.armyDrag) {
+        const d = this.armyDrag;
+        if (!d.moved && Math.hypot(p.x - d.x, p.y - d.y) > 8) {
+          d.moved = true;
+          d.ok = this.cb.onArmyDragStart(d.id);
+        }
+        if (d.moved && d.ok) {
+          this.setHover(this.regionAt(p.x, p.y));
+          this.drawDragArrow(d.id, p.x, p.y, e.ctrlKey || e.altKey);
+        }
         return;
       }
-      const dx = e.global.x - this.dragging.x,
-        dy = e.global.y - this.dragging.y;
-      if (!this.dragging.moved && Math.hypot(dx, dy) > 8) this.dragging.moved = true;
-      if (this.dragging.moved) {
-        this.world.x = this.dragging.wx + dx;
-        this.world.y = this.dragging.wy + dy;
+      if (this.dragging) {
+        const dx = p.x - this.dragging.x,
+          dy = p.y - this.dragging.y;
+        if (!this.dragging.moved && Math.hypot(dx, dy) > 8) this.dragging.moved = true;
+        if (this.dragging.moved) {
+          this.world.x = this.dragging.wx + dx;
+          this.world.y = this.dragging.wy + dy;
+          canvas.style.cursor = 'grabbing';
+        }
+        return;
       }
+      if (e.target !== canvas) return;
+      if (this.tokenAt(p.x, p.y)) {
+        this.setHover(null);
+        canvas.style.cursor = 'pointer';
+      } else this.setHover(this.regionAt(p.x, p.y));
     });
-    const end = (e: FederatedPointerEvent) => {
+
+    const up = (e: PointerEvent) => {
+      const p = local(e);
       this.pinch.delete(e.pointerId);
       if (this.pinch.size < 2) this.pinchDist = 0;
-      setTimeout(() => (this.dragging = null), 0);
+      const d = this.armyDrag;
+      if (d) {
+        this.armyDrag = null;
+        this.layers.drag.clear();
+        if (!d.moved) this.cb.onArmyClick(d.id);
+        else if (d.ok) this.cb.onArmyDrop(d.id, this.regionAt(p.x, p.y), e.ctrlKey || e.altKey);
+        return;
+      }
+      const g = this.dragging;
+      this.dragging = null;
+      if (!g || e.button !== 0) return;
+      canvas.style.cursor = '';
+      if (g.moved || e.target !== canvas) return;
+      const id = this.regionAt(p.x, p.y);
+      if (id) this.cb.onRegionClick(id, { shift: e.shiftKey, right: false, x: e.clientX, y: e.clientY });
     };
-    stage.on('pointertap', (e: FederatedPointerEvent) => {
-      if (e.target !== stage || this.dragging?.moved || e.button === 2) return;
-      const id = this.regionAt(e.global.x, e.global.y);
-      if (id) this.cb.onRegionClick(id, { shift: e.shiftKey, right: false });
+    on(window, 'pointerup', up);
+    on(window, 'pointercancel', (e) => {
+      this.pinch.delete(e.pointerId);
+      this.dragging = null;
+      this.armyDrag = null;
+      this.layers.drag.clear();
     });
-    stage.on('rightclick', (e: FederatedPointerEvent) => {
-      if (e.target !== stage) return;
-      const id = this.regionAt(e.global.x, e.global.y);
-      if (id) this.cb.onRegionClick(id, { shift: e.shiftKey, right: true });
-    });
-    stage.on('pointerup', end);
-    stage.on('pointerupoutside', end);
-    canvas.addEventListener(
+    on(
+      canvas,
       'wheel',
       (e) => {
         e.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        this.zoomBy(Math.exp(-e.deltaY * 0.0015), e.clientX - rect.left, e.clientY - rect.top);
+        const p = local(e);
+        this.zoomBy(Math.exp(-e.deltaY * 0.0015), p.x, p.y);
       },
       { passive: false },
     );

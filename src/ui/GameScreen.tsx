@@ -15,6 +15,7 @@ import { RegionPanel } from './RegionPanel';
 import { TopBar } from './TopBar';
 import { EventModal } from './EventModal';
 import { Tutorial } from './Tutorial';
+import { MapMenu, MouseHints } from './MapMenu';
 
 function HoverCard() {
   const game = useStore((s) => s.game)!;
@@ -165,6 +166,8 @@ export function GameScreen() {
       {selArmy && game.armies[selArmy] ? <ArmyPanel id={selArmy} moveMode={moveMode} setMoveMode={setMoveMode} /> : selRegion ? <RegionPanel id={selRegion} /> : null}
       <DhadiPanel />
       <HoverCard />
+      <MouseHints moveMode={moveMode} />
+      <MapMenu />
       <div className="zoom-ctl">
         <button className="btn small neela" onClick={() => getMap()?.zoomBy(1.25)} aria-label="Zoom in">
           +

@@ -46,6 +46,14 @@ function loadSettings(): Settings {
   }
 }
 
+/** The quick-actions menu opened by right-clicking an army or a region. */
+export interface MapMenu {
+  kind: 'army' | 'region';
+  id: string;
+  x: number;
+  y: number;
+}
+
 export interface Toast {
   id: number;
   text: string;
@@ -64,6 +72,8 @@ interface Store {
   settings: Settings;
   ledgerTab: string;
   tutorialRun: number;
+  menu: MapMenu | null;
+  openMenu(m: MapMenu | null): void;
   restartTutorial(): void;
   setScreen(s: Screen): void;
   start(opts: NewGameOptions): void;
@@ -106,6 +116,8 @@ export const useStore = create<Store>((set, get) => ({
   settings: loadSettings(),
   ledgerTab: 'treasury',
   tutorialRun: 0,
+  menu: null,
+  openMenu: (m) => set({ menu: m }),
   restartTutorial: () => {
     const s = get();
     s.updateSettings({ tutorial: true });

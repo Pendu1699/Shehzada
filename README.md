@@ -45,10 +45,14 @@ Four scenarios: 1748 *The Age of Ghallugharas*, 1767 *The Misl Raj*, 1799 *The L
 
 | Action | Mouse / touch | Keys |
 | --- | --- | --- |
-| Pan the map | drag | W A S D / arrows |
+| Pan the map | drag open land | W A S D / arrows |
 | Zoom | wheel / pinch | + / − |
-| Select a region or army | click / tap | Tab cycles your armies |
-| March the selected army | right-click or shift-click a region, or **Move** then tap | M toggles move mode |
+| Select a region or army | left-click / tap (left-click never gives orders) | Tab cycles your armies |
+| March | drag your army onto a region, or select it and right-click a region (right-click an enemy army to attack it), or **Move** then tap | M toggles move mode |
+| Divide and send half | Ctrl (or Alt) + drag your army | |
+| Army orders: divide, join, halt, stance | right-click your army | |
+| Land actions: langar, fort, rakhi, recruit | right-click a region (with no army selected) | |
+| Replay the tutorial | **? Counsel** | ? |
 | End the turn | **Beat the nagara** | Enter |
 | Ledger (bahi-khata) · Sarbat Khalsa · Codex | top bar | L · K · C |
 | Close / deselect | | Esc |

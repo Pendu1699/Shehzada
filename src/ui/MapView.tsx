@@ -23,21 +23,31 @@ export function MapView({ moveMode, onMoveIssued }: { moveMode: boolean; onMoveI
     const map = new PaintedMap(host.current, {
       onRegionClick: (id, e) => {
         const st = useStore.getState();
+        st.openMenu(null);
         const a = st.selArmy ? st.game?.armies[st.selArmy] : undefined;
-        if (a && a.owner === st.game?.playerFaction && (e.right || e.shift || moveRef.current)) {
+        const mine = a && a.owner === st.game?.playerFaction;
+        // Right-click (or Move mode) with your army selected: march there.
+        if (mine && (e.right || e.shift || moveRef.current)) {
           if (st.dispatch({ type: 'move', armyId: a.id, to: id })) {
             audio.quill();
             onMoveRef.current();
           }
           return;
         }
+        // Right-click with nothing of yours selected: quick actions for that land.
+        if (e.right) {
+          st.selectRegion(id);
+          st.openMenu({ kind: 'region', id, x: e.x, y: e.y });
+          return;
+        }
+        // Left-click on land selects the land, nothing else.
         audio.rustle();
-        // Clicking land selects the land. Armies are selected only by clicking them.
         st.selectArmy(null);
         st.selectRegion(id);
       },
       onArmyClick: (id) => {
         const st = useStore.getState();
+        st.openMenu(null);
         const a = st.game?.armies[id];
         if (!a) return;
         const sel = st.selArmy ? st.game?.armies[st.selArmy] : undefined;
@@ -49,6 +59,60 @@ export function MapView({ moveMode, onMoveIssued }: { moveMode: boolean; onMoveI
         audio.quill();
         st.selectArmy(id);
         st.selectRegion(a.region);
+      },
+      onArmyContext: (id, x, y) => {
+        const st = useStore.getState();
+        const a = st.game?.armies[id];
+        if (!a) return;
+        const sel = st.selArmy ? st.game?.armies[st.selArmy] : undefined;
+        const player = st.game?.playerFaction;
+        // Your army selected, right-click someone else's army: march on it.
+        if (sel && sel.owner === player && sel.id !== id && a.owner !== player) {
+          st.openMenu(null);
+          if (st.dispatch({ type: 'move', armyId: sel.id, to: a.region })) {
+            audio.quill();
+            onMoveRef.current();
+          }
+          return;
+        }
+        // Your own army: open its orders.
+        if (a.owner === player) {
+          st.selectArmy(id);
+          st.selectRegion(a.region);
+          st.openMenu({ kind: 'army', id, x, y });
+          return;
+        }
+        st.openMenu(null);
+        st.selectArmy(id);
+        st.selectRegion(a.region);
+      },
+      onArmyDragStart: (id) => {
+        const st = useStore.getState();
+        const a = st.game?.armies[id];
+        if (!a || a.owner !== st.game?.playerFaction) return false;
+        st.openMenu(null);
+        st.selectArmy(id);
+        st.selectRegion(a.region);
+        return true;
+      },
+      onArmyDrop: (id, region, split) => {
+        const st = useStore.getState();
+        st.setHover(null);
+        const a = st.game?.armies[id];
+        if (!a || !region || region === a.region) return;
+        let mover = id;
+        if (split) {
+          const before = new Set(Object.keys(st.game!.armies));
+          if (!st.dispatch({ type: 'split', armyId: id })) return;
+          const fresh = Object.keys(useStore.getState().game!.armies).find((k) => !before.has(k));
+          if (!fresh) return;
+          mover = fresh;
+        }
+        if (st.dispatch({ type: 'move', armyId: mover, to: region })) {
+          audio.quill();
+          st.selectArmy(mover);
+          onMoveRef.current();
+        }
       },
       onHover: (id) => useStore.getState().setHover(id),
     });
