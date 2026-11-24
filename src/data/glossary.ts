@@ -58,6 +58,22 @@ export const GLOSSARY: GlossaryEntry[] = [
   { id: 'sarai', term: 'Sarai', translit: 'Sarāī', gloss: 'A rest-house for travellers and caravans.' },
   { id: 'wasli', term: 'Wasli', translit: 'Waslī', gloss: 'Layered handmade paper used for miniature painting.' },
   { id: 'phulkari', term: 'Phulkari', gurmukhi: 'ਫੁਲਕਾਰੀ', translit: 'Phulkārī', gloss: 'Punjabi floss-silk embroidery; bagh phulkari covers the whole cloth.' },
+  // ── The wider subcontinent, and things seen in the game's art ──
+  { id: 'takht', term: 'Takht', gurmukhi: 'ਤਖ਼ਤ', translit: 'Takhat', gloss: 'A throne; the five Takhts are seats of Sikh temporal authority: the Akal Takht at Amritsar, Kesgarh Sahib at Anandpur, Damdama Sahib at Talwandi Sabo, Patna Sahib, and Hazur Sahib at Nanded.' },
+  { id: 'patna_sahib', term: 'Takht Sri Patna Sahib', translit: 'Paṭnā Sāhib', gloss: 'The birthplace of Guru Gobind Singh Ji at Patna in Bihar, far down the Ganga from the Punjab.' },
+  { id: 'hazur_sahib', term: 'Takht Sachkhand Sri Hazur Sahib', translit: 'Hazūr Sāhib', gloss: 'At Nanded on the Godavari, where Guru Gobind Singh Ji passed the Guruship to the Guru Granth Sahib in 1708.' },
+  { id: 'dumalla', term: 'Dumalla', gurmukhi: 'ਦੁਮਾਲਾ', translit: 'Dumālā', gloss: 'The tall, tightly wound turban of the Akali-Nihangs, often ringed with steel chakars.', review: true },
+  { id: 'farla', term: 'Farla', gurmukhi: 'ਫ਼ਰਲਾ', translit: 'Pharlā', gloss: 'The loose end of cloth left rising from the top of a Nihang dumalla.', review: true },
+  { id: 'chakar', term: 'Chakar', gurmukhi: 'ਚੱਕਰ', translit: 'Chakkar', gloss: 'A sharp-edged steel quoit, worn on the dumalla and thrown in battle.', review: true },
+  { id: 'sultan_ul_qaum', term: 'Sultan-ul-Qaum', translit: 'Sultān-ul-Qaum', gloss: 'King of the nation: the title the Khalsa gave Jassa Singh Ahluwalia.' },
+  { id: 'diwani', term: 'Diwani', translit: 'Dīwānī', gloss: 'The right to collect a province’s revenue. The emperor granted the Diwani of Bengal, Bihar and Orissa to the East India Company in 1765.' },
+  { id: 'subsidiary_alliance', term: 'Subsidiary alliance', translit: 'Subsidiary alliance', gloss: 'The Company’s treaty system: a ruler paid for a Company army stationed in his state and gave up his own foreign policy. Mysore, Awadh, Hyderabad and the Marathas were bound this way.' },
+  { id: 'paramountcy', term: 'Paramountcy', translit: 'Paramountcy', gloss: 'After 1818 the Company claimed supremacy over the Indian princes who still ruled their own states. In the game their lands are Company land.' },
+  { id: 'peshwa', term: 'Peshwa', translit: 'Peśvā', gloss: 'The chief minister of the Maratha state at Pune, who in the eighteenth century led the confederacy.' },
+  { id: 'nizam', term: 'Nizam', translit: 'Nizām', gloss: 'The title of the rulers of Hyderabad, once the Mughal viceroys of the Deccan.' },
+  { id: 'plassey', term: 'Plassey', translit: 'Palāśī', gloss: 'The battle of 1757 in which Robert Clive defeated Siraj-ud-Daula, Nawab of Bengal, largely by bribing his generals.' },
+  { id: 'chalisa', term: 'Chalisa famine', translit: 'Chālīsā', gloss: 'The famine of 1783–84 across the Punjab and Hindustan, named for the Vikrami year 1840.' },
+  { id: 'to_yo', term: 'To-yo', translit: 'To-yo', gloss: 'The battlefield in western Tibet where Zorawar Singh died in December 1841.' },
 ];
 
 export const TITLE_GURMUKHI = 'ਰਾਜ ਕਰੇਗਾ ਖ਼ਾਲਸਾ';

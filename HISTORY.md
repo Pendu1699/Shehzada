@@ -92,11 +92,50 @@ with "Dates uncertain" or "approximate". In particular:
 - **Sham Singh Attariwala** — birth year given variously (c. 1785–1790).
 - **Ilahi Bakhsh** — dates approximate.
 - **Nizamuddin Khan of Kasur** — dates approximate.
+- **Ghulam Shah Kalhoro**, **Mir Fateh Ali Khan Talpur**, **Attar Singh Sandhawalia** — dates approximate.
+
+## The wider subcontinent
+
+The map runs from Herat and Balkh to Dhaka and Chittagong, from Ladakh and Ngari to Lhasa, and
+down to Travancore and Ceylon. Beyond the Punjab, frontiers follow a timeline in
+`src/engine/history.ts` rather than AI conquest, so the century unfolds roughly as it did unless
+the player holds the land. Key dates used:
+
+- **1751** Balkh to the Durrani; Orissa ceded to the Bhonsles. **1752** Khandesh to the Peshwa.
+- **1756–1760** Ajmer, Ahmedabad and Bijapur to the Marathas; Surat castle and Chittagong to the
+  Company.
+- **1757** Plassey. **1761** Panipat; the Jats take Agra; Hyder Ali takes power in Mysore.
+- **1764** Buxar. **1765** the Diwani of Bengal, Bihar and Orissa granted to the Company.
+- **1768** Prithvi Narayan Shah takes Kathmandu. **1770** the Bengal famine.
+- **1774** Awadh conquers Rohilkhand. **1775** Benares to the Company.
+- **1783–84** the Chalisa famine. **1784–85** Mahadji Scindia takes Gwalior and Agra.
+- **1790** Gorkhas take Kumaon (Garhwal 1804). **1792** Malabar to the Company.
+- **1799** Srirangapatna; Tipu Sultan killed. **1801** Awadh's cessions; the Carnatic annexed.
+- **1803** Assaye and Laswari; Agra and Orissa to the Company. **1805** Holkar in the Punjab.
+- **1815** Treaty of Sugauli (Kumaon and Garhwal); the British take Kandy.
+- **1818** the end of the Peshwa's rule; the Rajput and Maratha princes accept paramountcy.
+- **1826** Bharatpur stormed. **1834** Zorawar Singh conquers Ladakh; **1840** Baltistan;
+  **1841** the Tibet campaign and his death at To-yo. **1842** the retreat from Kabul.
+- **1843** Sindh annexed after Miani and Dubba. **1844** Gwalior after Maharajpur.
+
+Princely states under the Company's paramountcy after 1818 are drawn as Company land, which is a
+simplification: they kept their own rulers.
+
+## Alternative history
+
+The game's forks (`src/data/events/alt.ts`) are labelled in play as roads history did not take:
+an early Sarkar-i-Khalsa under another misl (Jassa Singh Ahluwalia was hailed Sultan-ul-Qaum and
+the Sikhs struck coin at Lahore in 1765, but no state was made until Ranjit Singh); a permanent
+confederacy of the misls; Ranjit Singh entering another house's service; and cities the Khalsa
+never held for long (Delhi, which Baghel Singh entered in 1783) or never held at all.
 
 ## Deliberate simplifications
 
-- **Map.** Sixty-one regions stand in for hundreds of parganas. Borders are generated from
-  river courses and town positions, not from any historical administrative map.
+- **Map.** Sixty-one regions stand in for hundreds of parganas of the Punjab, and eighty-four
+  much larger regions for the rest of the subcontinent. Borders are generated from river courses,
+  a traced coastline and town positions, not from any historical administrative map.
+- **Populations beyond the Punjab** are scaled game figures, not census estimates, and the
+  economy counts most of a computer-run power's distant revenue as spent at home.
 - **Starting positions.** Ownership in each scenario approximates the most important holdings
   of each power. Misl territories in 1748 are home grounds (deras), not formal states.
 - **Population and faith.** Region populations and faith shares are game estimates for c. 1750,

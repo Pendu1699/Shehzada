@@ -75,3 +75,10 @@ spelled in more than one way in Gurmukhi).
 | Sher-e-Punjab | ਸ਼ੇਰ-ਏ-ਪੰਜਾਬ | **check** |
 | Sobraon | ਸਭਰਾਉਂ | **check** |
 | Chillianwala | ਚੇਲਿਆਂਵਾਲਾ | **check** |
+| Raj karega Khalsa (event title) | ਰਾਜ ਕਰੇਗਾ ਖ਼ਾਲਸਾ | confident |
+| Takht (codex) | ਤਖ਼ਤ | confident |
+| Dumalla (codex) | ਦੁਮਾਲਾ | **check** |
+| Farla (codex) | ਫ਼ਰਲਾ | **check** |
+| Chakar (codex) | ਚੱਕਰ | **check** |
+| Chalisa famine (event title) | ਚਾਲੀਸਾ ਕਾਲ | **check** |
+| Ranjit Singh event title | ਸ਼ੇਰ | confident |
