@@ -207,6 +207,3 @@ export const useStore = create<Store>((set, get) => ({
     return g ? serialize(g) : null;
   },
 }));
-
-// Exposed in development builds for automated playtests.
-if (import.meta.env.DEV) (window as unknown as { __store: typeof useStore }).__store = useStore;

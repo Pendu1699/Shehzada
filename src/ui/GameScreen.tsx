@@ -177,8 +177,8 @@ export function GameScreen() {
         </button>
       </div>
       <div className="endturn">
-        <span className="small" style={{ color: '#f2e6c9', textShadow: '0 1px 2px #000' }}>
-          {myArmies.length} armies · {fmt(myArmies.reduce((t, a) => t + armyMen(a), 0))} men · {idle} awaiting orders
+        <span className="small endturn-status">
+          {myArmies.length} {myArmies.length === 1 ? 'army' : 'armies'} · {fmt(myArmies.reduce((t, a) => t + armyMen(a), 0))} men · {idle === 0 ? 'all have orders' : `${idle} awaiting orders`}
         </span>
         <button className="nagara-btn" onClick={endTurn} disabled={busy || game.phase === 'ended'} title="End turn (Enter)">
           {busy ? '…' : (
