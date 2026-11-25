@@ -1,3 +1,4 @@
+import { canUnify, proclaimEmpire } from './unify';
 // Player actions. applyAction() is the only way the UI changes game state.
 // It clones, applies, and returns either the new state or an error message.
 
@@ -43,6 +44,7 @@ export type Action =
   | { type: 'contributeRebuild'; amount: number }
   | { type: 'vote'; gurmataId: string; yes: boolean }
   | { type: 'propose'; kind: string; target?: string }
+  | { type: 'proclaimEmpire' }
   | { type: 'eventChoice'; pendingId: string; choice: number }
   | { type: 'finishSarbat' }
   | { type: 'court'; act: CourtAction; target?: string }
@@ -312,6 +314,10 @@ export function applyAction(prev: GameState, action: Action): Result {
       return { state: s };
     case 'vote':
       return castVote(s, action.gurmataId, action.yes) ? { state: s } : err('That vote cannot be cast.');
+    case 'proclaimEmpire': {
+      if (!canUnify(s, p, 'proclamation')) return err('You cannot yet unify the Punjab: see what is still needed.');
+      return { state: s, info: proclaimEmpire(s, p, 'proclamation') };
+    }
     case 'propose':
       return castVote(s, '', true, action.kind, action.target) ? { state: s } : err('That gurmata cannot be proposed now.');
     case 'finishSarbat': {

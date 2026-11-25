@@ -102,7 +102,7 @@ export function factionName(id: FactionId | null | undefined): string {
 /** Display name: misls are "the X misl", the Sarkar gets its title. */
 export function polityName(s: GameState, id: FactionId | null | undefined): string {
   if (!id) return 'the local chiefs';
-  if (s.factions[id]?.sarkar) return 'the Sarkar-i-Khalsa';
+  if (s.factions[id]?.sarkar) return 'the Sikh Empire';
   const d = FACTION_BY_ID[id];
   if (!d) return id;
   return d.kind === 'misl' ? `the ${d.name} misl` : `the ${d.name}`;

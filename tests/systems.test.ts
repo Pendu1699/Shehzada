@@ -244,3 +244,46 @@ describe('ages and alternative history', () => {
     expect(eraTitle(s, 'sarkar')).toBe('The Bhangi Sarkar');
   });
 });
+
+describe('unifying the Punjab', () => {
+  const setup = async (piri: number, miri: number) => {
+    const { newGame } = await import('../src/engine/setup');
+    const s = newGame({ scenarioId: 's1767', playerFaction: 'bhangi', seed: 4 });
+    const { PUNJAB_REGION_IDS } = await import('../src/data/regions');
+    const lands = ['lahore', 'amritsar', ...[...PUNJAB_REGION_IDS].filter((r) => r !== 'lahore' && r !== 'amritsar').slice(0, 14)];
+    for (const r of lands) s.regions[r].owner = 'bhangi';
+    s.factions.bhangi.piri = piri;
+    s.factions.bhangi.miri = miri;
+    return s;
+  };
+  it('is out of reach without both high Miri and high Piri', async () => {
+    const { canUnify } = await import('../src/engine/unify');
+    expect(canUnify(await setup(40, 70), 'bhangi', 'proclamation')).toBe(false);
+    expect(canUnify(await setup(70, 40), 'bhangi', 'proclamation')).toBe(false);
+    expect(canUnify(await setup(66, 68), 'bhangi', 'proclamation')).toBe(true);
+    expect(canUnify(await setup(66, 68), 'bhangi', 'gurmata')).toBe(false); // the assembly asks more Piri
+  });
+  it('proclaims the Sikh Empire, by that name', async () => {
+    const { applyAction } = await import('../src/engine/actions');
+    const { polityName } = await import('../src/engine/query');
+    const s = await setup(66, 68);
+    const r = applyAction(s, { type: 'proclaimEmpire' });
+    expect(r.error).toBeUndefined();
+    expect(r.state.factions.bhangi.sarkar).toBe(true);
+    expect(polityName(r.state, 'bhangi')).toBe('the Sikh Empire');
+  });
+  it('lets misls that vote for you join the empire through the Sarbat Khalsa', async () => {
+    const { castVote, finishSarbat, assembly } = await import('../src/engine/sarbat');
+    const s = await setup(80, 70);
+    for (const f of assembly(s)) if (f !== 'bhangi') s.factions[f].attitude.bhangi = 60;
+    expect(castVote(s, '', true, 'unify')).toBe(true);
+    const g = s.gurmatas.find((x) => x.kind === 'unify')!;
+    // Make the vote decisive for the test: every other misl agrees.
+    g.votesFor = assembly(s);
+    g.votesAgainst = [];
+    const joiner = assembly(s).find((f) => f !== 'bhangi' && f !== 'phulkian')!;
+    finishSarbat(s);
+    expect(s.factions.bhangi.sarkar).toBe(true);
+    expect(s.factions[joiner].alive).toBe(false);
+  });
+});

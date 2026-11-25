@@ -82,3 +82,4 @@ spelled in more than one way in Gurmukhi).
 | Chakar (codex) | ਚੱਕਰ | **check** |
 | Chalisa famine (event title) | ਚਾਲੀਸਾ ਕਾਲ | **check** |
 | Ranjit Singh event title | ਸ਼ੇਰ | confident |
+| Unify the Punjab (heading) | ਪੰਜਾਬ ਇੱਕ ਕਰੋ | **check** |

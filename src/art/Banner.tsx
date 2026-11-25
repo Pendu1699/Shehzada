@@ -3,6 +3,39 @@
 // in the interface.
 
 import { FACTION_BY_ID } from '../data/factions';
+import { useStore } from '../store';
+
+export { EMPIRE_FIELD, empireEdge } from './empire';
+import { EMPIRE_FIELD, EMPIRE_VARIANT, empireEdge } from './empire';
+
+/**
+ * The arms of the Sikh Empire: a dhal (round shield) with two crossed talwars
+ * behind it and a katar (punch-dagger) upright before it — after the flags of
+ * the Sarkar-i-Khalsa. In a 100×100 box.
+ */
+export function EmpireArms({ color }: { color: string }) {
+  return (
+    <g>
+      <path d="M22 84 Q30 52 70 18" fill="none" stroke={color} strokeWidth="5" strokeLinecap="round" />
+      <path d="M78 84 Q70 52 30 18" fill="none" stroke={color} strokeWidth="5" strokeLinecap="round" />
+      <path d="M16 80 L28 88 M84 80 L72 88" stroke={color} strokeWidth="5" strokeLinecap="round" />
+      <circle cx="50" cy="54" r="20" fill={color} />
+      <circle cx="50" cy="54" r="15" fill="none" stroke="#F2E6C9" strokeWidth="1.6" opacity="0.6" />
+      {[[42, 48], [58, 48], [42, 60], [58, 60]].map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r="2.2" fill="#F2E6C9" opacity="0.8" />
+      ))}
+      <path d="M50 14 L55 38 L45 38 Z" fill={color} />
+      <rect x="44" y="38" width="12" height="4" fill={color} />
+      <rect x="44" y="42" width="2.6" height="9" fill={color} />
+      <rect x="53.4" y="42" width="2.6" height="9" fill={color} />
+    </g>
+  );
+}
+
+/** Is this house the Sikh Empire in the current game? */
+function useEmpire(faction: string): boolean {
+  return useStore((s) => !!s.game?.factions[faction]?.sarkar);
+}
 
 export function KhandaPath({ color }: { color: string }) {
   // Chakkar, central khanda and two kirpans, drawn in a 100×100 box.
@@ -123,7 +156,17 @@ function Emblem({ id, color }: { id: string; color: string }) {
 
 export function BannerEmblem({ faction, size = 40 }: { faction: string; size?: number }) {
   const f = FACTION_BY_ID[faction];
+  const empire = useEmpire(faction);
   if (!f) return null;
+  if (empire)
+    return (
+      <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r="48" fill={EMPIRE_FIELD} stroke={empireEdge(faction)} strokeWidth="6" />
+        <g transform="translate(14 12) scale(0.72)">
+          <EmpireArms color="#1B1712" />
+        </g>
+      </svg>
+    );
   const nishan = !!f.banner.nishan;
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
@@ -138,7 +181,9 @@ export function BannerEmblem({ faction, size = 40 }: { faction: string; size?: n
 /** A pennant on a pole. `wave` animates via CSS. */
 export function Banner({ faction, height = 120, wave = true }: { faction: string; height?: number; wave?: boolean }) {
   const f = FACTION_BY_ID[faction];
+  const empire = useEmpire(faction);
   if (!f) return null;
+  if (empire) return <EmpireFlag faction={faction} height={height} wave={wave} />;
   const { field, band, emblem, nishan } = f.banner;
   const emblemColor = field === '#1F3A68' || field === '#2F6F73' || field === '#9E1B1B' ? '#F2E6C9' : '#1F3A68';
   const showEmblem = nishan || emblem !== 'khanda';
@@ -163,6 +208,35 @@ export function Banner({ faction, height = 120, wave = true }: { faction: string
             <Emblem id={emblem} color={emblemColor} />
           </g>
         )}
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * A house's version of the Sikh Empire flag: the saffron swallow-tailed flag
+ * with the dhal, talwars and katar, edged and banded in the house's colours,
+ * with its old misl emblem in the hoist.
+ */
+export function EmpireFlag({ faction, height = 120, wave = true }: { faction: string; height?: number; wave?: boolean }) {
+  const f = FACTION_BY_ID[faction];
+  if (!f) return null;
+  const edge = empireEdge(faction);
+  const misl = EMPIRE_VARIANT[faction]?.emblem ?? (f.banner.emblem !== 'khanda' ? f.banner.emblem : 'sun');
+  return (
+    <svg width={height * 1.1} height={height} viewBox="0 0 110 100" className={wave ? 'banner-wave' : undefined} role="img" aria-label={`The Sikh Empire flag of the ${f.name} house`}>
+      <rect x="6" y="4" width="3.5" height="96" fill="#5A3A1E" />
+      <circle cx="7.75" cy="4" r="3.5" fill="#C9A13B" />
+      <g className="banner-cloth">
+        <path d="M9.5 8 L104 8 L90 30 L104 52 L9.5 52 Z" fill={EMPIRE_FIELD} stroke={edge} strokeWidth="3" strokeLinejoin="round" />
+        <rect x="9.5" y="46" width="88" height="4" fill={edge} />
+        <g transform="translate(36 8) scale(0.42)">
+          <EmpireArms color="#1B1712" />
+        </g>
+        <rect x="12" y="11" width="18" height="18" rx="2" fill={edge} />
+        <g transform="translate(13 12) scale(0.16)">
+          <Emblem id={misl} color="#F2E6C9" />
+        </g>
       </g>
     </svg>
   );

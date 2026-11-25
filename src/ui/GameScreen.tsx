@@ -15,6 +15,7 @@ import { RegionPanel } from './RegionPanel';
 import { TopBar } from './TopBar';
 import { EventModal } from './EventModal';
 import { Tutorial } from './Tutorial';
+import { UnifyModal } from './UnifyModal';
 import { MapMenu, MouseHints } from './MapMenu';
 
 function HoverCard() {
@@ -228,6 +229,7 @@ export function GameScreen() {
           {modal === 'sarbat' && <SarbatModal />}
           {modal === 'vaar' && <VaarPage />}
           {modal === 'darbar' && <DarbarModal />}
+          {modal === 'unify' && <UnifyModal />}
           {!modal && game.pendingEvents.length > 0 && <EventModal />}
         </>
       )}

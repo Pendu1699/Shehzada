@@ -19,6 +19,7 @@ import { GEO } from '../engine/map';
 import { armyMen, date, isCavalryArmy } from '../engine/query';
 import type { Army, GameState } from '../engine/state';
 import { UNIT_TYPES } from '../data/units';
+import { EMPIRE_FIELD, empireEdge } from '../art/empire';
 import { kitFor, kitKey, soldierFoot, soldierGun, soldierHorse } from './soldiers';
 import { bbox, meander, pointInPoly, polyPoints, smoothLine, type Pt } from './geometry';
 import {
@@ -1204,8 +1205,9 @@ export class PaintedMap {
         const wave = reduced ? 0 : Math.sin(t * 3 + u * 4 + px * 0.01) * 1.6 * u;
         pts.push(px + u * len, py - 13 * s - u * 6 * s + wave);
       }
-      g.poly(pts).fill(hexToNum(this.view.colorBlind ? this.factionColor(b.faction) : f.banner.field)).stroke({ width: 0.6, color: PALETTE.ink, alpha: 0.6 });
-      g.moveTo(px, py - 15 * s).lineTo(px + len * 0.7, py - 18 * s).stroke({ width: 2 * s, color: hexToNum(f.banner.band), alpha: 0.95 });
+      const empire = !!this.state?.factions[b.faction]?.sarkar;
+      g.poly(pts).fill(hexToNum(this.view.colorBlind ? this.factionColor(b.faction) : empire ? EMPIRE_FIELD : f.banner.field)).stroke({ width: 0.6, color: PALETTE.ink, alpha: 0.6 });
+      g.moveTo(px, py - 15 * s).lineTo(px + len * 0.7, py - 18 * s).stroke({ width: 2 * s, color: hexToNum(empire ? empireEdge(b.faction) : f.banner.band), alpha: 0.95 });
     }
   }
 

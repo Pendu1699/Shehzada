@@ -13,8 +13,9 @@ import { armiesOf, armyMen, factionName, isSikh, mislPeaceInForce, polityName } 
 import { chance } from './rng';
 import type { FactionId, GameState, Gurmata } from './state';
 import { newId } from './state';
+import { canUnify, proclaimEmpire } from './unify';
 
-export type GurmataKind = 'unite_vs' | 'misl_peace' | 'rebuild' | 'coin' | 'recognise' | 'langar_all';
+export type GurmataKind = 'unite_vs' | 'misl_peace' | 'rebuild' | 'coin' | 'recognise' | 'langar_all' | 'unify';
 
 export const GURMATA_INFO: Record<GurmataKind, { name: string; detail: string; duration: number }> = {
   unite_vs: { name: 'Unite the Dal Khalsa', detail: 'Every misl takes the field together against a common enemy. Misls become allies for a year.', duration: 2 },
@@ -23,6 +24,7 @@ export const GURMATA_INFO: Record<GurmataKind, { name: string; detail: string; d
   coin: { name: 'Strike coins in the Khalsa’s name', detail: 'The holder of Lahore strikes coins in the name of the Gurus.', duration: 1 },
   recognise: { name: 'Recognise a leader of the Dal Khalsa', detail: 'The Panth names one sardar to lead the combined army.', duration: 6 },
   langar_all: { name: 'Langar in every misl’s land', detail: 'Every misl keeps a langar in its chief town for a year.', duration: 2 },
+  unify: { name: 'Name a house to rule the Punjab', detail: 'Ask the assembly to make your house the Sikh Empire. Needs two-thirds of the assembly’s weight; the misls that vote for you join the empire.', duration: 1 },
 };
 
 export function gurmataTitle(s: GameState, kind: GurmataKind, target?: string): string {
@@ -69,6 +71,13 @@ function aiVote(s: GameState, f: FactionId, kind: GurmataKind, target?: string):
       return target === f || (fs.attitude[target ?? ''] ?? 0) > 5 || (s.factions[target ?? '']?.piri ?? 0) > 60;
     case 'langar_all':
       return fs.treasury > 20 || pers.zeal > 0.6;
+    case 'unify': {
+      // A misl gives up its own rule only to a house it trusts and cannot match.
+      const t = s.factions[target ?? ''];
+      if (!t) return false;
+      const trust = (fs.attitude[target!] ?? 0) + (t.piri - 60) * 1.5 + pers.zeal * 20 - pers.aggression * 15;
+      return fs.miri < t.miri * 0.7 && trust > 10;
+    }
   }
 }
 
@@ -137,6 +146,10 @@ export function castVote(s: GameState, id: string, yes: boolean, kind?: string, 
     const k = kind as GurmataKind;
     if (!GURMATA_INFO[k]) return false;
     if ((k === 'unite_vs' || k === 'recognise') && !target) return false;
+    if (k === 'unify') {
+      if (!canUnify(s, p, 'gurmata')) return false;
+      target = p;
+    }
     s.factions[p].flags[`proposed_${s.turn}`] = true;
     const g = propose(s, k, p, target);
     g.votesFor.push(p);
@@ -169,7 +182,8 @@ export function finishSarbat(s: GameState): string[] {
     if (g.passed !== undefined) continue;
     if (!g.votesFor.includes(p) && !g.votesAgainst.includes(p) && assembly(s).includes(p)) g.votesFor.push(p); // the player assents by default
     const t = tally(s, g);
-    g.passed = t.yes > t.no;
+    // Naming a ruler of the Punjab needs two-thirds of the assembly, not a majority.
+    g.passed = g.kind === 'unify' ? t.yes >= 2 * t.no && g.votesFor.length >= 2 : t.yes > t.no;
     if (!g.passed) {
       out.push(`The gurmata “${g.title}” was not agreed.`);
       continue;
@@ -235,6 +249,10 @@ function applyGurmata(s: GameState, g: Gurmata) {
       s.factions[t].flags.dal_leader = g.until;
       break;
     }
+    case 'unify':
+      if (g.target && s.factions[g.target] && !s.factions[g.target].sarkar)
+        proclaimEmpire(s, g.target, 'gurmata', g.votesFor.filter((f) => f !== g.target && f !== 'phulkian'));
+      break;
     case 'langar_all':
       for (const f of members) {
         const seat = Object.values(s.regions).filter((r) => r.owner === f).sort((a, b) => REGION_BY_ID[b.id].population - REGION_BY_ID[a.id].population)[0];

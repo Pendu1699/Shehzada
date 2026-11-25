@@ -1,7 +1,7 @@
 import { eraTitle } from '../engine/eras';
 import { factionIncome } from '../engine/economy';
 import { balanceOf, computeMiri } from '../engine/miripiri';
-import { date, factionMen, polityName } from '../engine/query';
+import { date, factionMen, isSikh, polityName } from '../engine/query';
 import { useStore } from '../store';
 import { BannerEmblem } from '../art/Banner';
 import { BreakdownView, Tip, fmt, rs } from './common';
@@ -135,6 +135,11 @@ export function TopBar() {
         <button className="btn small" data-tut="ledger" onClick={() => openModal('ledger')} title="Ledger (L)">
           Bahi-khata
         </button>
+        {isSikh(p) && !fs.sarkar && !Object.values(game.factions).some((f) => f.sarkar && f.alive) && (
+          <button className="btn small kesri" onClick={() => openModal('unify')} title="Found the Sikh Empire">
+            Unify the Punjab
+          </button>
+        )}
         <button className="btn small" data-tut="sarbat" onClick={() => openModal('sarbat')} title="Sarbat Khalsa (K)">
           Sarbat Khalsa
         </button>

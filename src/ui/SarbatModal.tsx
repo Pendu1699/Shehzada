@@ -6,6 +6,7 @@ import { AkalTakhtScene } from '../art/AkalTakht';
 import { BannerEmblem } from '../art/Banner';
 import { GURMATA_INFO, assembly, sarbatConvenes, tally, type GurmataKind } from '../engine/sarbat';
 import { date, isSikh, polityName } from '../engine/query';
+import { canUnify, unifyRequirements } from '../engine/unify';
 import { useStore } from '../store';
 import { Modal, Tip } from './common';
 
@@ -127,10 +128,19 @@ export function SarbatModal() {
                     ))}
                   </select>
                 )}
-                <button className="btn small kesri" disabled={(kind === 'unite_vs' || kind === 'recognise') && !target} onClick={() => dispatch({ type: 'propose', kind, target: target || undefined })}>
+                <button className="btn small kesri" disabled={((kind === 'unite_vs' || kind === 'recognise') && !target) || (kind === 'unify' && !canUnify(game, p, 'gurmata'))} onClick={() => dispatch({ type: 'propose', kind, target: target || undefined })}>
                   Propose
                 </button>
               </div>
+              {kind === 'unify' && (
+                <ul className="unify-list small" style={{ marginTop: 6 }}>
+                  {unifyRequirements(game, p, 'gurmata').map((r) => (
+                    <li key={r.label} className={r.ok ? 'ok' : 'no'}>
+                      <span className="unify-mark">{r.ok ? '✓' : '✗'}</span> <b>{r.label}</b> <span className="muted">{r.detail}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
         </>
