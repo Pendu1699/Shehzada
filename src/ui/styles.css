@@ -1586,3 +1586,20 @@ button.chip {
   line-height: 1.15;
   transform: rotate(-2deg);
 }
+
+/* English titles in the same hand as the Gurmukhi (Langar has Latin letters too). */
+.title-card .e-title,
+.era-title,
+.folio h2,
+.heading-band h2,
+.tutorial-head > span:first-child,
+.menu-title {
+  font-family: 'Langar', var(--font-display) !important;
+  font-weight: 400 !important;
+  filter: url(#brush-ink-small);
+  letter-spacing: 0.03em;
+}
+.title-card .e-title {
+  filter: url(#brush-ink);
+  font-size: clamp(2.4em, 5vw, 3.4em);
+}
