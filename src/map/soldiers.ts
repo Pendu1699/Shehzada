@@ -236,7 +236,7 @@ function head(g: GraphicsContext, hx: number, hy: number, k: Kit) {
  */
 function drawHead(g: GraphicsContext, hx: number, hy: number, k: Kit, scale = 1.3) {
   // The neck joins the head to the shoulders.
-  g.rect(hx - 1.1, hy + 1.2, 2.2, 2.6).fill(SKIN);
+  g.rect(hx - 1.1, hy + 1.6, 2.2, 3.4).fill(SKIN);
   g.save();
   g.setTransform(scale, 0, 0, scale, hx, hy);
   face(g, 0, 0, k);
@@ -326,7 +326,7 @@ export function soldierFoot(k: Kit): GraphicsContext {
   g.ellipse(0, 0, 7, 1.8).fill({ color: 0x2a2014, alpha: 0.25 });
   footBody(g, k);
   footWeapon(g, k);
-  drawHead(g, 0.4, -20.2, k);
+  drawHead(g, 0.4, -21.3, k);
   return g;
 }
 
@@ -377,7 +377,7 @@ export function soldierHorse(k: Kit, coat = 0, cloth = '#C9A13B'): GraphicsConte
     g.circle(-2.8, -19.5, 2.9).fill(0x5a3a1e).stroke({ width: 0.6, color: 0xc9a13b });
     g.circle(-2.8, -19.5, 0.7).fill(0xc9a13b);
   }
-  drawHead(g, 0.4, -25.6, k);
+  drawHead(g, 0.4, -26.7, k);
   return g;
 }
 
@@ -397,6 +397,6 @@ export function soldierGun(k: Kit, cloth: string): GraphicsContext {
   footBody(g, { ...k, shield: false });
   g.moveTo(2.6, -16).lineTo(8, -6).stroke({ width: 0.9, color: 0x5a3a1e });
   g.restore();
-  drawHead(g, -9 + 0.4 * 0.85, -20.2 * 0.85, k, 1.3 * 0.85);
+  drawHead(g, -9 + 0.4 * 0.85, -21.3 * 0.85, k, 1.3 * 0.85);
   return g;
 }
