@@ -76,6 +76,16 @@ function DhadiPanel() {
   );
 }
 
+/** Which way a key pans the map, if it is a pan key (WASD or the arrows). */
+function panDir(e: KeyboardEvent): 'up' | 'down' | 'left' | 'right' | null {
+  const k = e.key.toLowerCase();
+  if (k === 'w' || e.key === 'ArrowUp') return 'up';
+  if (k === 's' || e.key === 'ArrowDown') return 'down';
+  if (k === 'a' || e.key === 'ArrowLeft') return 'left';
+  if (k === 'd' || e.key === 'ArrowRight') return 'right';
+  return null;
+}
+
 export function GameScreen() {
   const game = useStore((s) => s.game)!;
   const selRegion = useStore((s) => s.selRegion);
@@ -144,15 +154,27 @@ export function GameScreen() {
         selectArmy(next.id);
         selectRegion(next.region);
         map?.focusOn(next.region, 2.2);
-      } else if (k === 'w' || e.key === 'ArrowUp') map?.panBy(0, 60);
-      else if (k === 's' || e.key === 'ArrowDown') map?.panBy(0, -60);
-      else if (k === 'a' || e.key === 'ArrowLeft') map?.panBy(60, 0);
-      else if (k === 'd' || e.key === 'ArrowRight') map?.panBy(-60, 0);
+      } else if (panDir(e)) {
+        // Held keys glide the map (see PaintedMap.holdPan); arrows must not scroll the page.
+        e.preventDefault();
+        map?.holdPan(panDir(e)!, true);
+      }
       else if (e.key === '+' || e.key === '=') map?.zoomBy(1.2);
       else if (e.key === '-') map?.zoomBy(1 / 1.2);
     };
+    const onKeyUp = (e: KeyboardEvent) => {
+      const d = panDir(e);
+      if (d) getMap()?.holdPan(d, false);
+    };
+    const onBlur = () => getMap()?.releasePan();
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
+    };
   });
 
   const battle = battleQueue.length ? game.battles.find((b) => b.id === battleQueue[0]) : undefined;

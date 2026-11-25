@@ -1098,6 +1098,7 @@ export class PaintedMap {
   private tick(dt: number) {
     if (!this.state) return;
     this.time += dt;
+    this.stepPan(Math.min(dt, 50));
     const reduced = !!this.view.reducedMotion;
     // Newly seen country: a wash of colour spreads outward like ink into wet paper.
     const bg = this.layers.bleed;
@@ -1258,6 +1259,38 @@ export class PaintedMap {
     this.setZoom(this.zoom * f);
     this.world.x = cx - wx * this.zoom;
     this.world.y = cy - wy * this.zoom;
+  }
+
+  /* ── Smooth keyboard panning ─────────────────────────────────────────── */
+
+  private panHeld = new Set<'up' | 'down' | 'left' | 'right'>();
+  private panVel = { x: 0, y: 0 };
+
+  /** A pan key went down or up. The map glides while it is held (see tick). */
+  holdPan(dir: 'up' | 'down' | 'left' | 'right', down: boolean) {
+    if (down) this.panHeld.add(dir);
+    else this.panHeld.delete(dir);
+  }
+
+  releasePan() {
+    this.panHeld.clear();
+  }
+
+  /** Ease the pan velocity toward the held direction and move the map. */
+  private stepPan(dt: number) {
+    const speed = 900; // screen pixels per second at full glide
+    const tx = (this.panHeld.has('left') ? 1 : 0) - (this.panHeld.has('right') ? 1 : 0);
+    const ty = (this.panHeld.has('up') ? 1 : 0) - (this.panHeld.has('down') ? 1 : 0);
+    const n = tx && ty ? Math.SQRT1_2 : 1;
+    const k = Math.min(1, dt / (this.panHeld.size ? 90 : 140)); // quick to start, gentle to stop
+    this.panVel.x += (tx * n * speed - this.panVel.x) * k;
+    this.panVel.y += (ty * n * speed - this.panVel.y) * k;
+    if (Math.abs(this.panVel.x) < 2 && Math.abs(this.panVel.y) < 2 && !this.panHeld.size) {
+      this.panVel.x = this.panVel.y = 0;
+      return;
+    }
+    this.world.x += (this.panVel.x * dt) / 1000;
+    this.world.y += (this.panVel.y * dt) / 1000;
   }
 
   panBy(dx: number, dy: number) {
