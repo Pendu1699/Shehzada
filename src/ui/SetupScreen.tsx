@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Banner } from '../art/Banner';
+import { Banner, EmpireFlag } from '../art/Banner';
 import { Portrait } from '../art/Portrait';
 import { TERRAIN_WASH } from '../art/palette';
 import { FACTION_BY_ID } from '../data/factions';
@@ -85,15 +85,16 @@ export function SetupScreen() {
         {playable.map((id) => {
           const d = FACTION_BY_ID[id];
           const c = chiefOf(scenario, id);
+          const empire = scenario.sarkar === id;
           return (
             <button key={id} className={`misl-card ${id === faction ? 'selected' : ''}`} onClick={() => pick(id)} aria-pressed={id === faction}>
               {id === scenario.recommended && <span className="rec">Historic path</span>}
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: 2, height: 92 }}>
-                <Banner faction={id} height={80} />
+                {empire ? <EmpireFlag faction={id} height={74} wave /> : <Banner faction={id} height={80} />}
                 {c && <Portrait id={c.id} faction={id} female={c.female} age={scenario.year - c.born} size={62} royal={c.id === 'ranjit_singh' && scenario.year >= 1801} />}
               </div>
-              <div className="misl-name">{d.name}</div>
-              <div className="epithet">{d.epithet}</div>
+              <div className="misl-name">{empire ? 'Sikh Empire' : d.name}</div>
+              <div className="epithet">{empire ? `The Sarkar-i-Khalsa · house of the ${d.name}` : d.epithet}</div>
               {c && <div className="small" style={{ marginTop: 3 }}>{c.name}</div>}
             </button>
           );
@@ -108,9 +109,7 @@ export function SetupScreen() {
             <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', flexWrap: 'wrap' }}>
               {chief && <Portrait id={chief.id} faction={faction} female={chief.female} age={scenario.year - chief.born} size={96} />}
               <div style={{ flex: 1, minWidth: 220 }}>
-                <h3>
-                  {f.name} {f.kind === 'misl' ? 'misl' : ''}
-                </h3>
+                <h3>{scenario.sarkar === faction ? 'The Sikh Empire' : `${f.name} ${f.kind === 'misl' ? 'misl' : ''}`}</h3>
                 <p className="small" style={{ marginTop: 0 }}>
                   {f.description}
                 </p>

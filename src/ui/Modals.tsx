@@ -477,9 +477,9 @@ export function SavesModal() {
           <button
             className="btn small kesri"
             onClick={() => {
-              const n = (name.trim() || `${FACTION_BY_ID[game.playerFaction].name} ${date(game).label}`).replace(/[^\w\s-]/g, '').slice(0, 40);
+              const n = (name.trim() || `${game.factions[game.playerFaction].sarkar ? 'Sikh Empire' : FACTION_BY_ID[game.playerFaction].name} ${date(game).label}`).replace(/[^\w\s-]/g, '').slice(0, 40);
               try {
-                saveToSlot(game, n, `${FACTION_BY_ID[game.playerFaction].name} · ${date(game).label}`);
+                saveToSlot(game, n, `${game.factions[game.playerFaction].sarkar ? 'Sikh Empire' : FACTION_BY_ID[game.playerFaction].name} · ${date(game).label}`);
                 toast('Saved.');
               } catch (e) {
                 toast((e as Error).message, 'error');
