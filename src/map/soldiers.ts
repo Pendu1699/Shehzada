@@ -229,15 +229,18 @@ function head(g: GraphicsContext, hx: number, hy: number, k: Kit) {
   }
 }
 
-/** Face and headgear, drawn a little larger than life so the dress reads on the map. */
+/**
+ * Face and headgear, drawn a little larger than life so the dress reads on the
+ * map. The transform is set absolutely (translate-then-scale on a context would
+ * scale the offset too and lift the head off the neck).
+ */
 function drawHead(g: GraphicsContext, hx: number, hy: number, k: Kit, scale = 1.3) {
   // The neck joins the head to the shoulders.
-  g.rect(hx - 1.1, hy + 0.5, 2.2, 3.6).fill(SKIN);
+  g.rect(hx - 1.1, hy + 1.2, 2.2, 2.6).fill(SKIN);
   g.save();
-  g.translate(hx, hy + 1.2);
-  g.scale(scale, scale);
-  face(g, 0, -1.2 / scale, k);
-  head(g, 0, -1.2 / scale, k);
+  g.setTransform(scale, 0, 0, scale, hx, hy);
+  face(g, 0, 0, k);
+  head(g, 0, 0, k);
   g.restore();
 }
 
@@ -323,7 +326,7 @@ export function soldierFoot(k: Kit): GraphicsContext {
   g.ellipse(0, 0, 7, 1.8).fill({ color: 0x2a2014, alpha: 0.25 });
   footBody(g, k);
   footWeapon(g, k);
-  drawHead(g, 0.4, -20.9, k);
+  drawHead(g, 0.4, -20.2, k);
   return g;
 }
 
@@ -374,7 +377,7 @@ export function soldierHorse(k: Kit, coat = 0, cloth = '#C9A13B'): GraphicsConte
     g.circle(-2.8, -19.5, 2.9).fill(0x5a3a1e).stroke({ width: 0.6, color: 0xc9a13b });
     g.circle(-2.8, -19.5, 0.7).fill(0xc9a13b);
   }
-  drawHead(g, 0.4, -26.3, k);
+  drawHead(g, 0.4, -25.6, k);
   return g;
 }
 
@@ -390,11 +393,10 @@ export function soldierGun(k: Kit, cloth: string): GraphicsContext {
   g.rect(-4, -11, 4, 2).fill(hexToNum(cloth));
   // the gunner stands behind, slightly smaller
   g.save();
-  g.translate(-9, 0);
-  g.scale(0.85, 0.85);
+  g.setTransform(0.85, 0, 0, 0.85, -9, 0);
   footBody(g, { ...k, shield: false });
-  drawHead(g, 0.4, -20.9, k);
   g.moveTo(2.6, -16).lineTo(8, -6).stroke({ width: 0.9, color: 0x5a3a1e });
   g.restore();
+  drawHead(g, -9 + 0.4 * 0.85, -20.2 * 0.85, k, 1.3 * 0.85);
   return g;
 }
