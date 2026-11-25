@@ -19,6 +19,7 @@ import { GEO } from '../engine/map';
 import { armyMen, date, isCavalryArmy } from '../engine/query';
 import type { Army, GameState } from '../engine/state';
 import { UNIT_TYPES } from '../data/units';
+import { kitFor, kitKey, soldierFoot, soldierGun, soldierHorse } from './soldiers';
 import { bbox, meander, pointInPoly, polyPoints, smoothLine, type Pt } from './geometry';
 import {
   drawCrossedSwords,
@@ -34,9 +35,6 @@ import {
   drawTemple,
   drawTown,
   drawTree,
-  footContext,
-  gunContext,
-  horsemanContext,
 } from './figures';
 
 const W = GEO.meta.width;
@@ -934,18 +932,20 @@ export class PaintedMap {
   /* ── Army tokens ───────────────────────────────────────────────────────── */
 
   private figureFor(a: Army): GraphicsContext {
-    const f = FACTION_BY_ID[a.owner];
-    const sikh = !!f?.sikh;
     let kind: 'horse' | 'foot' | 'gun' = isCavalryArmy(a) ? 'horse' : 'foot';
     const men = armyMen(a);
     const guns = a.units.filter((u) => UNIT_TYPES[u.type]?.cls === 'artillery').reduce((t, u) => t + u.men, 0);
     if (men && guns / men > 0.5) kind = 'gun';
-    const turban = sikh ? (a.owner === 'shaheedan' || a.units.some((u) => u.type === 'nihang') ? PALETTE.neela : f?.banner.field ?? PALETTE.kesri) : a.owner === 'company' ? '#1B1712' : '#F2E6C9';
+    // Dress by the troops the army is mostly made of (excluding guns).
+    const main = [...a.units].filter((u) => UNIT_TYPES[u.type]?.cls !== 'artillery' || kind === 'gun').sort((x, y) => y.men - x.men)[0]?.type ?? '';
+    const regular = !!this.state?.factions[a.owner]?.sarkar && main.startsWith('fauj_ain');
+    const kit = kitFor(a.owner, main, regular);
     const cloth = this.factionColor(a.owner);
-    const key = `${kind}|${turban}|${cloth}|${a.owner.length % 5}|${sikh}`;
+    const coat = a.owner.length % 5;
+    const key = `${kind}|${kitKey(kit)}|${cloth}|${coat}`;
     let ctx = this.figureCache.get(key);
     if (!ctx) {
-      ctx = kind === 'horse' ? horsemanContext(turban, cloth, a.owner.length % 5, sikh) : kind === 'foot' ? footContext(turban, a.owner === 'company' ? '#9E1B1B' : cloth, sikh) : gunContext(cloth);
+      ctx = kind === 'horse' ? soldierHorse(kit, coat, cloth) : kind === 'foot' ? soldierFoot(kit) : soldierGun(kit, cloth);
       this.figureCache.set(key, ctx);
     }
     return ctx;

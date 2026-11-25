@@ -1,84 +1,11 @@
-// Painted figures for the map, drawn with Pixi Graphics in a flat miniature manner:
-// side-profile horsemen with spear and dhal, musketeers, guns, forts, trees, hills.
+// Painted glyphs for the map, drawn with Pixi Graphics in a flat miniature manner:
+// forts, towns, sacred sites, trees, hills and fields.
 
-import { Graphics, GraphicsContext } from 'pixi.js';
-import { hexToNum } from '../art/util';
+import { Graphics } from 'pixi.js';
 
 const INK = 0x1b1712;
 
-export type FigureKind = 'horse' | 'foot' | 'gun';
-
-const HORSE_COATS = [0x7a4a2a, 0xb8b0a0, 0x3a2a22, 0xe6dccb, 0x9a6a3a];
-
-/** A horseman facing right, about 30 units wide, standing on y = 0. */
-export function horsemanContext(turban: string, cloth: string, coat = 0, sikh = true): GraphicsContext {
-  const g = new GraphicsContext();
-  const horse = HORSE_COATS[coat % HORSE_COATS.length];
-  // shadow
-  g.ellipse(0, 0, 13, 2.6).fill({ color: 0x2a2014, alpha: 0.25 });
-  // legs
-  for (const [x0, x1] of [[-7, -8.5], [-4, -3], [5, 4.5], [8, 10]] as const) g.moveTo(x0, -8).lineTo(x1, 0).stroke({ width: 1.6, color: horse === 0xe6dccb ? 0x8a8070 : 0x2a1a12 });
-  // tail
-  g.moveTo(-10, -12).bezierCurveTo(-14, -10, -15, -5, -13, -2).stroke({ width: 1.8, color: 0x2a1a12 });
-  // body
-  g.ellipse(0, -11, 10.5, 4.6).fill(horse).stroke({ width: 0.7, color: INK, alpha: 0.6 });
-  // neck + head
-  g.poly([7, -13, 11, -21, 15.5, -21.5, 16, -18.5, 12.5, -17, 10, -9]).fill(horse).stroke({ width: 0.7, color: INK, alpha: 0.6 });
-  g.poly([11, -21, 12.5, -23.5, 13, -21]).fill(horse);
-  // saddle cloth
-  g.roundRect(-5, -15.5, 9, 6, 1.2).fill(hexToNum(cloth));
-  g.rect(-5, -10.8, 9, 1).fill({ color: 0xc9a13b });
-  // rider torso (jama)
-  g.poly([-2.5, -15, 2.5, -15, 2, -24, -1.6, -24]).fill(0xf2e6c9).stroke({ width: 0.6, color: INK, alpha: 0.5 });
-  g.poly([-1.5, -15.5, 1.5, -15.5, 0.8, -12, -0.8, -12]).fill(0xf2e6c9);
-  // head
-  g.circle(0.6, -26.2, 2.1).fill(0xc68b59);
-  if (sikh) g.ellipse(0.4, -27.6, 2.6, 2.1).fill(hexToNum(turban));
-  else g.ellipse(0.4, -27.4, 2.8, 1.9).fill(hexToNum(turban));
-  // beard
-  if (sikh) g.poly([1.6, -26, 2.6, -24, 1, -23.2]).fill(INK);
-  // mustache
-  g.moveTo(1.4, -25.6).bezierCurveTo(2.6, -25.2, 3.4, -25.8, 3.2, -26.8).stroke({ width: 0.7, color: INK });
-  // spear
-  g.moveTo(-6, -13).lineTo(12, -38).stroke({ width: 0.9, color: 0x5a3a1e });
-  g.poly([12, -38, 13.8, -42.5, 10.6, -39]).fill(0x8c8c8c);
-  g.poly([10.3, -35.5, 9.2, -34.2, 11, -34.4]).fill(0xb83a2b);
-  // dhal (shield) on the back
-  g.circle(-2.8, -19.5, 2.9).fill(0x5a3a1e).stroke({ width: 0.6, color: 0xc9a13b });
-  g.circle(-2.8, -19.5, 0.7).fill(0xc9a13b);
-  return g;
-}
-
-/** A musketeer on foot facing right. */
-export function footContext(turban: string, cloth: string, sikh = true): GraphicsContext {
-  const g = new GraphicsContext();
-  g.ellipse(0, 0, 7, 1.8).fill({ color: 0x2a2014, alpha: 0.25 });
-  g.moveTo(-1.5, -8).lineTo(-3, 0).stroke({ width: 1.6, color: 0x2a1a12 });
-  g.moveTo(1.5, -8).lineTo(3, 0).stroke({ width: 1.6, color: 0x2a1a12 });
-  g.poly([-3.5, -8, 3.5, -8, 2.4, -19, -2.4, -19]).fill(hexToNum(cloth)).stroke({ width: 0.6, color: INK, alpha: 0.5 });
-  g.rect(-3, -12, 6, 1.4).fill(0xc9a13b);
-  g.circle(0.4, -21.2, 2.1).fill(0xc68b59);
-  g.ellipse(0.2, -22.7, 2.6, 2).fill(hexToNum(turban));
-  if (sikh) g.poly([1.6, -21, 2.6, -19, 1, -18.4]).fill(INK);
-  g.moveTo(1.4, -20.6).bezierCurveTo(2.6, -20.2, 3.4, -20.8, 3.2, -21.8).stroke({ width: 0.7, color: INK });
-  // matchlock at the shoulder
-  g.moveTo(-1, -14).lineTo(13, -25).stroke({ width: 1.3, color: 0x4a3018 });
-  g.moveTo(9, -22).lineTo(13, -25).stroke({ width: 1, color: 0x6b6b6b });
-  return g;
-}
-
-/** A gun on a carriage. */
-export function gunContext(cloth: string): GraphicsContext {
-  const g = new GraphicsContext();
-  g.ellipse(0, 0, 12, 2).fill({ color: 0x2a2014, alpha: 0.25 });
-  g.poly([-10, -9, 12, -13, 12.5, -10, -9, -5]).fill(0x8a6a2a).stroke({ width: 0.7, color: INK, alpha: 0.6 });
-  g.circle(12.3, -11.5, 1.2).fill(INK);
-  g.circle(-3, -5, 5).fill(0x5a3a1e).stroke({ width: 1, color: INK });
-  for (let a = 0; a < 6; a++) g.moveTo(-3, -5).lineTo(-3 + Math.cos((a * Math.PI) / 3) * 5, -5 + Math.sin((a * Math.PI) / 3) * 5).stroke({ width: 0.6, color: INK });
-  g.poly([-11, -6, -16, 0, -14, 0, -9, -5]).fill(0x5a3a1e);
-  g.rect(-8, -11, 4, 2).fill(hexToNum(cloth));
-  return g;
-}
+// The soldiers themselves are drawn in ./soldiers.ts, dressed by army.
 
 /** A painted fort: crenellated walls and towers, sized by level (1..5). */
 export function drawFort(g: Graphics, x: number, y: number, level: number, wall = 0xc58f5a, desecrated = false) {

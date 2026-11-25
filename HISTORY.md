@@ -129,6 +129,22 @@ the Sikhs struck coin at Lahore in 1765, but no state was made until Ranjit Sing
 confederacy of the misls; Ranjit Singh entering another house's service; and cities the Khalsa
 never held for long (Delhi, which Baghel Singh entered in 1783) or never held at all.
 
+## Soldiers on the map
+
+Each army is dressed for who it is (`src/map/soldiers.ts`), after Company-period and Pahari
+pictures of soldiers. Sikh misls wear their misl's dastaar and a chola; the Akali-Nihangs of the
+Shaheedan and the Budha Dal the blue dumalla with farla and chakars. Afghan forces wear a turban
+wound about a peaked kulah, a long chapan and the lungi sash, and carry the jezail. The Mughal
+governors and the nawabs wear the flat atpati pagri and the flared jama with a cummerbund. Marathas
+wear the rounded pagadi and the white angarkha and carry the swallow-tailed bhagwa jhenda. Company
+sepoys wear red coats with white cross-belts (the "Lal Paltan") and the pointed "sundial" turban;
+European regulars the shako. Muslim soldiers are drawn with full beards and trimmed upper lips,
+Sikhs with full beards and moustaches, Marathas and Gorkhas with moustaches. These are emblems at
+map scale: dress varied far more between regiments, decades and individuals than any token can
+show. Useful references: the National Army Museum's pages on the armies of the East India Company
+and Indian armies in art; the Royal Society's Afghan portraits after James Rattray (1840s); and
+museum collections of Mughal and Peshwa-era painting.
+
 ## Deliberate simplifications
 
 - **Map.** Sixty-one regions stand in for hundreds of parganas of the Punjab, and eighty-four
