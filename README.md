@@ -9,39 +9,88 @@ Everything you see and hear is generated in code: the wasli-paper map, the paint
 figures, the drone, drums and sarangi. The only bundled third-party assets are
 open-licence fonts installed through `@fontsource`.
 
-## How to download and play
+## ▶ Play now — no download needed
 
-You don't need to know how to code. It takes about five minutes the first time.
+**Click here: [pendu1699.github.io/Akal](https://pendu1699.github.io/Akal/)**
 
-### 1. Install Node.js (once)
+That's it. The game opens in your web browser (Chrome, Safari, Edge or Firefox) on a laptop
+or desktop computer. Nothing to install, nothing to sign up for. Your games are saved in that
+browser automatically, so you can close the tab and carry on later.
 
-Download the **LTS** version from [nodejs.org](https://nodejs.org) and install it like any other app.
-To check it worked, open **Terminal** (Mac: press Cmd + Space and type "Terminal"; Windows: open
-"Command Prompt") and type:
+> It works best on a computer with a mouse. Phones and tablets work, but the map is small.
 
-```bash
-node -v
-```
+---
 
-It should print a version number such as `v22.x.x`.
+## How to play (for complete beginners)
 
-### 2. Download the game
+**You are the leader of a Sikh misl** — a band of horsemen — in the Punjab in the 1700s. Over
+a hundred years you try to survive, grow strong, and keep the trust of the Panth, until the
+story ends in 1849.
 
-Download the ZIP of the game:
-[akal-main.zip](https://github.com/pendu1699/akal/archive/refs/heads/main.zip)
-(or, on the repository page, choose **Code → Download ZIP**).
+**Starting a game**
 
-Unzip it (double-click it in Downloads). You can rename the unzipped folder to something short,
-like `Akal`.
+1. Click **Begin a new vaar**.
+2. Pick a starting year. For your first game choose **1748**.
+3. Pick a misl. For your first game choose **Ahluwalia** (it says "Historic path").
+4. Click **Ride out**.
 
-> **Using git instead?** If the repository is private and `git clone` says *"Invalid username or
-> token"*, log in with the GitHub CLI first (`brew install gh`, then `gh auth login`), or just use the
-> ZIP.
+**The old man will teach you.** A box at the bottom of the screen — the counsel of Nawab
+Kapur Singh — tells you what to do, one small step at a time, and the button or place he's
+talking about glows orange. Do what he says, or click **Next →**. You can bring him back any
+time with the orange **? Counsel** button at the top of the screen.
 
-### 3. Start it
+**What you do each turn**
 
-In Terminal, go into the game's folder. The easiest way: type `cd ` (with a space), drag the folder
-from Finder/Explorer into the Terminal window, and press Enter. Then:
+1. **Move your army.** Click on your horsemen, then drag them onto a nearby area of the map
+   (or right-click the area). A red line shows where they'll ride.
+2. **Look after your land.** Right-click one of your areas to open a free kitchen (*langar*),
+   strengthen a fort, or raise more men.
+3. **End the turn.** Click the big drum (**Beat the nagara**) in the bottom-right corner.
+   Everyone moves, battles happen, and a storyteller tells you what happened.
+4. Sometimes news arrives with a choice to make. Read it and pick what you think is right.
+
+**The two numbers that matter** are at the top: **Miri** (your power — land, money, soldiers)
+and **Piri** (how much the Sikh community trusts you). Try to grow both together. Being
+generous, keeping promises and sparing cities raises Piri; cruelty and greed lower it.
+
+**Not sure what something means?** Hover your mouse over it — almost everything explains
+itself. The **Codex** button explains the Punjabi words.
+
+**The mouse, in short**
+
+| Do this | And this happens |
+| --- | --- |
+| Left-click | Select something (it never gives an order by accident) |
+| Drag the empty map / scroll the wheel | Move around / zoom in and out |
+| Drag your army somewhere | March there |
+| Right-click your army | Its orders: split it, join armies, how it fights |
+| Right-click land | Langar, fort, recruiting, offering protection |
+
+Settings (the ⚙ button) has bigger text, colour-blind mode, and sound on/off.
+
+---
+
+## Playing on your own computer (optional)
+
+Only needed if the link above doesn't work for you, or you'd like to play offline.
+
+**1. Install Node.js** — a free program the game needs to start. Go to
+[nodejs.org](https://nodejs.org), click the big **LTS** download button, and install it like
+any other app (keep clicking Next / Continue).
+
+**2. Download the game** — click
+[this link to download the game](https://github.com/pendu1699/akal/archive/refs/heads/main.zip),
+then double-click the downloaded file to unzip it. You'll get a folder called `akal-main`.
+
+**3. Open Terminal (Mac) or Command Prompt (Windows)**
+
+- *Mac:* press **Cmd + Space**, type **Terminal**, press Enter.
+- *Windows:* press the **Windows key**, type **cmd**, press Enter.
+
+**4. Go into the game's folder.** Type `cd` followed by a space, then drag the `akal-main`
+folder from your Downloads into the window, and press **Enter**.
+
+**5. Copy and paste these, one at a time, pressing Enter after each:**
 
 ```bash
 npm install
@@ -51,48 +100,20 @@ npm install
 npm run dev
 ```
 
-The first command downloads the game's tools (only needed once, or after downloading a new
-version). The second starts the game. Open **http://localhost:5173** in your browser.
+The first one takes a minute or two (only needed once). The second starts the game.
 
-Leave Terminal open while you play. To stop, click in Terminal and press **Ctrl + C**. Next time,
-you only need the `cd` step and `npm run dev`.
+**6. Open your browser and go to http://localhost:5173** — the game is there.
+
+Keep the Terminal window open while you play. When you're done, close it. Next time, repeat
+steps 3, 4, and only the second command (`npm run dev`).
 
 **If something goes wrong**
 
-- *"Could not read package.json"* — you're not inside the game's folder. Do the `cd` step again.
-- *"command not found: npm"* — Node.js isn't installed; go back to step 1.
-- *An error mentioning esbuild* — run `npm rebuild esbuild`, then `npm run dev` again.
-- Vulnerability warnings during `npm install` are about the build tools, not the game. Ignore
-  them, and don't run `npm audit fix --force`.
-
-**Updating to a new version:** download the ZIP again, unzip it, and repeat step 3 in the new
-folder. Your saved games live in your browser, so they carry over.
-
-### 4. Playing
-
-1. Click **Begin a new vaar**, choose a start year (1748, 1767, 1799 or 1839) and a misl. For a
-   first game, try **1748** with the **Ahluwalia** misl, and leave the tutorial on.
-2. Nawab Kapur Singh's **Counsel** walks you through everything. You can replay it any time with
-   the **? Counsel** button at the top, or the **?** key.
-3. Give orders, then **Beat the nagara** (bottom right, or Enter) to end the season. Each turn is
-   half a year, Vaisakhi or Diwali.
-4. The game ends in 1849, or earlier if your misl falls. Then the dhadi sings your **Vaar**.
-
-**Mouse**
-
-| Do this | And this happens |
-| --- | --- |
-| Left-click land or an army | Select it |
-| Drag open land / scroll wheel | Move / zoom the map |
-| Drag your army onto a region | March there |
-| Ctrl + drag your army | Divide it and send half |
-| Right-click a region (army selected) | March there; right-click an enemy army to attack |
-| Right-click your army | Orders: divide, join, halt, how to fight |
-| Right-click land (nothing selected) | Langar, fort, rakhi, recruit |
-
-**Tips:** hover over any number to see how it's worked out. Keep **Miri** (power) and **Piri** (the
-Panth's trust) growing together. Langar, sparing cities and keeping rakhi raise Piri. Settings
-(⚙) has colour-blind mode, UI scale, reduced motion and sound.
+- *"Could not read package.json"* — you're not in the game's folder; do step 4 again.
+- *"command not found: npm"* or *"'npm' is not recognized"* — Node.js isn't installed; do step 1,
+  then close and reopen Terminal.
+- *An error mentioning esbuild* — type `npm rebuild esbuild`, press Enter, then `npm run dev`.
+- Warnings about "vulnerabilities" during step 5 are normal and harmless. Ignore them.
 
 ## For developers
 
