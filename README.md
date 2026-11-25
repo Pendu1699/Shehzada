@@ -11,7 +11,7 @@ open-licence fonts installed through `@fontsource`.
 
 ## ▶ Play now — no download needed
 
-**Click here: [pendu1699.github.io/Akal](https://pendu1699.github.io/Akal/)**
+**Click here: [pendu1699.github.io/Shehzada](https://pendu1699.github.io/Shehzada/)**
 
 That's it. The game opens in your web browser (Chrome, Safari, Edge or Firefox) on a laptop
 or desktop computer. Nothing to install, nothing to sign up for. Your games are saved in that
@@ -79,15 +79,15 @@ Only needed if the link above doesn't work for you, or you'd like to play offlin
 any other app (keep clicking Next / Continue).
 
 **2. Download the game** — click
-[this link to download the game](https://github.com/pendu1699/akal/archive/refs/heads/main.zip),
-then double-click the downloaded file to unzip it. You'll get a folder called `akal-main`.
+[this link to download the game](https://github.com/pendu1699/Shehzada/archive/refs/heads/main.zip),
+then double-click the downloaded file to unzip it. You'll get a folder called `Shehzada-main`.
 
 **3. Open Terminal (Mac) or Command Prompt (Windows)**
 
 - *Mac:* press **Cmd + Space**, type **Terminal**, press Enter.
 - *Windows:* press the **Windows key**, type **cmd**, press Enter.
 
-**4. Go into the game's folder.** Type `cd` followed by a space, then drag the `akal-main`
+**4. Go into the game's folder.** Type `cd` followed by a space, then drag the `Shehzada-main`
 folder from your Downloads into the window, and press **Enter**.
 
 **5. Copy and paste these, one at a time, pressing Enter after each:**
