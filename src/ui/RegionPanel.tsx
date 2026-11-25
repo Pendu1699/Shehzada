@@ -3,7 +3,7 @@ import { BannerEmblem } from '../art/Banner';
 import { FACTION_BY_ID } from '../data/factions';
 import { REGION_BY_ID } from '../data/regions';
 import { UNIT_TYPES, canRaise } from '../data/units';
-import { BUILDINGS, fortCost, type BuildingKind } from '../engine/actions';
+import { BUILDINGS, TOWN_NAMES, buildingCost, fortCost, townCost, type BuildingKind } from '../engine/actions';
 import { rakhiChance } from '../engine/conquest';
 import { langarCost, recruitCost, recruitPool, regionRevenue } from '../engine/economy';
 import { armiesIn, armyMen, atWar, isSikh, polityName, relation, year } from '../engine/query';
@@ -220,9 +220,41 @@ export function RegionPanel({ id }: { id: string }) {
                 Strengthen fort ({rs(fortCost(game, id))})
               </button>
             </div>
+            <div className="row" style={{ marginTop: 6, alignItems: 'center' }}>
+              <span className="small" style={{ minWidth: 34 }}>
+                Tax
+              </span>
+              {(['light', 'normal', 'heavy'] as const).map((t) => (
+                <Tip
+                  key={t}
+                  title={`${t[0].toUpperCase()}${t.slice(1)} tax`}
+                  content={
+                    <span>
+                      {t === 'light' ? 'Land revenue ×0.75; the people are content (stability +8).' : t === 'heavy' ? 'Land revenue ×1.3, trade ×1.1; the villages grumble (stability −14).' : 'The customary share.'}
+                    </span>
+                  }
+                >
+                  <button className={`chip ${(st.tax ?? 'normal') === t ? 'on' : ''}`} onClick={() => dispatch({ type: 'setTax', region: id, tax: t })}>
+                    {t}
+                  </button>
+                </Tip>
+              ))}
+            </div>
+            <div className="row" style={{ marginTop: 6, alignItems: 'center', justifyContent: 'space-between' }}>
+              <span className="small">
+                <b>{TOWN_NAMES[st.town ?? 0]}</b> <span className="muted">— revenue +{(st.town ?? 0) * 8}%, trade +{(st.town ?? 0) * 12}%</span>
+              </span>
+              {(st.town ?? 0) < 4 && (
+                <Tip title={`Grow into a ${TOWN_NAMES[(st.town ?? 0) + 1].toLowerCase()}`} content={<span>Build streets, a bazaar and a kotwali. More revenue, trade and stability. Needs control {50 + (st.town ?? 0) * 10}.</span>}>
+                  <button className="btn small" disabled={fs.treasury < townCost(game, id) || st.control < 50 + (st.town ?? 0) * 10} onClick={() => dispatch({ type: 'growTown', region: id })}>
+                    Grow to {TOWN_NAMES[(st.town ?? 0) + 1]} ({rs(Math.round(townCost(game, id)))})
+                  </button>
+                </Tip>
+              )}
+            </div>
             <div className="row" style={{ marginTop: 6 }}>
               {(Object.keys(BUILDINGS) as BuildingKind[]).map((k) => (
-                <Tip key={k} title={BUILDINGS[k].name} content={<span>{BUILDINGS[k].detail} Cost {rs(BUILDINGS[k].cost)}.</span>}>
+                <Tip key={k} title={BUILDINGS[k].name} content={<span>{BUILDINGS[k].detail} Cost {rs(buildingCost(game, game.playerFaction, k))}.</span>}>
                   <button className={`chip ${st.buildings.includes(k) ? 'on' : ''}`} disabled={st.buildings.includes(k)} onClick={() => dispatch({ type: 'build', region: id, kind: k })}>
                     {BUILDINGS[k].name}
                   </button>

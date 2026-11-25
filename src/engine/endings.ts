@@ -31,9 +31,23 @@ export function checkEnding(s: GameState, finalTurnPassed: boolean): void {
     chronicle(s, 'loss', 'And so the banner fell. But the Panth endures.', { faction: s.playerFaction, weight: 10 });
     return;
   }
+  if (s.beyond) {
+    // Past 1849 the game ends only if the player's house loses everything.
+    if (!regionsOf(s, s.playerFaction).length) {
+      s.phase = 'ended';
+      s.ending = { kind: 'annexation', turn: s.turn };
+    }
+    return;
+  }
   if (finalTurnPassed || p.flags.annexed) {
     s.phase = 'ended';
     s.ending = { kind: endingFor(s), turn: s.turn };
     if (s.ending.kind === 'annexation' && p.flags.koh_i_noor) p.flags.koh_i_noor = 'taken';
   }
+}
+
+/** Can the player ride on past the end of the century? Only with a house still standing. */
+export function canRideOn(s: GameState): boolean {
+  const p = s.factions[s.playerFaction];
+  return !!p?.alive && regionsOf(s, s.playerFaction).length > 0 && !p.flags.annexed && s.ending?.kind !== 'ghallughara';
 }

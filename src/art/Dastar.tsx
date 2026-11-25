@@ -47,11 +47,18 @@ function shade(hex: string, k: number): string {
 }
 
 /** The dastaar look of a misl (style, colours and signature marks), if it has one. */
+/**
+ * The Akali-Nihangs among the historical figures. Whatever house they serve,
+ * they wear the blue dumalla with its farla and steel chakars.
+ */
+export const NIHANG_LEADERS = new Set(['baba_deep_singh', 'karam_singh_shaheed', 'gurbakhsh_singh_nihang', 'phula_singh', 'hanuman_singh_akali', 'sudh_singh_shaheed']);
+
 export function lookOf(faction: string): Look | undefined {
   return LOOKS[faction];
 }
 
 export function lookColor(faction: string, id: string, fallback: string) {
+  if (NIHANG_LEADERS.has(id)) return hpick(LOOKS.shaheedan.colors!, id, 't');
   const l = LOOKS[faction];
   return l?.colors ? hpick(l.colors, id, 't') : fallback;
 }
@@ -176,7 +183,7 @@ function Dumalla({ look, turban }: { look: Look; turban: string }) {
 }
 
 export function Dastar({ faction, id, color, royal }: { faction: string; id: string; color: string; royal?: boolean }) {
-  const look = LOOKS[faction] ?? { style: 'pagg' as const, mark: [] };
+  const look = NIHANG_LEADERS.has(id) ? LOOKS.shaheedan : LOOKS[faction] ?? { style: 'pagg' as const, mark: [] };
   const turban = lookColor(faction, id, color);
   return look.style === 'dumalla' ? <Dumalla look={look} turban={turban} /> : <Pagg look={look} turban={turban} id={id} royal={royal} />;
 }

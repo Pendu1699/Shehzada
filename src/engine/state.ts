@@ -78,6 +78,10 @@ export interface RegionState {
   desecrated: string[];
   /** Patronage built here: gurdwara, temple, mosque, sarai, canal, school, bagh. */
   buildings: string[];
+  /** Tax set by the owner (player): light, normal or heavy. */
+  tax?: 'light' | 'normal' | 'heavy';
+  /** Town grown by the owner: 0 village … 4 great city. */
+  town?: number;
   /** Turn on which the Company's red ink reached this region (for the seep animation). */
   inkSince?: number;
   /** Raided this turn by (faction), for rakhi obligations. */
@@ -266,6 +270,8 @@ export interface GameState {
   piriNotes: { delta: number; reason: string }[];
   nextId: number;
   /** Set when the game ends. */
+  /** The player chose to ride on past 1849: the world runs on with no history script. */
+  beyond?: boolean;
   ending?: { kind: 'sovereign' | 'protected' | 'annexation' | 'ghallughara'; turn: number };
   settings: { difficulty: 'gentle' | 'standard' | 'hard' };
   /** The player's darbar, once they rule as the Sarkar-i-Khalsa. */

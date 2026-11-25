@@ -1,3 +1,4 @@
+import { factionMods } from './reforms';
 // Battles and sieges.
 //
 // Combat is auto-resolved over 3–5 rounds after the commander picks a stance.
@@ -11,7 +12,6 @@
 //  * A commander with low loyalty in a brittle polity may hold back or betray in the
 //    field. This is how Mudki, Ferozeshah and Sobraon can repeat — or be averted.
 
-import { FACTION_BY_ID } from '../data/factions';
 import { REGION_BY_ID } from '../data/regions';
 import { UNIT_TYPES, type UnitType } from '../data/units';
 import { battleLine } from '../narrative/dhadi';
@@ -55,7 +55,7 @@ interface SideCalc {
 
 function unitAttack(s: GameState, a: Army, u: UnitType, region: RegionId, defending: boolean): number {
   let atk = u.attack;
-  const mods = FACTION_BY_ID[a.owner]?.mods ?? {};
+  const mods = factionMods(s, a.owner) ?? {};
   const terr = REGION_BY_ID[region].terrain;
   const d = date(s);
   if (u.cls === 'cavalry') {
@@ -112,7 +112,7 @@ function calcSide(s: GameState, side: Side, region: RegionId, defending: boolean
   const quality = men ? moraleW / men / 6 : 1;
   const cur = side.armies.length ? side.armies.reduce((t, a) => t + a.morale * armyMen(a), 0) / Math.max(1, side.armies.reduce((t, a) => t + armyMen(a), 0)) : 70;
   let morale = cur * (0.7 + 0.3 * quality);
-  const fmod = FACTION_BY_ID[side.faction]?.mods.morale ?? 1;
+  const fmod = factionMods(s, side.faction).morale ?? 1;
   morale *= fmod;
   const pm = piriMoraleBonus(s, side.faction);
   morale += pm;
@@ -134,7 +134,7 @@ function calcSide(s: GameState, side: Side, region: RegionId, defending: boolean
   }
   if (defending && fortLevel > 0 && (side.stance === 'hold' || side.garrison)) {
     let fortMult = 1 + 0.3 * fortLevel;
-    if (FACTION_BY_ID[side.faction]?.mods.fortDefense) fortMult *= FACTION_BY_ID[side.faction].mods.fortDefense!;
+    if (factionMods(s, side.faction).fortDefense) fortMult *= factionMods(s, side.faction).fortDefense!;
     if (side.armies.some((a) => hasTrait(s, a.leader, 'fort_builder'))) fortMult += 0.3;
     def *= fortMult;
     mods.push({ label: `Walls (fort ${fortLevel})`, value: `×${fortMult.toFixed(2)} defence` });
@@ -388,7 +388,7 @@ export function siegeProgress(s: GameState, besiegers: Army[], region: RegionId)
   let siegePts = 0;
   let men = 0;
   for (const a of besiegers) {
-    const mods = FACTION_BY_ID[a.owner]?.mods ?? {};
+    const mods = factionMods(s, a.owner) ?? {};
     for (const u of a.units) {
       let sp = (UNIT_TYPES[u.type]?.siege ?? 0) * (u.men / 100);
       if (UNIT_TYPES[u.type]?.cls === 'artillery' && hasTrait(s, a.leader, 'artillerist')) sp *= 1.3;
@@ -398,7 +398,7 @@ export function siegeProgress(s: GameState, besiegers: Army[], region: RegionId)
     }
     if (hasTrait(s, a.leader, 'fort_builder')) siegePts *= 1.25;
   }
-  const defMult = st.owner ? FACTION_BY_ID[st.owner]?.mods.fortDefense ?? 1 : 1;
+  const defMult = st.owner ? factionMods(s, st.owner).fortDefense ?? 1 : 1;
   const battering = (siegePts / (Math.pow(fort, 1.5) * 12 * defMult)) * 100;
   const garrison = garrisonOf(s, region);
   const blockade = (14 * clamp(men / Math.max(1, garrison * 2), 0, 1.5)) / Math.sqrt(fort);

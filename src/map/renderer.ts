@@ -21,6 +21,7 @@ import type { Army, GameState } from '../engine/state';
 import { UNIT_TYPES } from '../data/units';
 import { EMPIRE_FIELD, empireEdge } from '../art/empire';
 import { flagOf } from '../art/flags';
+import { NIHANG_LEADERS } from '../art/Dastar';
 import { kitFor, kitKey, soldierFoot, soldierGun, soldierHorse } from './soldiers';
 import { bbox, meander, pointInPoly, polyPoints, smoothLine, type Pt } from './geometry';
 import {
@@ -728,6 +729,8 @@ export class PaintedMap {
       const i = FACTIONS.findIndex((x) => x.id === f);
       return CB_SAFE[i % CB_SAFE.length];
     }
+    // The Sikh Empire is painted in its own saffron, whatever house it grew from.
+    if (this.state?.factions[f]?.sarkar) return '#D2601A';
     return FACTION_BY_ID[f]?.color ?? '#888888';
   }
 
@@ -941,7 +944,8 @@ export class PaintedMap {
     // Dress by the troops the army is mostly made of (excluding guns).
     const main = [...a.units].filter((u) => UNIT_TYPES[u.type]?.cls !== 'artillery' || kind === 'gun').sort((x, y) => y.men - x.men)[0]?.type ?? '';
     const regular = !!this.state?.factions[a.owner]?.sarkar && main.startsWith('fauj_ain');
-    const kit = kitFor(a.owner, main, regular);
+    const nihangLed = !!a.leader && NIHANG_LEADERS.has(a.leader);
+    const kit = kitFor(a.owner, nihangLed ? 'nihang' : main, regular && !nihangLed);
     const cloth = this.factionColor(a.owner);
     const coat = a.owner.length % 5;
     const key = `${kind}|${kitKey(kit)}|${cloth}|${coat}`;

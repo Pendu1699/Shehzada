@@ -1,3 +1,5 @@
+import { beginReform, factionMods, hasReform } from './reforms';
+import { canRideOn } from './endings';
 import { canUnify, proclaimEmpire } from './unify';
 // Player actions. applyAction() is the only way the UI changes game state.
 // It clones, applies, and returns either the new state or an error message.
@@ -14,7 +16,7 @@ import { changePiri, updateMiri } from './miripiri';
 import { findPath } from './movement';
 import { armiesIn, armyMen, atWar, isSikh, mislPeaceInForce, polityName, year } from './query';
 import { chance } from './rng';
-import type { Army, GameState, Stance } from './state';
+import type { FactionId, Army, GameState, Stance } from './state';
 import { newId } from './state';
 import { endTurn } from './turn';
 import { breaksUnity, castVote, finishSarbat } from './sarbat';
@@ -45,6 +47,10 @@ export type Action =
   | { type: 'vote'; gurmataId: string; yes: boolean }
   | { type: 'propose'; kind: string; target?: string }
   | { type: 'proclaimEmpire' }
+  | { type: 'rideOn' }
+  | { type: 'setTax'; region: string; tax: 'light' | 'normal' | 'heavy' }
+  | { type: 'growTown'; region: string }
+  | { type: 'beginReform'; id: string }
   | { type: 'eventChoice'; pendingId: string; choice: number }
   | { type: 'finishSarbat' }
   | { type: 'court'; act: CourtAction; target?: string }
@@ -52,7 +58,7 @@ export type Action =
   | { type: 'diplo'; kind: DiploKind; target: string }
   | { type: 'endTurn' };
 
-export type BuildingKind = 'gurdwara' | 'temple' | 'mosque' | 'sarai' | 'canal' | 'school' | 'bagh';
+export type BuildingKind = 'gurdwara' | 'temple' | 'mosque' | 'sarai' | 'canal' | 'school' | 'bagh' | 'road' | 'mandi';
 
 export const BUILDINGS: Record<BuildingKind, { name: string; cost: number; detail: string }> = {
   gurdwara: { name: 'Gurdwara', cost: 30, detail: 'Raise or restore a gurdwara. Piri and stability where Sikhs live.' },
@@ -62,11 +68,25 @@ export const BUILDINGS: Record<BuildingKind, { name: string; cost: number; detai
   canal: { name: 'Canal', cost: 45, detail: 'Dig or repair a canal: +10% harvest, protection in famine.' },
   school: { name: 'Pathshala and maktab', cost: 25, detail: 'Schools for all communities: stability and administration.' },
   bagh: { name: 'Bagh', cost: 35, detail: 'A great garden, like the Hazuri Bagh at Lahore: prestige and Legend.' },
+  road: { name: 'Pakki sarak', cost: 30, detail: 'A metalled road through the district: +10% trade, and armies march in faster.' },
+  mandi: { name: 'Mandi', cost: 35, detail: 'A grain and cloth market with its own ganj: +20% trade.' },
 };
+
+/** What a building costs this house (reforms make some cheaper). */
+export function buildingCost(s: GameState, f: FactionId, kind: BuildingKind): number {
+  let c = BUILDINGS[kind].cost;
+  if (kind === 'canal' && hasReform(s, f, 'canal_works')) c *= 0.6;
+  if (kind === 'road' && hasReform(s, f, 'grand_road')) c *= 0.5;
+  return Math.round(c);
+}
+
+export const TOWN_NAMES = ['Village', 'Qasba', 'Town', 'City', 'Great city'];
+/** What it costs to grow a region's town to the next level. */
+export const townCost = (s: GameState, region: string) => 40 * ((s.regions[region].town ?? 0) + 1) ** 1.4;
 
 export function fortCost(s: GameState, region: string): number {
   const lvl = s.regions[region].fort;
-  return Math.round(18 * (lvl + 1) * (FACTION_BY_ID[s.playerFaction]?.mods.fortCost ?? 1));
+  return Math.round(18 * (lvl + 1) * (factionMods(s, s.playerFaction).fortCost ?? 1));
 }
 
 export interface Result {
@@ -76,6 +96,14 @@ export interface Result {
 }
 
 export function applyAction(prev: GameState, action: Action): Result {
+  if (action.type === 'rideOn') {
+    if (prev.phase !== 'ended' || !canRideOn(prev)) return { state: prev, error: 'There is no road onward from here.' };
+    const s = structuredClone(prev);
+    s.phase = 'orders';
+    s.beyond = true;
+    chronicle(s, 'event', 'The century closed, and the story did not. The riders went on into years no dhadi had sung.', { faction: s.playerFaction, weight: 4 });
+    return { state: s };
+  }
   if (action.type === 'endTurn') {
     if (prev.phase === 'ended') return { state: prev, error: 'The game has ended.' };
     return { state: endTurn(prev) };
@@ -248,8 +276,9 @@ export function applyAction(prev: GameState, action: Action): Result {
       const b = BUILDINGS[action.kind];
       if (st.owner !== p) return err('You can only build in your own lands.');
       if (st.buildings.includes(action.kind)) return err(`There is already a ${b.name.toLowerCase()} under your patronage here.`);
-      if (fs.treasury < b.cost) return err(`That costs ${b.cost} thousand rupees.`);
-      fs.treasury -= b.cost;
+      const bc = buildingCost(s, p, action.kind);
+      if (fs.treasury < bc) return err(`That costs ${bc} thousand rupees.`);
+      fs.treasury -= bc;
       st.buildings.push(action.kind);
       const def = REGION_BY_ID[action.region];
       // Tolerance: patronage of every faith raises Piri, as it did for the Sarkar.
@@ -314,6 +343,31 @@ export function applyAction(prev: GameState, action: Action): Result {
       return { state: s };
     case 'vote':
       return castVote(s, action.gurmataId, action.yes) ? { state: s } : err('That vote cannot be cast.');
+    case 'setTax': {
+      const st = s.regions[action.region];
+      if (st.owner !== p) return err('You can only tax your own lands.');
+      st.tax = action.tax;
+      return { state: s };
+    }
+    case 'growTown': {
+      const st = s.regions[action.region];
+      if (st.owner !== p) return err('You can only build up your own lands.');
+      const lvl = st.town ?? 0;
+      if (lvl >= 4) return err('This is already a great city.');
+      if (st.control < 50 + lvl * 10) return err(`Your hold here is too weak (control ${50 + lvl * 10} needed).`);
+      const c = Math.round(townCost(s, action.region));
+      if (fs.treasury < c) return err(`That costs ${c} thousand rupees.`);
+      fs.treasury -= c;
+      st.town = lvl + 1;
+      const def = REGION_BY_ID[action.region];
+      chronicle(s, 'event', `${def.name} grew into a ${TOWN_NAMES[lvl + 1].toLowerCase()} under ${polityName(s, p)}.`, { faction: p, region: action.region, weight: lvl + 1 >= 3 ? 3 : 1 });
+      if (lvl + 1 >= 3) fs.legend += 1;
+      return { state: s };
+    }
+    case 'beginReform': {
+      const r = beginReform(s, p, action.id);
+      return r ? { state: s, info: r } : err('That reform cannot be begun now.');
+    }
     case 'proclaimEmpire': {
       if (!canUnify(s, p, 'proclamation')) return err('You cannot yet unify the Punjab: see what is still needed.');
       return { state: s, info: proclaimEmpire(s, p, 'proclamation') };

@@ -1,3 +1,4 @@
+import { factionMods } from './reforms';
 // The Sarbat Khalsa and its gurmatas.
 //
 // Twice a year, at Vaisakhi and Diwali, the misl leaders gathered at Amritsar before
@@ -98,7 +99,7 @@ function propose(s: GameState, kind: GurmataKind, proposer: FactionId, target?: 
     // The proposer's standing sways the assembly.
     if (!yes && proposer !== s.playerFaction && chance(s, 0.15)) yes = true;
     if (!yes && proposer === s.playerFaction) {
-      const pull = ((FACTION_BY_ID[proposer]?.mods.diplomacy ?? 1) - 1) + (s.factions[proposer].piri - 50) / 200 + ((s.factions[f].attitude[proposer] ?? 0) / 200);
+      const pull = ((factionMods(s, proposer).diplomacy ?? 1) - 1) + (s.factions[proposer].piri - 50) / 200 + ((s.factions[f].attitude[proposer] ?? 0) / 200);
       if (chance(s, Math.max(0, pull))) yes = true;
     }
     (yes ? g.votesFor : g.votesAgainst).push(f);

@@ -6,6 +6,7 @@ import { Banner } from '../art/Banner';
 import { makePaperCanvas } from '../art/paper';
 import { PALETTE } from '../art/palette';
 import { composeVaar, type Vaar } from '../narrative/vaar';
+import { canRideOn } from '../engine/endings';
 import { useStore } from '../store';
 
 const ENDING_NAMES: Record<string, string> = {
@@ -145,6 +146,8 @@ export async function exportVaarPng(v: Vaar, ending: string) {
 export function VaarPage() {
   const game = useStore((s) => s.game)!;
   const setScreen = useStore((s) => s.setScreen);
+  const dispatch = useStore((s) => s.dispatch);
+  const closeModal = useStore((s) => s.closeModal);
   const v = useMemo(() => composeVaar(game), [game]);
   const ending = game.ending?.kind ?? 'annexation';
   useMemo(() => {
@@ -188,6 +191,17 @@ export function VaarPage() {
             <button className="btn kesri" onClick={() => exportVaarPng(v, ending)}>
               Save the page as an image
             </button>
+            {canRideOn(game) && (
+              <button
+                className="btn neela"
+                onClick={() => {
+                  if (dispatch({ type: 'rideOn' })) closeModal();
+                }}
+                title="The world runs on, with the computer playing every other power"
+              >
+                Ride on beyond 1849
+              </button>
+            )}
             <button className="btn" onClick={() => setScreen('title')}>
               Return to the title
             </button>

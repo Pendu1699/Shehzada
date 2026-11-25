@@ -1,3 +1,4 @@
+import { aiReforms } from './reforms';
 // Faction AI. Each faction has a personality (aggression, caution, zeal, greed,
 // honour) and era-aware goals:
 //   Durrani  — come down in the cold season, plunder, go home before the heat.
@@ -396,6 +397,7 @@ export function runAI(s: GameState): void {
 
 export function runAIFor(s: GameState, f: FactionId): void {
   aiDiplomacy(s, f);
+  aiReforms(s, f);
   assignLeaders(s, f);
   aiRecruit(s, f);
   mergeArmies(s, f);

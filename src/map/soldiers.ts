@@ -71,7 +71,8 @@ export function kitFor(owner: string, unitType: string, sarkarRegular: boolean):
     const look = lookOf(owner);
     const pagg = look?.colors?.[0] ?? banner;
     if (sarkarRegular)
-      return { head: 'pagg', headColor: pagg, head2: '#C9A13B', coat: 'redcoat', coatColor: '#B83A2B', sash: '#F7F1E3', legs: '#F2E6C9', face: 'beard_moustache', beard: 0x1b1712, weapon: 'musket', shield: false, marks: look?.mark };
+      // The Fauj-i-Ain: drilled like sepoys, but in the Khalsa's saffron, never the Company's red.
+      return { head: 'pagg', headColor: pagg === '#E8870E' || pagg === '#E6C23B' ? '#1F3A68' : pagg, head2: '#C9A13B', coat: 'redcoat', coatColor: '#E07A12', sash: '#F7F1E3', legs: '#1F3A68', face: 'beard_moustache', beard: 0x1b1712, weapon: 'musket', shield: false, marks: look?.mark };
     return {
       head: 'pagg',
       headColor: pagg,

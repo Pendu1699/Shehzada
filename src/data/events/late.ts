@@ -5,7 +5,7 @@
 
 import { chronicle } from '../../engine/chronicle';
 import { collapseRisk, courtStability, newCourt } from '../../engine/court';
-import { armiesOf, armyMen, atWar, isSikh, polityName, regionsOf } from '../../engine/query';
+import { armiesOf, armyMen, atWar, isSikh, polityName, regionsOf, year } from '../../engine/query';
 import { chance } from '../../engine/rng';
 import type { GameState } from '../../engine/state';
 import { alive, fx, leaderAlive, owns, P } from './fx';
@@ -246,14 +246,18 @@ export const LATE: EventDef[] = [
     title: 'Across the Sutlej',
     kind: 'historical',
     from: { year: 1845, festival: 'diwali' },
-    to: { year: 1845, festival: 'diwali' },
+    to: { year: 1848, festival: 'diwali' },
     weight: 9,
     mood: 'ominous',
     when: (s) => {
+      // The Company wanted the Punjab. A weak or divided Darbar brings the war in
+      // 1845 as it came historically; a strong one only delays it, and each
+      // season the pressure rises until the Company comes.
       const f = sarkar(s);
-      if (!f || !alive(s, 'company')) return false;
-      const fs = s.factions[f];
-      return !!fs.flags.court_crisis || fs.foothold >= 30 || Number(fs.flags.refused_company ?? 0) >= 2 || chance(s, 0.4);
+      if (!f || !alive(s, 'company') || s.factions[f].flags.war_started) return false;
+      // The war comes in the cold season of 1845, as it did. Only the player's
+      // own choice below (with a steady court) can buy time.
+      return true;
     },
     text: () =>
       'In December the Khalsa army crosses the Sutlej. Some say the court sent it hoping it would be destroyed; some say the Company had massed its regiments at Ferozepur for exactly this. Mudki, Ferozeshah: the names of the coming fields are already waiting.',
@@ -284,6 +288,27 @@ export const LATE: EventDef[] = [
       },
     ],
     aiChoice: 0,
+  },
+  {
+    id: 'company_returns',
+    title: 'The Company crosses the Sutlej',
+    kind: 'historical',
+    from: { year: 1846, festival: 'diwali' },
+    to: { year: 1849, festival: 'vaisakhi' },
+    weight: 9,
+    mood: 'ominous',
+    when: (s) => {
+      const f = sarkar(s);
+      if (!f || !alive(s, 'company')) return false;
+      const fs = s.factions[f];
+      // Bought time runs out: perhaps a season or two, never more than 1848.
+      return !!fs.flags.war_averted_1845 && !fs.flags.war_started && (year(s) >= 1848 || chance(s, 0.55));
+    },
+    text: () =>
+      'The envoys bought a year, perhaps two. Now the Governor-General has his reasons written out and his regiments at Ferozepur, Ludhiana and Ambala. The Company’s army crosses the Sutlej.',
+    effect: (s) => {
+      startWar(s, sarkar(s)!);
+    },
   },
   {
     id: 'sobraon',

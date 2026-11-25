@@ -1,3 +1,4 @@
+import { factionMods, hasReform } from './reforms';
 // Revenue, rakhi, jagirs, langar and upkeep. All amounts are in thousands of rupees
 // per half-year turn. Every figure is built as a Breakdown so tooltips can explain it.
 
@@ -29,12 +30,18 @@ export function regionGross(s: GameState, id: RegionId): { land: number; trade: 
   const st = s.regions[id];
   const d = date(s);
   const season = d.harvest === 'rabi' ? 1 : 0.9;
-  const famine = s.regions[id].buildings.includes('canal') ? 1.1 : 1;
-  const land = def.population * def.fertility * 0.05 * season * famine * (1 - st.devastation) * (0.55 + st.stability / 220);
+  const owner = st.owner;
+  const canal = s.regions[id].buildings.includes('canal') ? (owner && hasReform(s, owner, 'canal_works') ? 1.2 : 1.1) : 1;
+  const famine = canal;
+  const town = 1 + (st.town ?? 0) * 0.08;
+  const land = def.population * def.fertility * 0.05 * season * famine * town * (1 - st.devastation) * (0.55 + st.stability / 220);
   let trade = def.trade * 2.2 * (def.gtRoad ? 1.4 : 1) * (1 - st.devastation * 0.8);
   for (const res of def.resources) trade += RESOURCE_VALUE[res] ?? 0;
   if (id === 'amritsar' && !st.desecrated.includes('harmandir')) trade += 6; // the mandis of Amritsar thrive around the shrine
   if (st.buildings.includes('sarai')) trade *= 1.15;
+  if (st.buildings.includes('road')) trade *= 1.1;
+  if (st.buildings.includes('mandi')) trade *= 1.2;
+  trade *= 1 + (st.town ?? 0) * 0.12;
   return { land, trade };
 }
 
@@ -43,12 +50,13 @@ export function regionRevenue(s: GameState, id: RegionId): Breakdown {
   const st = s.regions[id];
   const owner = st.owner;
   if (!owner) return bd([]);
-  const mods = FACTION_BY_ID[owner]?.mods ?? {};
+  const mods = factionMods(s, owner) ?? {};
   const { land, trade } = regionGross(s, id);
   const control = st.control / 100;
   const parts: Part[] = [];
-  parts.push({ label: 'Land revenue (harvest share)', value: land * control * (mods.revenue ?? 1) });
-  parts.push({ label: 'Trade and mandis', value: trade * control * (mods.trade ?? 1) });
+  const taxK = st.tax === 'heavy' ? 1.3 : st.tax === 'light' ? 0.75 : 1;
+  parts.push({ label: 'Land revenue (harvest share)', value: land * control * (mods.revenue ?? 1) * taxK });
+  parts.push({ label: 'Trade and mandis', value: trade * control * (mods.trade ?? 1) * (st.tax === 'heavy' ? 1.1 : 1) });
   if (st.rakhi && st.rakhi !== owner) parts.push({ label: `Rakhi paid to ${FACTION_BY_ID[st.rakhi]?.name ?? st.rakhi}`, value: -(land + trade) * 0.2 });
   if (st.jagir) {
     const sub = parts.reduce((t, p) => t + p.value, 0);
@@ -70,7 +78,9 @@ export function rakhiIncome(s: GameState, f: FactionId): Breakdown {
 
 export function langarCost(s: GameState, id: RegionId): number {
   const famine = !!s.factions[s.regions[id].owner ?? '']?.flags[`famine_${id}`] || s.regions[id].devastation > 0.3;
-  return r1(REGION_BY_ID[id].population * 0.03 * (famine ? 2 : 1));
+  const owner = s.regions[id].owner;
+  const endowed = owner && hasReform(s, owner, 'langar_endowment') ? 0.7 : 1;
+  return r1(REGION_BY_ID[id].population * 0.03 * (famine ? 2 : 1) * endowed);
 }
 
 export function armyUpkeep(s: GameState, f: FactionId): number {
@@ -107,7 +117,7 @@ export function factionIncome(s: GameState, f: FactionId): Breakdown {
       else if (p.label.startsWith('Jagir')) jagir += p.value;
     }
     if (r.langar) langar += langarCost(s, r.id);
-    forts += r.fort * 0.5 * (FACTION_BY_ID[f]?.mods.fortCost ?? 1);
+    forts += r.fort * 0.5 * (factionMods(s, f).fortCost ?? 1);
     patronage += r.buildings.length * 0.4;
   }
   const chief = s.factions[f].chief ? s.leaders[s.factions[f].chief!] : undefined;
@@ -157,10 +167,10 @@ export function recruitPool(s: GameState, id: RegionId, f: FactionId): Breakdown
   return b;
 }
 
-export function recruitCost(_s: GameState, f: FactionId, unitId: string, men: number): number {
+export function recruitCost(s: GameState, f: FactionId, unitId: string, men: number): number {
   const u = UNIT_TYPES[unitId];
   let c = (u.cost * men) / 100;
-  const mods = FACTION_BY_ID[f]?.mods ?? {};
+  const mods = factionMods(s, f) ?? {};
   if (u.cls === 'cavalry' && mods.recruitCost) c *= mods.recruitCost;
   if (u.cls === 'artillery' && mods.artillery) c /= mods.artillery;
   if (unitId === 'nihang' && f === 'shaheedan') c *= 0.7;
@@ -190,6 +200,10 @@ export function stabilityTarget(s: GameState, id: RegionId): number {
     t += def.faith.muslim > 60 && ['mughal', 'durrani', 'kasur', 'multan', 'peshawar', 'bahawalpur', 'malerkotla'].includes(owner) ? 10 : 0;
   }
   if (st.langar) t += 10;
+  if (st.tax === 'heavy') t -= 14;
+  if (st.tax === 'light') t += 8;
+  t += (st.town ?? 0) * 2;
+  if (hasReform(s, owner, 'adalat')) t += 6;
   t += st.buildings.length * 3;
   t -= st.devastation * 40;
   t -= (100 - st.control) * 0.2;

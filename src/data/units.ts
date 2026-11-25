@@ -358,5 +358,6 @@ export const UNIT_TYPES: Record<string, UnitType> = {
 export function canRaise(unit: UnitType, factionId: string, isSikh: boolean, isSarkar: boolean, year: number, flags: Record<string, unknown>): boolean {
   if (unit.from && year < unit.from) return false;
   if (unit.requiresFlag && !flags[unit.requiresFlag]) return false;
+  if (flags[`unlock_${unit.id}`]) return true;
   return unit.raisedBy.some((r) => r === '*' || r === factionId || (r === 'sikh' && isSikh) || (r === 'sarkar' && isSarkar));
 }

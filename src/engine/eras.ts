@@ -20,6 +20,7 @@ export const ERAS: EraDef[] = [
   { id: 'misl_raj', from: 1765 },
   { id: 'sarkar', from: 1799 },
   { id: 'twilight', from: 1839 },
+  { id: 'beyond', from: 1849 },
 ];
 
 export interface EraPage {
@@ -57,6 +58,9 @@ export function eraTitle(s: GameState, id = eraOf(year(s)).id): string {
       if (!sk) return 'The Red Ink';
       if (s.factions[sk].miri > (s.factions.company?.miri ?? 0) * 1.2) return 'The Two Empires';
       return 'Twilight of the Sarkar';
+    case 'beyond':
+      if (sk && sk === p) return 'The Khalsa Raj Endures';
+      return 'The Unwritten Years';
   }
   return '';
 }
@@ -71,6 +75,8 @@ const AHEAD: Record<string, string> = {
     'If history holds: the Afghan kings will come down once or twice more and then stop coming. The misls will divide the Punjab among themselves, and quarrel over it. In the east the Company has just been granted Bengal.',
   sarkar:
     'If history holds: a young Sukerchakia will take Lahore and make one state of the Punjab, from the Sutlej to the Khyber. The Company will reach the Sutlej in 1809 and stop there, for a time.',
+  beyond:
+    'History has nothing more to say: from here no one knows. The Company, the Afghans and every court of Hindustan will act as their rulers choose — and so will you.',
   twilight:
     'If history holds: the Maharaja will die, his heirs will die after him, and the army will rule the court. The Company waits across the Sutlej with its regiments counted.',
 };

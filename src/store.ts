@@ -11,7 +11,7 @@ import { newGame, type NewGameOptions } from './engine/setup';
 import type { GameState } from './engine/state';
 
 export type Screen = 'title' | 'setup' | 'game';
-export type Modal = null | 'ledger' | 'sarbat' | 'codex' | 'settings' | 'saves' | 'summary' | 'vaar' | 'help' | 'event' | 'darbar' | 'unify' | 'khabar';
+export type Modal = null | 'ledger' | 'sarbat' | 'codex' | 'settings' | 'saves' | 'summary' | 'vaar' | 'help' | 'event' | 'darbar' | 'unify' | 'khabar' | 'reforms';
 
 export interface Settings {
   master: number;

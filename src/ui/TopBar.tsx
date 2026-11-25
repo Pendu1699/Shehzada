@@ -141,6 +141,9 @@ export function TopBar() {
             Unify the Punjab
           </button>
         )}
+        <button className="btn small" onClick={() => openModal('reforms')} title="Reforms: the tech tree (R)">
+          Reforms{fs.flags.studying ? ' ⏳' : ''}
+        </button>
         <button className="btn small khabar-btn" onClick={() => openModal('khabar')} title="Khabar: news of the subcontinent (N)">
           Khabar
           {fresh > 0 && <span className="khabar-badge">{fresh}</span>}

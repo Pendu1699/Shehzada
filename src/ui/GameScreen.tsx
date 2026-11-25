@@ -17,6 +17,7 @@ import { EventModal } from './EventModal';
 import { Tutorial } from './Tutorial';
 import { UnifyModal } from './UnifyModal';
 import { KhabarModal } from './KhabarModal';
+import { ReformsModal } from './ReformsModal';
 import { MapMenu, MouseHints } from './MapMenu';
 
 function HoverCard() {
@@ -144,6 +145,7 @@ export function GameScreen() {
       else if (k === 'c') openModal('codex');
       else if (k === 'b') openModal('darbar');
       else if (k === 'n') openModal('khabar');
+      else if (k === 'r') openModal('reforms');
       else if (e.key === '?') st.restartTutorial();
       else if (k === 'h') {
         const home = Object.values(game.regions).find((r) => r.owner === game.playerFaction);
@@ -233,6 +235,7 @@ export function GameScreen() {
           {modal === 'darbar' && <DarbarModal />}
           {modal === 'unify' && <UnifyModal />}
           {modal === 'khabar' && <KhabarModal />}
+          {modal === 'reforms' && <ReformsModal />}
           {!modal && game.pendingEvents.length > 0 && <EventModal />}
         </>
       )}

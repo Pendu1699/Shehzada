@@ -300,3 +300,57 @@ describe('the Khabar', () => {
     expect(new Set(k.map((x) => x.desk)).size).toBeGreaterThan(3);
   });
 });
+
+describe('the war of 1845, the years beyond, reforms and taxes', () => {
+  it('brings the Company across the Sutlej in the cold season of 1845', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { eligible } = await import('../src/engine/events');
+    const { EVENT_BY_ID } = await import('../src/data/events/index');
+    const s = newGame({ scenarioId: 's1839', playerFaction: 'sukerchakia', seed: 2, difficulty: 'gentle' });
+    s.turn = (1845 - s.startYear) * 2 + (s.startFestival === 'diwali' ? 0 : 1);
+    expect(eligible(s, EVENT_BY_ID.first_war)).not.toBeNull();
+  });
+  it('lets the player ride on past 1849 with the world still running', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { endTurn } = await import('../src/engine/turn');
+    const { applyAction } = await import('../src/engine/actions');
+    const { date } = await import('../src/engine/query');
+    let s = newGame({ scenarioId: 's1839', playerFaction: 'sukerchakia', seed: 2 });
+    s.phase = 'ended';
+    s.ending = { kind: 'sovereign', turn: s.turn };
+    s.turn = (1849 - s.startYear) * 2;
+    const r = applyAction(s, { type: 'rideOn' });
+    expect(r.error).toBeUndefined();
+    s = r.state;
+    for (let i = 0; i < 3; i++) s = endTurn(s);
+    expect(s.phase).not.toBe('ended');
+    expect(date(s).year).toBeGreaterThan(1849);
+  });
+  it('studies a reform over seasons and applies its bonus', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { applyAction } = await import('../src/engine/actions');
+    const { endTurn } = await import('../src/engine/turn');
+    const { factionMods, hasReform } = await import('../src/engine/reforms');
+    let s = newGame({ scenarioId: 's1767', playerFaction: 'bhangi', seed: 6 });
+    s.factions.bhangi.treasury = 500;
+    s = applyAction(s, { type: 'beginReform', id: 'revenue_daftar' }).state;
+    expect(s.factions.bhangi.flags.studying).toBe('revenue_daftar');
+    for (let i = 0; i < 3; i++) s = endTurn(s);
+    expect(hasReform(s, 'bhangi', 'revenue_daftar')).toBe(true);
+    expect(factionMods(s, 'bhangi').revenue).toBeGreaterThan(1);
+  });
+  it('heavy tax raises revenue and lowers stability; towns grow revenue', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { regionRevenue, stabilityTarget } = await import('../src/engine/economy');
+    const s = newGame({ scenarioId: 's1767', playerFaction: 'bhangi', seed: 6 });
+    const r = Object.values(s.regions).find((x) => x.owner === 'bhangi')!.id;
+    const base = regionRevenue(s, r).total;
+    const baseStab = stabilityTarget(s, r);
+    s.regions[r].tax = 'heavy';
+    expect(regionRevenue(s, r).total).toBeGreaterThan(base);
+    expect(stabilityTarget(s, r)).toBeLessThan(baseStab);
+    s.regions[r].tax = 'normal';
+    s.regions[r].town = 3;
+    expect(regionRevenue(s, r).total).toBeGreaterThan(base);
+  });
+});

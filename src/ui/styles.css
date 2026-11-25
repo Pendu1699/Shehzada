@@ -1779,3 +1779,80 @@ button.chip {
     flex-wrap: wrap;
   }
 }
+.battle-stage {
+  height: auto;
+  aspect-ratio: 800 / 240;
+}
+.battle-canvas canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.battle-counts {
+  position: absolute;
+  top: 6px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.02em;
+  color: var(--ink);
+  text-shadow: 0 0 4px #f2e6c9;
+  pointer-events: none;
+}
+
+/* ── Reforms ─────────────────────────────────────────────────────────────── */
+
+.reform-tree {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+@media (max-width: 800px) {
+  .reform-tree {
+    grid-template-columns: 1fr;
+  }
+}
+.reform-branch h3 {
+  margin: 0 0 6px;
+  font-size: 1.05em;
+  border-bottom: 1px solid var(--gold);
+}
+.reform-card {
+  border: 1px solid rgba(140, 106, 30, 0.5);
+  border-left: 4px solid var(--gold);
+  background: rgba(255, 250, 235, 0.6);
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  position: relative;
+}
+.reform-card + .reform-card::before {
+  content: '';
+  position: absolute;
+  left: 18px;
+  top: -9px;
+  height: 8px;
+  border-left: 2px solid rgba(140, 106, 30, 0.5);
+}
+.reform-card.done {
+  border-left-color: var(--mehndi);
+  background: rgba(94, 107, 46, 0.12);
+}
+.reform-card.studying {
+  border-left-color: var(--kesri);
+  background: rgba(232, 135, 14, 0.12);
+}
+.reform-card.locked {
+  opacity: 0.6;
+}
+.reform-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.02em;
+}
+.reform-foot {
+  margin-top: 4px;
+}
+svg[aria-label="portrait"] { flex: none; }

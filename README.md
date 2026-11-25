@@ -59,6 +59,15 @@ all over the subcontinent, written like an old court newsletter.
 **Unifying the Punjab.** The orange **Unify the Punjab** button shows what it takes to found the
 Sikh Empire. It's meant to be hard: you need a lot of land and both Miri and Piri high.
 
+**Growing your state.**
+- *Reforms* (top bar, or **R**): a tech tree in three branches: the army, the treasury and the people.
+  Pick one at a time; it costs silver and takes a few seasons.
+- *Your lands:* click one of your regions to set its **tax** (light, normal or heavy), **grow its town**
+  from a village up to a great city, and build roads, markets, canals, schools and places of worship.
+
+**After 1849.** When the century ends you get your Vaar, and if your house still stands you can
+choose **Ride on beyond 1849**: the world carries on, with the computer playing every other power.
+
 **Not sure what something means?** Hover your mouse over it — almost everything explains
 itself. The **Codex** button explains the Punjabi words.
 

@@ -1,3 +1,4 @@
+import { factionMods } from './reforms';
 import { PUNJAB_REGION_IDS } from '../data/regions';
 // Miri and Piri: the two swords.
 //
@@ -51,7 +52,7 @@ export function changePiri(s: GameState, f: FactionId, delta: number, reason: st
   const fs = s.factions[f];
   if (!fs) return 0;
   let d = delta;
-  if (d > 0) d *= FACTION_BY_ID[f]?.mods.piriGain ?? 1;
+  if (d > 0) d *= factionMods(s, f).piriGain ?? 1;
   const before = fs.piri;
   fs.piri = clamp(fs.piri + d, 0, 100);
   const applied = fs.piri - before;

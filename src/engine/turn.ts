@@ -1,3 +1,4 @@
+import { reformsTurn } from './reforms';
 import { gatherKhabar, report } from './khabar';
 import { eraTransition } from './eras';
 import { applyHistory } from './history';
@@ -392,6 +393,7 @@ export function endTurn(prev: GameState): GameState {
   log.notes.push(...courtTurn(s));
   log.notes.push(...spawnInvasions(s));
   log.notes.push(...applyHistory(s));
+  log.notes.push(...reformsTurn(s));
   gatherKhabar(s);
   log.notes.push(...joshTurn(s));
   regionTurn(s);

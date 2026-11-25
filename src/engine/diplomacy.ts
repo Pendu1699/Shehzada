@@ -1,3 +1,4 @@
+import { factionMods } from './reforms';
 // Diplomacy: alliances, marriages, tribute and safe passage.
 // Marriage alliances were central to misl politics (the Kanhaiya–Sukerchakia match
 // through Sada Kaur is the famous example); the Kanhaiya misl is better at them.
@@ -31,7 +32,7 @@ export function diploChance(s: GameState, kind: DiploKind, target: FactionId): n
   if (!them?.alive || target === p) return 0;
   if (atWar(s, p, target) && kind !== 'tribute') return 0;
   const att = them.attitude[p] ?? 0;
-  const dip = FACTION_BY_ID[p]?.mods.diplomacy ?? 1;
+  const dip = factionMods(s, p).diplomacy ?? 1;
   const kin = isSikh(p) && isSikh(target) ? 0.15 : 0;
   const ratio = me.miri / Math.max(1, them.miri);
   let c = 0;
@@ -44,7 +45,7 @@ export function diploChance(s: GameState, kind: DiploKind, target: FactionId): n
     case 'marriage':
       // Marriage alliances joined Sikh houses with each other and with the hill rajas.
       if (!isSikh(target) && !['hill_states', 'kangra', 'jammu'].includes(target)) return 0;
-      c = (0.35 + att / 200 + kin) * (FACTION_BY_ID[p]?.mods.marriage ?? 1);
+      c = (0.35 + att / 200 + kin) * (factionMods(s, p).marriage ?? 1);
       break;
     case 'tribute':
       if (!borders(s, p, target) || ratio < 1.5) return 0;
@@ -89,7 +90,7 @@ export function diplomacy(s: GameState, kind: DiploKind, target: FactionId): { o
       return { ok, text: `${name} declined the alliance.` };
     case 'marriage':
       if (ok) {
-        them.attitude[p] = clamp((them.attitude[p] ?? 0) + 40 * (FACTION_BY_ID[p]?.mods.marriage ?? 1), -100, 100);
+        them.attitude[p] = clamp((them.attitude[p] ?? 0) + 40 * (factionMods(s, p).marriage ?? 1), -100, 100);
         me.attitude[target] = clamp((me.attitude[target] ?? 0) + 30, -100, 100);
         me.flags[`marriage_${target}`] = s.turn;
         if ((them.attitude[p] ?? 0) > 45) setRel('alliance');
