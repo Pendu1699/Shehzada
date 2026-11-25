@@ -18,6 +18,7 @@ import { Tutorial } from './Tutorial';
 import { UnifyModal } from './UnifyModal';
 import { KhabarModal } from './KhabarModal';
 import { Alerts } from './Alerts';
+import { MapModes } from './MapModes';
 import { ReformsModal } from './ReformsModal';
 import { MapMenu, MouseHints } from './MapMenu';
 
@@ -196,6 +197,7 @@ export function GameScreen() {
       <HoverCard />
       <MouseHints moveMode={moveMode} />
       <Alerts />
+      <MapModes />
       <MapMenu />
       <div className="zoom-ctl">
         <button className="btn small neela" onClick={() => getMap()?.zoomBy(1.25)} aria-label="Zoom in">

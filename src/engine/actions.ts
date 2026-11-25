@@ -1,3 +1,4 @@
+import { foundUnion, joinChance, joinUnion, leaveUnion, sendAid, unionOf } from './unions';
 import { annex, makeVassal, overlordOf, release, submissionChance } from './vassals';
 import { beginReform, factionMods, hasReform } from './reforms';
 import { canRideOn } from './endings';
@@ -49,6 +50,10 @@ export type Action =
   | { type: 'propose'; kind: string; target?: string }
   | { type: 'proclaimEmpire' }
   | { type: 'rideOn' }
+  | { type: 'foundUnion'; name: string }
+  | { type: 'inviteUnion'; target: string }
+  | { type: 'leaveUnion' }
+  | { type: 'sendAid'; target: string; amount: number }
   | { type: 'demandSubmission'; target: string }
   | { type: 'setVassalTribute'; target: string; level: 'light' | 'normal' | 'heavy' }
   | { type: 'releaseVassal'; target: string }
@@ -169,7 +174,9 @@ export function applyAction(prev: GameState, action: Action): Result {
     }
     case 'recruit': {
       const st = s.regions[action.region];
-      if (st.owner !== p) return err('You can only raise men in your own lands.');
+      // In a union partner's land you may raise men too, at a higher price.
+      const partner = !!st.owner && st.owner !== p && !!unionOf(s, p)?.members.includes(st.owner);
+      if (st.owner !== p && !partner) return err('You can only raise men in your own lands, or a union partner’s.');
       if (st.control < 40) return err('Your hold on this region is too weak to raise men here.');
       const u = UNIT_TYPES[action.unit];
       if (!u || !canRaise(u, p, isSikh(p), fs.sarkar, year(s), fs.flags)) return err('You cannot raise that kind of troops.');
@@ -178,7 +185,7 @@ export function applyAction(prev: GameState, action: Action): Result {
       const men = Math.floor(action.men / 100) * 100;
       if (men <= 0) return err('Raise at least a hundred men.');
       if (men > pool) return err(`Only ${Math.max(0, pool)} men will answer the call here this season.`);
-      const cost = recruitCost(s, p, action.unit, men);
+      const cost = Math.round(recruitCost(s, p, action.unit, men) * (partner ? 1.25 : 1) * 10) / 10;
       if (cost > fs.treasury) return err(`That would cost ${cost} thousand rupees; the treasury holds ${Math.floor(fs.treasury)}.`);
       fs.treasury -= cost;
       fs.flags[`recruited_${action.region}_${s.turn}`] = used + men;
@@ -348,6 +355,32 @@ export function applyAction(prev: GameState, action: Action): Result {
       return { state: s };
     case 'vote':
       return castVote(s, action.gurmataId, action.yes) ? { state: s } : err('That vote cannot be cast.');
+    case 'foundUnion': {
+      const u = foundUnion(s, p, action.name);
+      return u ? { state: s, info: `The ${u.name} is founded. Invite others to join it.` } : err('You already belong to a union.');
+    }
+    case 'inviteUnion': {
+      const u = unionOf(s, p);
+      if (!u) return err('Found a union first.');
+      if (fs.flags[`diplo_${action.target}_${s.turn}`]) return err('Your envoys have already been there this season.');
+      const pr = joinChance(s, action.target);
+      if (pr <= 0) return err('They will not hear of it.');
+      fs.flags[`diplo_${action.target}_${s.turn}`] = true;
+      if (chance(s, pr)) {
+        joinUnion(s, u, action.target);
+        return { state: s, info: `${polityName(s, action.target)} joins the ${u.name}.` };
+      }
+      return { state: s, info: `${polityName(s, action.target)} declined to join the ${u.name}.` };
+    }
+    case 'leaveUnion': {
+      if (!unionOf(s, p)) return err('You are in no union.');
+      leaveUnion(s, p);
+      return { state: s, info: 'You have left the union.' };
+    }
+    case 'sendAid': {
+      const r = sendAid(s, action.target, action.amount);
+      return r ? { state: s, info: r } : err('You cannot send that.');
+    }
     case 'demandSubmission': {
       const t = action.target;
       if (fs.flags[`diplo_${t}_${s.turn}`]) return err('Your envoys have already been there this season.');

@@ -12,6 +12,7 @@ import { armiesOf, armyMen, date, isSikh, polityName, regionsOf, relation, year 
 import { deleteSlot, listSlots, loadFromSlot, saveToSlot, serialize } from '../engine/save';
 import { ANNEX_AFTER, TRIBUTE_RATE, annexCost, canAnnex, liberty, overlordOf, submissionChance, tributeLevel, type TributeLevel } from '../engine/vassals';
 import { useStore } from '../store';
+import { UnionPanel } from './UnionPanel';
 import { Heading, Modal, Tip, fmt, rs, signed } from './common';
 
 export function SummaryModal() {
@@ -126,6 +127,7 @@ export function LedgerModal() {
     ['armies', 'Armies'],
     ['leaders', 'Sardars'],
     ['diplomacy', 'Diplomacy'],
+    ['union', 'Union'],
     ['chronicle', 'Chronicle'],
   ];
   return (
@@ -414,6 +416,7 @@ export function LedgerModal() {
               </table>
             </>
           )}
+          {tab === 'union' && <UnionPanel />}
           {tab === 'chronicle' && (
             <>
               <Heading en="Chronicle" pa="ਤਵਾਰੀਖ਼" />

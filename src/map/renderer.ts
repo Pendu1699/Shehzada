@@ -22,6 +22,8 @@ import { UNIT_TYPES } from '../data/units';
 import { EMPIRE_FIELD, empireEdge } from '../art/empire';
 import { flagOf } from '../art/flags';
 import { NIHANG_LEADERS } from '../art/Dastar';
+import { modeColor, type MapMode } from './mapModes';
+import { regionGross } from '../engine/economy';
 import { kitFor, kitKey, soldierFoot, soldierGun, soldierHorse } from './soldiers';
 import { bbox, meander, pointInPoly, polyPoints, smoothLine, type Pt } from './geometry';
 import {
@@ -64,6 +66,7 @@ export interface MapView {
   colorBlind?: boolean;
   reducedMotion?: boolean;
   mourning?: boolean;
+  mapMode?: MapMode;
 }
 
 interface RegionGfx {
@@ -785,6 +788,24 @@ export class PaintedMap {
     this.diyaSpots = [];
     const player = s.playerFaction;
     const d = date(s);
+    // Map views other than the painting: a flat, strong colouring of every region.
+    const mode = this.view.mapMode ?? 'painted';
+    this.layers.ink.visible = mode === 'painted';
+    if (mode !== 'painted') {
+      const maxWealth = Math.max(...REGIONS.map((r) => {
+        const gr = regionGross(s, r.id);
+        return gr.land + gr.trade;
+      }));
+      for (const r of REGIONS) {
+        const geo = GEO.regions[r.id];
+        const col = modeColor(s, mode, r.id, (f) => this.factionColor(f), maxWealth);
+        if (!col) continue;
+        g.poly(geo.poly).fill({ color: hexToNum(col), alpha: 0.82 });
+        b.poly(geo.poly).stroke({ width: 0.9, color: 0x1b1712, alpha: 0.45 });
+        if (s.regions[r.id].owner === player) gold.poly(geo.poly).stroke({ width: 2.2, color: PALETTE.gold, alpha: 0.95 });
+      }
+      return;
+    }
     for (const r of REGIONS) {
       const st = s.regions[r.id];
       const geo = GEO.regions[r.id];

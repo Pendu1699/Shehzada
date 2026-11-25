@@ -23,6 +23,7 @@ export interface Settings {
   reducedMotion: boolean;
   autosave: boolean;
   tutorial: boolean;
+  mapMode: import('./map/mapModes').MapMode;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -35,6 +36,7 @@ const DEFAULT_SETTINGS: Settings = {
   reducedMotion: false,
   autosave: true,
   tutorial: true,
+  mapMode: 'painted',
 };
 
 function loadSettings(): Settings {

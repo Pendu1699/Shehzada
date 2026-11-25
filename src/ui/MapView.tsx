@@ -125,7 +125,7 @@ export function MapView({ moveMode, onMoveIssued }: { moveMode: boolean; onMoveI
       if (!alive) return;
       const s = useStore.getState();
       if (s.game) {
-        map.update(s.game, { selectedRegion: s.selRegion, selectedArmy: s.selArmy, colorBlind: s.settings.colorBlind, reducedMotion: s.settings.reducedMotion });
+        map.update(s.game, { selectedRegion: s.selRegion, selectedArmy: s.selArmy, colorBlind: s.settings.colorBlind, reducedMotion: s.settings.reducedMotion, mapMode: s.settings.mapMode });
         const army = Object.values(s.game.armies).find((a) => a.owner === s.game!.playerFaction);
         const home = army?.region ?? Object.values(s.game.regions).find((r) => r.owner === s.game!.playerFaction)?.id;
         if (home) map.focusOn(home, 2.2);
@@ -146,10 +146,11 @@ export function MapView({ moveMode, onMoveIssued }: { moveMode: boolean; onMoveI
       selectedArmy: selArmy,
       preview,
       colorBlind: settings.colorBlind,
+      mapMode: settings.mapMode,
       reducedMotion: settings.reducedMotion,
       mourning: game.josh.active && game.josh.turnsLeft >= 3,
     });
-  }, [game, selRegion, selArmy, settings.colorBlind, settings.reducedMotion]);
+  }, [game, selRegion, selArmy, settings.colorBlind, settings.reducedMotion, settings.mapMode]);
 
   useEffect(() => {
     if (!mapInstance) return;

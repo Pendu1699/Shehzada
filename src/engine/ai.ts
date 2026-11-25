@@ -91,6 +91,12 @@ function aiRecruit(s: GameState, f: FactionId) {
   let budget = Math.max(0, fs.treasury - reserve) * (0.4 + (personality?.aggression ?? 0.5) * 0.4);
   // Don't build armies the treasury can't feed.
   if (f !== 'company' && men > 0 && fs.lastIncome < 0) budget = 0;
+  // Silver sent by a union partner goes on soldiers.
+  const aid = Number(fs.flags.aid_for_army ?? 0);
+  if (aid) {
+    budget += aid;
+    delete fs.flags.aid_for_army;
+  }
   if (budget < 3) return;
   const regions = shuffle(s, regionsOf(s, f).filter((r) => s.regions[r].control >= 40));
   const mix = unitMix(s, f);

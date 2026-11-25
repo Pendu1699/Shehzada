@@ -397,3 +397,31 @@ describe('alerts and puppets', () => {
     expect(s.factions.nakai.alive).toBe(false);
   });
 });
+
+describe('alliance unions', () => {
+  it('founds a union, takes members, calls them to war, and lets the player recruit in their lands', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { applyAction } = await import('../src/engine/actions');
+    const { joinUnion, unionOf, unionTurn } = await import('../src/engine/unions');
+    let s = newGame({ scenarioId: 's1767', playerFaction: 'bhangi', seed: 5 });
+    s = applyAction(s, { type: 'foundUnion', name: 'League of the Doabs' }).state;
+    const u = unionOf(s, 'bhangi')!;
+    expect(u.name).toBe('League of the Doabs');
+    joinUnion(s, u, 'kanhaiya');
+    expect(s.factions.bhangi.relations.kanhaiya).toBe('alliance');
+    // An enemy of one is the enemy of all (members answer with good odds each season).
+    s.factions.kanhaiya.relations.durrani = 'war';
+    s.factions.durrani.relations.kanhaiya = 'war';
+    for (let i = 0; i < 8 && s.factions.kanhaiya.relations.durrani !== 'war'; i++) unionTurn(s);
+    expect(s.factions.kanhaiya.relations.durrani).toBe('war');
+    // Raise men in the partner's land.
+    const r = Object.values(s.regions).find((x) => x.owner === 'kanhaiya' && x.control >= 40)!;
+    s.factions.bhangi.treasury = 500;
+    const res = applyAction(s, { type: 'recruit', region: r.id, unit: 'ghorchare', men: 200 });
+    expect(res.error).toBeUndefined();
+    expect(Object.values(res.state.armies).some((a) => a.owner === 'bhangi' && a.region === r.id)).toBe(true);
+    // Aid.
+    const aid = applyAction(res.state, { type: 'sendAid', target: 'kanhaiya', amount: 20 });
+    expect(aid.state.factions.kanhaiya.flags.aid_for_army).toBe(20);
+  });
+});

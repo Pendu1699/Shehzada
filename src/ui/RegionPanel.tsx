@@ -7,6 +7,7 @@ import { BUILDINGS, TOWN_NAMES, buildingCost, fortCost, townCost, type BuildingK
 import { rakhiChance } from '../engine/conquest';
 import { langarCost, recruitCost, recruitPool, regionRevenue } from '../engine/economy';
 import { armiesIn, armyMen, atWar, isSikh, polityName, relation, year } from '../engine/query';
+import { unionOf } from '../engine/unions';
 import { useStore } from '../store';
 import { Bar, BreakdownView, Folio, Tip, fmt, rs } from './common';
 
@@ -289,6 +290,14 @@ export function RegionPanel({ id }: { id: string }) {
           </div>
           {st.control >= 40 ? <Recruit region={id} /> : <p className="small muted">Your hold here is too weak to raise men (control below 40).</p>}
         </>
+      )}
+      {!mine && st.owner && unionOf(game, p)?.members.includes(st.owner) && st.control >= 40 && (
+        <div className="section">
+          <div className="small" style={{ color: 'var(--mehndi)', fontWeight: 600 }}>
+            A union partner’s land: you may raise men here at a quarter more cost.
+          </div>
+          <Recruit region={id} />
+        </div>
       )}
       {!mine && seen && (
         <div className="section">

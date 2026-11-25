@@ -1,3 +1,4 @@
+import { unionTurn } from './unions';
 import { alert, vassalTurn } from './vassals';
 import { reformsTurn } from './reforms';
 import { gatherKhabar, report } from './khabar';
@@ -403,6 +404,7 @@ export function endTurn(prev: GameState): GameState {
   regionTurn(s);
   tributeTurn(s);
   vassalTurn(s);
+  unionTurn(s);
   const incomeParts: { label: string; value: number }[] = [];
   for (const f of Object.values(s.factions)) {
     if (!f.alive) continue;

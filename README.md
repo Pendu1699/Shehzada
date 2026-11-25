@@ -70,6 +70,13 @@ Sikh Empire. It's meant to be hard: you need a lot of land and both Miri and Pir
 beating): it keeps its lands, fights beside you and pays the tribute you choose (10, 20 or 35%).
 Heavy tribute makes it restless — at full liberty desire it revolts. After 10 seasons you can annex a loyal puppet.
 
+**Unions.** In **Bahi-khata → Union** you can found a named league and invite other houses. Members
+are allies, ride to war when any one of them is attacked, let you raise men in their lands, and
+accept silver from you to build their own armies.
+
+**Map views.** Buttons at the bottom-left switch the map between **Painted**, **Countries**,
+**Alliances**, **Terrain**, **Faith** and **Wealth**, each with a small legend.
+
 **After 1849.** When the century ends you get your Vaar, and if your house still stands you can
 choose **Ride on beyond 1849**: the world carries on, with the computer playing every other power.
 
