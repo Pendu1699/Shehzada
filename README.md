@@ -1,4 +1,4 @@
-# Raj Karega Khalsa · ਰਾਜ ਕਰੇਗਾ ਖ਼ਾਲਸਾ
+# Shehzada · ਸ਼ਹਿਜ਼ਾਦਾ
 
 A browser-based, turn-based grand strategy game of the Punjab from the formation of
 the Dal Khalsa (Vaisakhi 1748) to the annexation of 1849. Lead a Sikh misl through a

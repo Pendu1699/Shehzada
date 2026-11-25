@@ -1,4 +1,4 @@
-# Raj Karega Khalsa — Development Plan
+# Shehzada — Development Plan
 
 This is the working plan for the game described in the design brief. It covers the architecture, the data model and the milestones. It is updated as milestones land, and the **Status** column at the bottom is the source of truth for what is done.
 

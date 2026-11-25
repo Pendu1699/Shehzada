@@ -174,5 +174,6 @@ museum collections of Mughal and Peshwa-era painting.
 - The Gurus are never depicted; they are referred to with "Ji".
 - No Gurbani is quoted, paraphrased or invented. The dhadi's text is original prose.
 - No Sikh faction has any option to desecrate; this is enforced in code and tested.
-- The title "Raj Karega Khalsa" is the name given in the design brief; the game does not
-  quote the rest of the dohra in which the phrase appears.
+- The game is called *Shehzada* ("prince", the young heir of a house: the sardar you play
+  inherits a misl and a century). The phrase "Raj karega Khalsa", which the game uses as a
+  historical saying, is not quoted further: the rest of the dohra in which it appears is left out.

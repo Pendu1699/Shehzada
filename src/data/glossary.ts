@@ -76,6 +76,6 @@ export const GLOSSARY: GlossaryEntry[] = [
   { id: 'to_yo', term: 'To-yo', translit: 'To-yo', gloss: 'The battlefield in western Tibet where Zorawar Singh died in December 1841.' },
 ];
 
-export const TITLE_GURMUKHI = 'ਰਾਜ ਕਰੇਗਾ ਖ਼ਾਲਸਾ';
+export const TITLE_GURMUKHI = 'ਸ਼ਹਿਜ਼ਾਦਾ';
 export const PUNJAB_GURMUKHI = 'ਪੰਜਾਬ';
 export const G = Object.fromEntries(GLOSSARY.map((g) => [g.id, g]));

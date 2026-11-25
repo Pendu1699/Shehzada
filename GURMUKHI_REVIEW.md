@@ -10,7 +10,7 @@ spelled in more than one way in Gurmukhi).
 
 | English | Gurmukhi | Status |
 |---|---|---|
-| Raj Karega Khalsa (title) | ਰਾਜ ਕਰੇਗਾ ਖ਼ਾਲਸਾ | confident |
+| Shehzada (title) | ਸ਼ਹਿਜ਼ਾਦਾ | **check** |
 | Punjab | ਪੰਜਾਬ | confident |
 | Khalsa | ਖ਼ਾਲਸਾ | confident (also written ਖਾਲਸਾ without the nukta) |
 | Panth | ਪੰਥ | confident |

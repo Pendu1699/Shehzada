@@ -11,7 +11,7 @@ export function serialize(s: GameState): string {
 
 export function deserialize(json: string): GameState {
   const s = JSON.parse(json) as GameState;
-  if (!s || typeof s !== 'object' || !s.regions || !s.factions) throw new Error('This is not a Raj Karega Khalsa save.');
+  if (!s || typeof s !== 'object' || !s.regions || !s.factions) throw new Error('This is not a Shehzada save.');
   return migrate(s);
 }
 

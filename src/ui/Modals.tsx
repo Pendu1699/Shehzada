@@ -464,7 +464,7 @@ export function SavesModal() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `raj-karega-khalsa-${game.playerFaction}-${date(game).year}.json`;
+    a.download = `shehzada-${game.playerFaction}-${date(game).year}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };

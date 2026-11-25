@@ -39,7 +39,7 @@ export function TitleScreen() {
       <div className="folio title-card">
         <div className="folio-inner" style={{ overflow: 'visible' }}>
           <p className="g-title">{TITLE_GURMUKHI}</p>
-          <h1 className="e-title">Raj Karega Khalsa</h1>
+          <h1 className="e-title">Shehzada</h1>
           <div className="subtitle">The Punjab, 1748 – 1849</div>
           <div className="rule" />
           <div className="title-menu">
