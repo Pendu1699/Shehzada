@@ -12,6 +12,7 @@
 
 import { REGION_BY_ID } from '../data/regions';
 import { chronicle } from './chronicle';
+import { report } from './khabar';
 import { year } from './query';
 import type { GameState } from './state';
 
@@ -131,6 +132,7 @@ export function applyHistory(s: GameState): string[] {
     if (!moved && !bent) continue;
     const text = bent ? (st.bent ?? `${st.text} — but not where the Khalsa held the land.`) : st.text;
     chronicle(s, 'event', text, { weight: bent ? 6 : 2, region: st.regions[0] });
+    report(s, bent ? 'History turns aside' : headlineFor(st), text, { region: st.regions[0], desk: st.owner === 'company' && !bent ? 'company' : undefined, weight: 3 });
     notes.push(text);
     // Powers left with no land and no army leave the stage.
     for (const f of Object.values(s.factions)) {
@@ -141,4 +143,10 @@ export function applyHistory(s: GameState): string[] {
     }
   }
   return notes;
+}
+
+function headlineFor(st: HistoryStep): string {
+  const first = REGION_BY_ID[st.regions[0]]?.name ?? st.regions[0];
+  if (st.owner === 'company') return st.regions.length > 2 ? 'The red ink spreads' : `${first} to the Company`;
+  return st.regions.length > 2 ? 'Frontiers redrawn' : `News from ${first}`;
 }

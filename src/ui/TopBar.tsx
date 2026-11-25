@@ -46,6 +46,7 @@ export function TopBar() {
   const openModal = useStore((s) => s.openModal);
   const restartTutorial = useStore((s) => s.restartTutorial);
   const p = game.playerFaction;
+  const fresh = (game.khabar ?? []).filter((k) => k.turn === game.turn && k.weight >= 2).length;
   const fs = game.factions[p];
   const d = date(game);
   const inc = factionIncome(game, p);
@@ -140,6 +141,10 @@ export function TopBar() {
             Unify the Punjab
           </button>
         )}
+        <button className="btn small khabar-btn" onClick={() => openModal('khabar')} title="Khabar: news of the subcontinent (N)">
+          Khabar
+          {fresh > 0 && <span className="khabar-badge">{fresh}</span>}
+        </button>
         <button className="btn small" data-tut="sarbat" onClick={() => openModal('sarbat')} title="Sarbat Khalsa (K)">
           Sarbat Khalsa
         </button>

@@ -127,6 +127,7 @@ export function newGame(opts: NewGameOptions): GameState {
     josh: { active: false, turnsLeft: 0 },
     chronicle: [],
     battles: [],
+    khabar: [],
     lastBattles: [],
     pendingEvents: [],
     firedEvents: {},

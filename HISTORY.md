@@ -145,6 +145,32 @@ show. Useful references: the National Army Museum's pages on the armies of the E
 and Indian armies in art; the Royal Society's Afghan portraits after James Rattray (1840s); and
 museum collections of Mughal and Peshwa-era painting.
 
+## Flags
+
+The Sikh Empire flag follows the Sarkar-i-Khalsa's own standard: a saffron pennant with a
+golden sun, a green border worked with a gold vine, and gold trefoils on the field. Each house
+that unifies the Punjab in the game flies its own version (border in its colour, its old device
+in the hoist); only the Sukerchakia version is historical.
+
+Few misl banners survive and none is securely documented. The misl flags are game designs built
+from what each misl was known for: the Bhangis (said to be named for bhang, and the first to raise
+a flag over the Darbar Sahib, in 1771) a bhang leaf; the Nishanwalias, who carried the blue nishans
+of the Dal Khalsa, two crossed Nishan Sahibs; the Ramgarhias the fort of Ram Rauni and a carpenter's
+tesa; the Singhpurias the hand-fan Nawab Kapur Singh was using in sewa when the nawabship was
+offered him; the Karorasinghias a gate of Delhi for Baghel Singh; the Shaheedan the kirpans, dhal
+and katar of the martyrs; the Phulkians a flower for Baba Phul. Known flags of other powers are
+followed where they exist: the East India Company's red and white stripes with the Union canton,
+the Maratha bhagwa jhenda, Nepal's double pennant, the Asaf Jahi flag with its kulcha, the lion
+of Kandy.
+
+## The Khabar
+
+Mughal provincial and court news-writers (akhbar-navis, waqia-navis) sent newsletters (akhbarat)
+from across the empire; the Rajput courts, the Peshwas and Ranjit Singh kept them too. The game's
+Khabar collects the season's news in that spirit: dated reports of real events across the
+subcontinent (1748–1848), the battles, conquests and deaths of the game itself, the timeline
+beyond the Punjab, and invented bazaar talk.
+
 ## Deliberate simplifications
 
 - **Map.** Sixty-one regions stand in for hundreds of parganas of the Punjab, and eighty-four

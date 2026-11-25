@@ -3,7 +3,7 @@
 import { FACTION_BY_ID } from '../data/factions';
 
 /** The saffron of the Sikh Empire's flag. */
-export const EMPIRE_FIELD = '#EBA22E';
+export const EMPIRE_FIELD = '#DC4A0E';
 
 /** The edge colour of a house's empire flag: its own field, or its band if that is too close to saffron. */
 export function empireEdge(faction: string): string {
@@ -21,7 +21,7 @@ export const EMPIRE_VARIANT: Record<string, { edge: string; emblem: string }> = 
   bhangi: { edge: '#1F3A68', emblem: 'gun' },
   ramgarhia: { edge: '#1B1712', emblem: 'fort' },
   kanhaiya: { edge: '#B83A2B', emblem: 'lotus' },
-  sukerchakia: { edge: '#5E6B2E', emblem: 'horse' },
+  sukerchakia: { edge: '#1E7A1E', emblem: 'lion' },
   nakai: { edge: '#7A3B69', emblem: 'horse' },
   dallewalia: { edge: '#2F6F73', emblem: 'spear' },
   nishanwalia: { edge: '#1F3A68', emblem: 'lion' },

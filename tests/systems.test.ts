@@ -287,3 +287,16 @@ describe('unifying the Punjab', () => {
     expect(s.factions[joiner].alive).toBe(false);
   });
 });
+
+describe('the Khabar', () => {
+  it('fills with dated news, history and bazaar talk as seasons pass', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { endTurn } = await import('../src/engine/turn');
+    let s = newGame({ scenarioId: 's1748', playerFaction: 'ahluwalia', seed: 3 });
+    for (let i = 0; i < 6; i++) s = endTurn(s);
+    const k = s.khabar ?? [];
+    expect(k.length).toBeGreaterThan(10);
+    expect(k.some((x) => x.headline === 'The Nizam is gone')).toBe(true);
+    expect(new Set(k.map((x) => x.desk)).size).toBeGreaterThan(3);
+  });
+});

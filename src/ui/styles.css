@@ -1658,3 +1658,124 @@ button.chip {
   width: 140px;
   height: 128px;
 }
+
+/* ── Khabar ──────────────────────────────────────────────────────────────── */
+
+.khabar-btn {
+  position: relative;
+}
+.khabar-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--sindoor);
+  color: #fff8e6;
+  font-size: 0.72em;
+  line-height: 18px;
+  text-align: center;
+  font-family: var(--font-body);
+}
+.khabar-mast {
+  text-align: center;
+  border-bottom: 3px double var(--ink);
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+.khabar-title {
+  font-family: 'Langar', var(--font-display);
+  font-size: 2.6em;
+  line-height: 1;
+  filter: url(#brush-ink);
+  color: var(--ink);
+}
+.khabar-title .gurmukhi {
+  color: var(--sindoor);
+  font-size: 0.8em;
+}
+.khabar-sub {
+  font-style: italic;
+  font-size: 0.9em;
+  color: var(--ink-soft);
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  padding: 2px 0;
+  margin: 4px 0 6px;
+}
+.khabar-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.khabar-date {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15em;
+}
+.khabar-lead {
+  border-bottom: 1px solid var(--gold-dark);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+}
+.khabar-lead h3 {
+  font-family: 'Langar', var(--font-display) !important;
+  font-weight: 400 !important;
+  font-size: 1.7em !important;
+  margin: 2px 0 4px !important;
+}
+.khabar-lead p {
+  font-size: 1.08em;
+  margin: 0;
+}
+.khabar-cols {
+  column-width: 250px;
+  column-gap: 22px;
+  column-rule: 1px solid rgba(140, 106, 30, 0.45);
+}
+.khabar-section {
+  break-inside: avoid;
+  margin-bottom: 10px;
+}
+.khabar-desk {
+  font-size: 0.72em;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sindoor);
+  border-bottom: 1px solid rgba(184, 58, 43, 0.4);
+  margin-bottom: 4px;
+}
+.khabar-item h4 {
+  margin: 4px 0 1px;
+  font-family: var(--font-display);
+  font-size: 1.02em;
+}
+.khabar-item p {
+  margin: 0 0 6px;
+  font-size: 0.92em;
+  line-height: 1.35;
+}
+.khabar-item.w1 h4 {
+  font-style: italic;
+  font-weight: 500;
+}
+.khabar-item.w3 h4 {
+  font-size: 1.12em;
+}
+.topbar .actions {
+  flex-wrap: nowrap;
+  gap: 5px;
+}
+.topbar .actions .btn.small {
+  padding: 4px 8px;
+  font-size: 0.82em;
+  min-height: 28px;
+  white-space: nowrap;
+}
+@media (max-width: 1250px) {
+  .topbar .actions {
+    flex-wrap: wrap;
+  }
+}

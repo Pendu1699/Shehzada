@@ -188,4 +188,133 @@ export const WORLD: EventDef[] = [
       for (const f of Object.values(s.factions)) if (f.alive && isSikh(f.id)) fx.legend(s, f.id, 2);
     },
   },
+  // ── The Punjab: more moments of the century ──
+  {
+    id: 'zamzama_1764',
+    title: 'The great gun Zamzama',
+    kind: 'historical',
+    from: { year: 1764, festival: 'diwali' },
+    to: { year: 1766 },
+    weight: 5,
+    mood: 'heroic',
+    when: (s) => alive(s, 'bhangi'),
+    text: () =>
+      'The Bhangi sardars have taken the great bronze gun Zamzama — cast at Lahore for Ahmad Shah — from the Afghans. They call it the Bhangian wali top, and men come from far off just to see it.',
+    effect: (s) => {
+      fx.legend(s, 'bhangi', 4);
+      s.factions.bhangi.flags.zamzama = true;
+    },
+  },
+  {
+    id: 'akal_takht_1774',
+    title: 'The Akal Takht raised again',
+    kind: 'historical',
+    from: { year: 1774 },
+    to: { year: 1775 },
+    weight: 6,
+    mood: 'festive',
+    when: (s) => !s.josh.active,
+    text: () =>
+      'Ahmad Shah blew up the Akal Takht in 1762. Now, with the Afghan tide gone out, the sardars raise it again as a hall facing the Harmandir. The Sarbat Khalsa will gather before it as before.',
+    playerOnly: (s) => isSikh(P(s)) && !s.factions[P(s)].sarkar,
+    choices: [
+      {
+        label: 'Give generously to the building (₹25k)',
+        detail: 'Piri and legend rise; the assembly remembers who gave.',
+        available: rich(25),
+        effect: (s) => {
+          fx.money(s, P(s), -25);
+          fx.piri(s, P(s), 4, 'Raising the Akal Takht again');
+          fx.legend(s, P(s), 3);
+          for (const f of Object.values(s.factions)) if (f.alive && isSikh(f.id) && f.id !== P(s)) fx.attitude(s, f.id, P(s), 8);
+          return 'Your name was read out at the Akal Takht among those who built it.';
+        },
+      },
+      { label: 'Send what you can spare', detail: 'A small gift.', effect: (s) => (fx.money(s, P(s), -5), fx.piri(s, P(s), 1, 'A gift to the Akal Takht'), 'Your gift was received with thanks.') },
+    ],
+    aiChoice: 1,
+  },
+  {
+    id: 'zaman_guns_1799',
+    title: 'Zaman Shah’s guns in the Jhelum',
+    kind: 'historical',
+    from: { year: 1799 },
+    to: { year: 1799, festival: 'diwali' },
+    weight: 6,
+    mood: 'neutral',
+    when: (s) => !owns(s, 'durrani', 'lahore'),
+    text: () =>
+      'Retreating to Kabul with the Jhelum in flood, Zaman Shah has lost a dozen guns in the river. A message comes from his camp: whoever fishes them out and sends them after him will have his favour.',
+    playerOnly: (s) => isSikh(P(s)) && s.factions[P(s)].relations.durrani !== 'war',
+    choices: [
+      {
+        label: 'Raise the guns and send them to Kabul',
+        detail: 'As Ranjit Singh did: Durrani goodwill, and a royal recognition of your hold on Lahore if you have it. The Panth may frown.',
+        effect: (s) => {
+          fx.attitude(s, 'durrani', P(s), 40);
+          fx.relation(s, P(s), 'durrani', 'peace');
+          fx.legend(s, P(s), 3);
+          fx.piri(s, P(s), -1, 'Doing a favour for the Afghan king');
+          return 'Eight guns were dragged out of the Jhelum and sent up the road to Kabul.';
+        },
+      },
+      {
+        label: 'Keep the guns',
+        detail: 'Artillery for your own army; the Afghan king will not forget.',
+        effect: (s) => {
+          fx.attitude(s, 'durrani', P(s), -30);
+          s.factions[P(s)].flags.zaman_guns = true;
+          fx.recruit(s, P(s), Object.values(s.regions).find((r) => r.owner === P(s))?.id ?? 'lahore', 'top', 200);
+          return 'The guns were hauled out of the river and turned round to face the passes.';
+        },
+      },
+    ],
+    aiChoice: 0,
+  },
+  {
+    id: 'gilding_1830',
+    title: 'Gold for the Harmandir',
+    kind: 'historical',
+    from: { year: 1803 },
+    to: { year: 1835 },
+    weight: 7,
+    mood: 'festive',
+    when: (s) => s.factions[P(s)].sarkar === true && owns(s, P(s), 'amritsar'),
+    text: () =>
+      'Craftsmen from Lahore and Delhi offer to cover the upper storeys of the Harmandir Sahib in gilded copper, as was done in the years of the Sarkar. It will cost a fortune.',
+    playerOnly: () => true,
+    choices: [
+      {
+        label: 'Gild the Harmandir (₹120k)',
+        detail: 'Great Piri and legend; the Golden Temple shines for centuries.',
+        available: rich(120),
+        effect: (s) => {
+          fx.money(s, P(s), -120);
+          fx.piri(s, P(s), 8, 'Gilding the Harmandir Sahib');
+          fx.legend(s, P(s), 8);
+          s.factions[P(s)].flags.gilded = true;
+          return 'Sheet by sheet the gilded copper went up. Pilgrims began to call it the Golden Temple.';
+        },
+      },
+      { label: 'Not now', detail: 'The army needs the money.', effect: () => 'The craftsmen went home. Perhaps another year.' },
+    ],
+    aiChoice: 1,
+  },
+  {
+    id: 'ropar_1831',
+    title: 'The meeting at Ropar',
+    kind: 'historical',
+    from: { year: 1831 },
+    to: { year: 1832 },
+    weight: 5,
+    mood: 'neutral',
+    when: (s) => alive(s, 'company') && !!Object.values(s.factions).find((f) => f.sarkar && f.alive),
+    text: () =>
+      'On the banks of the Sutlej at Ropar, the Maharaja of the Sikh Empire and Lord William Bentinck meet amid tents, elephants and reviews of troops. Each side counts the other’s guns.',
+    effect: (s) => {
+      const sk = Object.values(s.factions).find((f) => f.sarkar && f.alive)!.id;
+      fx.attitude(s, 'company', sk, 10);
+      fx.legend(s, sk, 2);
+    },
+  },
 ];

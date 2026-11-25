@@ -1,3 +1,4 @@
+import { report } from './khabar';
 // Leaders: ageing, death, succession, historical arrivals and generated sardars.
 
 import { FACTION_BY_ID } from '../data/factions';
@@ -69,6 +70,7 @@ export function killLeader(s: GameState, id: string, cause: string): void {
   const f = s.factions[L.faction];
   const weight = L.historical ? (f && f.chief === id ? 8 : 5) : 2;
   chronicle(s, 'death', `${L.name} ${cause}.`, { faction: L.faction, leader: id, weight });
+  if (L.historical) report(s, `${L.name} is dead`, `${L.name} ${cause}.`, { desk: L.faction === 'company' ? 'company' : undefined, region: Object.values(s.regions).find((r) => r.owner === L.faction)?.id, weight: 3 });
   if (L.traits.includes('beloved') && f) f.legend += 3;
   if (f && f.chief === id) {
     onRulerDeath(s, L.faction);

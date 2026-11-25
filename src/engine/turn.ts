@@ -1,3 +1,4 @@
+import { gatherKhabar, report } from './khabar';
 import { eraTransition } from './eras';
 import { applyHistory } from './history';
 // Turn resolution.
@@ -108,6 +109,20 @@ function recordBattle(s: GameState, b: BattleReport, log: ResolutionLog) {
   s.battles.push(b);
   if (s.battles.length > 120) s.battles.shift();
   log.battles.push(b);
+  {
+    const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+    const win = b.winner === 'attacker' ? b.attacker : b.winner === 'defender' ? b.defender : null;
+    const lose = win === b.attacker ? b.defender : b.attacker;
+    const place = REGION_BY_ID[b.region]?.name ?? b.region;
+    report(
+      s,
+      `Battle at ${place}`,
+      win
+        ? `${cap(polityName(s, win))} defeated ${polityName(s, lose)} at ${place}. ${(b.aMen + b.dMen).toLocaleString()} men took the field; ${(b.aLosses + b.dLosses).toLocaleString()} fell.`
+        : `${cap(polityName(s, b.attacker))} and ${polityName(s, b.defender)} fought at ${place} without a decision.`,
+      { region: b.region, weight: b.aMen + b.dMen >= 20000 ? 3 : 2 },
+    );
+  }
   const involved = b.attacker === s.playerFaction || b.defender === s.playerFaction;
   const big = b.aMen + b.dMen >= 30000;
   if (involved || big) {
@@ -377,6 +392,7 @@ export function endTurn(prev: GameState): GameState {
   log.notes.push(...courtTurn(s));
   log.notes.push(...spawnInvasions(s));
   log.notes.push(...applyHistory(s));
+  gatherKhabar(s);
   log.notes.push(...joshTurn(s));
   regionTurn(s);
   tributeTurn(s);

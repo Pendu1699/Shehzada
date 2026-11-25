@@ -255,6 +255,8 @@ export interface GameState {
   josh: Josh;
   chronicle: ChronicleEntry[];
   battles: BattleReport[];
+  /** The Khabar: news of the subcontinent (engine/khabar.ts). */
+  khabar?: import('./khabar').KhabarItem[];
   /** Battles from the most recent resolution, for the vignette. */
   lastBattles: string[];
   pendingEvents: PendingEvent[];

@@ -1,3 +1,4 @@
+import { report } from './khabar';
 // Taking and losing land, retreats, raids and rakhi.
 
 import { REGION_BY_ID } from '../data/regions';
@@ -258,4 +259,9 @@ export function transferRegion(s: GameState, region: RegionId, to: FactionId | n
     checkElimination(s, prev, to ?? undefined);
   }
   if (to) onCapture(s, region, to);
+  if (prev !== to && (prev || to)) {
+    const name = REGION_BY_ID[region]?.name ?? region;
+    const who = to ? polityName(s, to) : 'local chiefs';
+    report(s, `${name} changes hands`, `${who.charAt(0).toUpperCase() + who.slice(1)} now hold${to ? 's' : ''} ${name}${prev ? `, taken from ${polityName(s, prev)}` : ''}.`, { region, weight: 2 });
+  }
 }

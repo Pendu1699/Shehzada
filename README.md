@@ -53,6 +53,12 @@ time with the orange **? Counsel** button at the top of the screen.
 and **Piri** (how much the Sikh community trusts you). Try to grow both together. Being
 generous, keeping promises and sparing cities raises Piri; cruelty and greed lower it.
 
+**What's happening elsewhere?** Click **Khabar** (or press **N**) for the season's news from
+all over the subcontinent, written like an old court newsletter.
+
+**Unifying the Punjab.** The orange **Unify the Punjab** button shows what it takes to found the
+Sikh Empire. It's meant to be hard: you need a lot of land and both Miri and Piri high.
+
 **Not sure what something means?** Hover your mouse over it — almost everything explains
 itself. The **Codex** button explains the Punjabi words.
 

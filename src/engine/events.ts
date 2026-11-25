@@ -5,6 +5,7 @@
 
 import { EVENTS, EVENT_BY_ID, type EventDef } from '../data/events/index';
 import { chronicle } from './chronicle';
+import { report } from './khabar';
 import { date } from './query';
 import { chance } from './rng';
 import type { GameState, PendingEvent } from './state';
@@ -57,6 +58,7 @@ export function runEvents(s: GameState): { notes: string[]; dhadi: string[] } {
       s.pendingEvents.push({ id: newId(s, 'E'), eventId: ev.id, ctx });
     } else {
       dhadi.push(text);
+      if (ev.kind === 'historical') report(s, ev.title, text, { region: typeof ctx.region === 'string' ? ctx.region : undefined, weight: ev.weight && ev.weight >= 6 ? 3 : 2 });
       const r = ev.effect?.(s, ctx);
       if (r) notes.push(r);
       // A choice event not for the player resolves with its historical (AI) choice.
