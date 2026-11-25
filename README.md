@@ -28,8 +28,8 @@ It should print a version number such as `v22.x.x`.
 ### 2. Download the game
 
 Download the ZIP of the game:
-[akal-claude-vibrant-meitner-ooqsx4.zip](https://github.com/pendu1699/akal/archive/refs/heads/claude/vibrant-meitner-ooqsx4.zip)
-(or, on the repository page, pick the branch and choose **Code → Download ZIP**).
+[akal-main.zip](https://github.com/pendu1699/akal/archive/refs/heads/main.zip)
+(or, on the repository page, choose **Code → Download ZIP**).
 
 Unzip it (double-click it in Downloads). You can rename the unzipped folder to something short,
 like `Akal`.
