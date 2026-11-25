@@ -15,9 +15,9 @@
 import { hpick } from '../narrative/dhadi';
 
 type Style = 'pagg' | 'dumalla';
-type Mark = 'farla' | 'chakar' | 'kalgi' | 'jigha' | 'pearls' | 'shamla' | 'band' | 'tilla' | 'pennant' | 'twotone' | 'sarpech';
+export type Mark = 'farla' | 'chakar' | 'kalgi' | 'jigha' | 'pearls' | 'shamla' | 'band' | 'tilla' | 'pennant' | 'twotone' | 'sarpech';
 
-interface Look {
+export interface Look {
   style: Style;
   colors?: string[];
   mark: Mark[];
@@ -44,6 +44,11 @@ function shade(hex: string, k: number): string {
   const n = parseInt(hex.slice(1), 16);
   const c = (v: number) => Math.max(0, Math.min(255, Math.round(k > 0 ? v + (255 - v) * k : v * (1 + k))));
   return `#${[n >> 16, (n >> 8) & 255, n & 255].map((v) => c(v).toString(16).padStart(2, '0')).join('')}`;
+}
+
+/** The dastaar look of a misl (style, colours and signature marks), if it has one. */
+export function lookOf(faction: string): Look | undefined {
+  return LOOKS[faction];
 }
 
 export function lookColor(faction: string, id: string, fallback: string) {
