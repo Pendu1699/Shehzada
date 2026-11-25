@@ -16,6 +16,7 @@
   "dependencies": {
     "@fontsource/cormorant-garamond": "^5.3.0",
     "@fontsource/eb-garamond": "^5.3.0",
+    "@fontsource/langar": "^5.3.0",
     "@fontsource/noto-serif-gurmukhi": "^5.3.0",
     "@fontsource/rozha-one": "^5.3.0",
     "@fontsource/tiro-gurmukhi": "^5.3.0",

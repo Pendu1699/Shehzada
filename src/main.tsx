@@ -9,6 +9,7 @@ import '@fontsource/eb-garamond/400-italic.css';
 import '@fontsource/tiro-gurmukhi/400.css';
 import '@fontsource/noto-serif-gurmukhi/500.css';
 import '@fontsource/rozha-one/400.css';
+import '@fontsource/langar/400.css';
 import './ui/styles.css';
 import { createRoot } from 'react-dom/client';
 import { App } from './ui/App';

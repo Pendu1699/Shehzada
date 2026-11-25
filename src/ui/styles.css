@@ -21,6 +21,8 @@
   --font-display: 'Cormorant Garamond', 'EB Garamond', Georgia, serif;
   --font-body: 'EB Garamond', Georgia, serif;
   --font-gurmukhi: 'Tiro Gurmukhi', 'Noto Serif Gurmukhi', serif;
+  /* Titles: a hand-drawn Gurmukhi, inked as with a brush (see BrushInk in App.tsx). */
+  --font-gurmukhi-brush: 'Langar', 'Tiro Gurmukhi', serif;
   --font-accent: 'Rozha One', 'Cormorant Garamond', serif;
   --ui-scale: 1;
   --shadow: 0 10px 30px rgba(20, 12, 4, 0.45), 0 2px 6px rgba(20, 12, 4, 0.35);
@@ -1560,4 +1562,27 @@ button.chip {
   padding-left: 0;
   margin-top: -3px;
   font-size: 0.5em;
+}
+
+/* ── Brush-lettered Gurmukhi titles ──────────────────────────────────────── */
+
+.gurmukhi,
+.title-card .g-title {
+  font-family: var(--font-gurmukhi-brush);
+  filter: url(#brush-ink-small);
+  letter-spacing: 0.03em;
+}
+.title-card .g-title,
+.era-page .gurmukhi {
+  filter: url(#brush-ink);
+}
+.heading-band .gurmukhi {
+  font-size: 1.25em;
+  transform: rotate(-1.5deg);
+  display: inline-block;
+}
+.title-card .g-title {
+  font-size: clamp(2.6em, 6vw, 3.8em);
+  line-height: 1.15;
+  transform: rotate(-2deg);
 }
