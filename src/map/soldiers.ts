@@ -231,6 +231,8 @@ function head(g: GraphicsContext, hx: number, hy: number, k: Kit) {
 
 /** Face and headgear, drawn a little larger than life so the dress reads on the map. */
 function drawHead(g: GraphicsContext, hx: number, hy: number, k: Kit, scale = 1.3) {
+  // The neck joins the head to the shoulders.
+  g.rect(hx - 1.1, hy + 0.5, 2.2, 3.6).fill(SKIN);
   g.save();
   g.translate(hx, hy + 1.2);
   g.scale(scale, scale);
@@ -254,9 +256,9 @@ function footBody(g: GraphicsContext, k: Kit) {
   g.moveTo(-3.4, 0).lineTo(-1.8, 0).stroke({ width: 1.1, color: INK });
   g.moveTo(2.2, 0).lineTo(3.8, 0).stroke({ width: 1.1, color: INK });
   // coat
-  if (flare) g.poly([-2.6, -19, 2.6, -19, 3.2, -12, 5.6, -5, -5.2, -5, -3.2, -12]).fill(coat).stroke({ width: 0.6, color: INK, alpha: 0.5 });
-  else if (long) g.poly([-2.6, -19, 2.6, -19, 3.4, -11, 4.0, -4, -4.0, -4, -3.4, -11]).fill(coat).stroke({ width: 0.6, color: INK, alpha: 0.5 });
-  else g.poly([-3.2, -8, 3.2, -8, 2.6, -19, -2.6, -19]).fill(coat).stroke({ width: 0.6, color: INK, alpha: 0.5 });
+  if (flare) g.poly([-3.4, -19, 3.4, -19, 3.2, -12, 5.6, -5, -5.2, -5, -3.2, -12]).fill(coat).stroke({ width: 0.6, color: INK, alpha: 0.5 });
+  else if (long) g.poly([-3.4, -19, 3.4, -19, 3.4, -11, 4.0, -4, -4.0, -4, -3.4, -11]).fill(coat).stroke({ width: 0.6, color: INK, alpha: 0.5 });
+  else g.poly([-3.2, -8, 3.2, -8, 3.4, -19, -3.4, -19]).fill(coat).stroke({ width: 0.6, color: INK, alpha: 0.5 });
   // details by coat
   if (k.coat === 'redcoat') {
     g.moveTo(-2.4, -18.6).lineTo(2.6, -9).stroke({ width: 0.9, color: col(k.sash) });
@@ -321,7 +323,7 @@ export function soldierFoot(k: Kit): GraphicsContext {
   g.ellipse(0, 0, 7, 1.8).fill({ color: 0x2a2014, alpha: 0.25 });
   footBody(g, k);
   footWeapon(g, k);
-  drawHead(g, 0.4, -21.6, k);
+  drawHead(g, 0.4, -20.9, k);
   return g;
 }
 
@@ -345,7 +347,7 @@ export function soldierHorse(k: Kit, coat = 0, cloth = '#C9A13B'): GraphicsConte
   const coatC = col(k.coatColor);
   g.poly([-4.5, -14, 4.5, -14, 3.6, -10, -3.6, -10]).fill(coatC);
   g.moveTo(1, -12).lineTo(2.6, -7.2).stroke({ width: 1.6, color: col(k.legs) });
-  g.poly([-2.6, -14, 2.6, -14, 2.1, -24.4, -1.8, -24.4]).fill(coatC).stroke({ width: 0.6, color: INK, alpha: 0.5 });
+  g.poly([-2.6, -14, 2.6, -14, 2.9, -24.2, -2.5, -24.2]).fill(coatC).stroke({ width: 0.6, color: INK, alpha: 0.5 });
   if (k.coat === 'redcoat') {
     g.moveTo(-1.8, -23.8).lineTo(2.2, -15).stroke({ width: 0.8, color: col(k.sash) });
     g.moveTo(1.8, -23.8).lineTo(-2.2, -15).stroke({ width: 0.8, color: col(k.sash) });
@@ -372,7 +374,7 @@ export function soldierHorse(k: Kit, coat = 0, cloth = '#C9A13B'): GraphicsConte
     g.circle(-2.8, -19.5, 2.9).fill(0x5a3a1e).stroke({ width: 0.6, color: 0xc9a13b });
     g.circle(-2.8, -19.5, 0.7).fill(0xc9a13b);
   }
-  drawHead(g, 0.6, -27, k);
+  drawHead(g, 0.4, -26.3, k);
   return g;
 }
 
@@ -391,7 +393,7 @@ export function soldierGun(k: Kit, cloth: string): GraphicsContext {
   g.translate(-9, 0);
   g.scale(0.85, 0.85);
   footBody(g, { ...k, shield: false });
-  drawHead(g, 0.4, -21.6, k);
+  drawHead(g, 0.4, -20.9, k);
   g.moveTo(2.6, -16).lineTo(8, -6).stroke({ width: 0.9, color: 0x5a3a1e });
   g.restore();
   return g;
