@@ -1,3 +1,4 @@
+import { aiVassals } from './vassals';
 import { aiReforms } from './reforms';
 // Faction AI. Each faction has a personality (aggression, caution, zeal, greed,
 // honour) and era-aware goals:
@@ -398,6 +399,7 @@ export function runAI(s: GameState): void {
 export function runAIFor(s: GameState, f: FactionId): void {
   aiDiplomacy(s, f);
   aiReforms(s, f);
+  aiVassals(s, f);
   assignLeaders(s, f);
   aiRecruit(s, f);
   mergeArmies(s, f);

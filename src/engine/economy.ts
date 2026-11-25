@@ -1,3 +1,4 @@
+import { TRIBUTE_RATE, type TributeLevel } from './vassals';
 import { factionMods, hasReform } from './reforms';
 // Revenue, rakhi, jagirs, langar and upkeep. All amounts are in thousands of rupees
 // per half-year turn. Every figure is built as a Breakdown so tooltips can explain it.
@@ -134,6 +135,13 @@ export function factionIncome(s: GameState, f: FactionId): Breakdown {
     if (k.startsWith('tribute_from_') && s.factions[k.slice(13)]?.alive) parts.push({ label: `Tribute from ${FACTION_BY_ID[k.slice(13)]?.name ?? k.slice(13)}`, value: Number(v) });
     if (k.startsWith('tribute_to_') && s.factions[k.slice(11)]?.alive) parts.push({ label: `Tribute to ${FACTION_BY_ID[k.slice(11)]?.name ?? k.slice(11)}`, value: -Number(v) });
   }
+  // Puppets: tribute on their land and trade, at the rate the overlord sets.
+  const over = s.factions[f].flags.overlord as string | undefined;
+  if (over && s.factions[over]?.alive) parts.push({ label: `Tribute to ${FACTION_BY_ID[over]?.name ?? over} (overlord)`, value: -r1(puppetBase(s, f) * TRIBUTE_RATE[(s.factions[f].flags.tribute_level as TributeLevel) ?? 'normal']) });
+  for (const v of Object.values(s.factions)) {
+    if (!v.alive || v.flags.overlord !== f) continue;
+    parts.push({ label: `Tribute from ${FACTION_BY_ID[v.id]?.name ?? v.id} (puppet)`, value: r1(puppetBase(s, v.id) * TRIBUTE_RATE[(v.flags.tribute_level as TributeLevel) ?? 'normal']) });
+  }
   parts.push({ label: 'Army pay and fodder', value: -armyUpkeep(s, f) });
   if (forts) parts.push({ label: 'Fort garrisons and repair', value: -forts });
   if (langar) parts.push({ label: 'Langar', value: -langar });
@@ -178,6 +186,13 @@ export function recruitCost(s: GameState, f: FactionId, unitId: string, men: num
 }
 
 /** Apply the turn's income; handle arrears. Returns the breakdown applied. */
+/** What a puppet's tribute is reckoned on: its land revenue and trade. */
+function puppetBase(s: GameState, f: FactionId): number {
+  let t = 0;
+  for (const r of Object.values(s.regions)) if (r.owner === f) t += Math.max(0, regionRevenue(s, r.id).total);
+  return t;
+}
+
 export function collectIncome(s: GameState, f: FactionId): Breakdown {
   const inc = factionIncome(s, f);
   const fs = s.factions[f];

@@ -10,6 +10,7 @@ import { factionIncome, regionRevenue, langarCost } from '../engine/economy';
 import { DIPLO_INFO, diploChance, type DiploKind } from '../engine/diplomacy';
 import { armiesOf, armyMen, date, isSikh, polityName, regionsOf, relation, year } from '../engine/query';
 import { deleteSlot, listSlots, loadFromSlot, saveToSlot, serialize } from '../engine/save';
+import { ANNEX_AFTER, TRIBUTE_RATE, annexCost, canAnnex, liberty, overlordOf, submissionChance, tributeLevel, type TributeLevel } from '../engine/vassals';
 import { useStore } from '../store';
 import { Heading, Modal, Tip, fmt, rs, signed } from './common';
 
@@ -334,9 +335,12 @@ export function LedgerModal() {
                 <tbody>
                   {Object.values(game.factions)
                     .filter((f) => f.alive && f.id !== p)
-                    .sort((a, b) => regionsOf(game, b.id).length - regionsOf(game, a.id).length)
+                    .sort((a, b) => Number(overlordOf(game, b.id) === p) - Number(overlordOf(game, a.id) === p) || regionsOf(game, b.id).length - regionsOf(game, a.id).length)
                     .map((f) => {
                       const rel = relation(game, p, f.id);
+                      const puppet = overlordOf(game, f.id) === p;
+                      const myOverlord = overlordOf(game, f.id);
+                      const sub = submissionChance(game, f.id);
                       return (
                         <tr key={f.id}>
                           <td>
@@ -344,12 +348,21 @@ export function LedgerModal() {
                               <BannerEmblem faction={f.id} size={22} /> {polityName(game, f.id)}
                             </span>
                           </td>
-                          <td style={{ color: rel === 'war' ? 'var(--sindoor)' : rel === 'alliance' ? 'var(--mehndi)' : undefined, fontWeight: 600 }}>{rel}</td>
+                          <td style={{ color: rel === 'war' ? 'var(--sindoor)' : rel === 'alliance' ? 'var(--mehndi)' : undefined, fontWeight: 600 }}>
+                            {puppet ? 'your puppet' : myOverlord ? `puppet of ${polityName(game, myOverlord).replace(/^the /, '')}` : rel}
+                            {puppet && (
+                              <Tip title="Liberty desire" content={<span>At 100 a puppet rises against you. Heavy tribute and a strong puppet raise it; good relations and high Piri (with Sikh puppets) lower it.</span>}>
+                                <div className="bar" style={{ height: 6, width: 80, marginTop: 2 }}>
+                                  <div style={{ width: `${liberty(game, f.id)}%`, background: liberty(game, f.id) >= 75 ? 'var(--sindoor)' : 'var(--kesri)' }} />
+                                </div>
+                              </Tip>
+                            )}
+                          </td>
                           <td>{Math.round(f.attitude[p] ?? 0)}</td>
                           <td>{regionsOf(game, f.id).length}</td>
                           <td style={{ whiteSpace: 'nowrap' }}>
                             {(['alliance', 'marriage', 'tribute', 'passage', 'break_alliance'] as DiploKind[])
-                              .filter((k) => diploChance(game, k, f.id) > 0)
+                              .filter((k) => !puppet && diploChance(game, k, f.id) > 0)
                               .map((k) => (
                                 <Tip key={k} title={DIPLO_INFO[k].name} content={<span>{DIPLO_INFO[k].detail} {k !== 'break_alliance' && `Chance about ${Math.round(diploChance(game, k, f.id) * 100)}%.`} {DIPLO_INFO[k].cost ? `Costs ${rs(DIPLO_INFO[k].cost)}.` : ''}</span>}>
                                   <button className="btn small" style={{ marginRight: 3 }} onClick={() => dispatch({ type: 'diplo', kind: k, target: f.id })}>
@@ -357,7 +370,34 @@ export function LedgerModal() {
                                   </button>
                                 </Tip>
                               ))}
-                            {rel === 'war' ? (
+                            {puppet && (
+                              <span style={{ display: 'inline-flex', gap: 3, alignItems: 'center', marginRight: 4 }}>
+                                <span className="small">Tribute</span>
+                                {(['light', 'normal', 'heavy'] as TributeLevel[]).map((lv) => (
+                                  <Tip key={lv} title={`${lv} tribute`} content={<span>{Math.round(TRIBUTE_RATE[lv] * 100)}% of their land revenue and trade, each season.</span>}>
+                                    <button className={`chip ${tributeLevel(game, f.id) === lv ? 'on' : ''}`} onClick={() => dispatch({ type: 'setVassalTribute', target: f.id, level: lv })}>
+                                      {Math.round(TRIBUTE_RATE[lv] * 100)}%
+                                    </button>
+                                  </Tip>
+                                ))}
+                                <Tip title="Annex" content={<span>Take their lands into your own realm. Possible after {ANNEX_AFTER} seasons as your puppet with liberty below 35. Costs {rs(annexCost(game, f.id))}.</span>}>
+                                  <button className="btn small" disabled={!canAnnex(game, f.id) || game.factions[p].treasury < annexCost(game, f.id)} onClick={() => dispatch({ type: 'annexVassal', target: f.id })}>
+                                    Annex
+                                  </button>
+                                </Tip>
+                                <button className="btn small ghost" onClick={() => dispatch({ type: 'releaseVassal', target: f.id })}>
+                                  Release
+                                </button>
+                              </span>
+                            )}
+                            {sub > 0 && (
+                              <Tip title="Demand submission" content={<span>Make them your puppet: they keep their lands, ride with you, and pay tribute you set. Chance about {Math.round(sub * 100)}%. Easier against an enemy you are beating.</span>}>
+                                <button className="btn small kesri" style={{ marginRight: 3 }} onClick={() => dispatch({ type: 'demandSubmission', target: f.id })}>
+                                  Make puppet
+                                </button>
+                              </Tip>
+                            )}
+                            {puppet ? null : rel === 'war' ? (
                               <button className="btn small ghost" onClick={() => dispatch({ type: 'proposePeace', target: f.id })}>
                                 Seek peace
                               </button>

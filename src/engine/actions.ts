@@ -1,3 +1,4 @@
+import { annex, makeVassal, overlordOf, release, submissionChance } from './vassals';
 import { beginReform, factionMods, hasReform } from './reforms';
 import { canRideOn } from './endings';
 import { canUnify, proclaimEmpire } from './unify';
@@ -48,6 +49,10 @@ export type Action =
   | { type: 'propose'; kind: string; target?: string }
   | { type: 'proclaimEmpire' }
   | { type: 'rideOn' }
+  | { type: 'demandSubmission'; target: string }
+  | { type: 'setVassalTribute'; target: string; level: 'light' | 'normal' | 'heavy' }
+  | { type: 'releaseVassal'; target: string }
+  | { type: 'annexVassal'; target: string }
   | { type: 'setTax'; region: string; tax: 'light' | 'normal' | 'heavy' }
   | { type: 'growTown'; region: string }
   | { type: 'beginReform'; id: string }
@@ -343,6 +348,37 @@ export function applyAction(prev: GameState, action: Action): Result {
       return { state: s };
     case 'vote':
       return castVote(s, action.gurmataId, action.yes) ? { state: s } : err('That vote cannot be cast.');
+    case 'demandSubmission': {
+      const t = action.target;
+      if (fs.flags[`diplo_${t}_${s.turn}`]) return err('Your envoys have already been there this season.');
+      const pr = submissionChance(s, t);
+      if (pr <= 0) return err('They are not weak enough to bow to you.');
+      fs.flags[`diplo_${t}_${s.turn}`] = true;
+      if (chance(s, pr)) {
+        if (atWar(s, p, t)) {
+          s.factions[t].relations[p] = 'peace';
+          fs.relations[t] = 'peace';
+        }
+        makeVassal(s, p, t);
+        return { state: s, info: `${polityName(s, t)} has submitted. It will pay you tribute and ride with you.` };
+      }
+      s.factions[t].attitude[p] = Math.max(-100, (s.factions[t].attitude[p] ?? 0) - 15);
+      return { state: s, info: `${polityName(s, t)} refused to bow.` };
+    }
+    case 'setVassalTribute': {
+      if (overlordOf(s, action.target) !== p) return err('They are not your tributary.');
+      s.factions[action.target].flags.tribute_level = action.level;
+      return { state: s };
+    }
+    case 'releaseVassal': {
+      if (overlordOf(s, action.target) !== p) return err('They are not your tributary.');
+      release(s, action.target);
+      return { state: s, info: `${polityName(s, action.target)} is free again, and grateful.` };
+    }
+    case 'annexVassal': {
+      const r = annex(s, action.target);
+      return r ? { state: s, info: r } : err('You cannot annex them yet.');
+    }
     case 'setTax': {
       const st = s.regions[action.region];
       if (st.owner !== p) return err('You can only tax your own lands.');

@@ -65,6 +65,11 @@ Sikh Empire. It's meant to be hard: you need a lot of land and both Miri and Pir
 - *Your lands:* click one of your regions to set its **tax** (light, normal or heavy), **grow its town**
   from a village up to a great city, and build roads, markets, canals, schools and places of worship.
 
+**Alerts and puppets.** A red card drops in whenever someone declares war on you. In the
+**Bahi-khata → Diplomacy** page you can **Make puppet** of a much weaker neighbour (or an enemy you're
+beating): it keeps its lands, fights beside you and pays the tribute you choose (10, 20 or 35%).
+Heavy tribute makes it restless — at full liberty desire it revolts. After 10 seasons you can annex a loyal puppet.
+
 **After 1849.** When the century ends you get your Vaar, and if your house still stands you can
 choose **Ride on beyond 1849**: the world carries on, with the computer playing every other power.
 

@@ -259,6 +259,7 @@ export function transferRegion(s: GameState, region: RegionId, to: FactionId | n
     checkElimination(s, prev, to ?? undefined);
   }
   if (to) onCapture(s, region, to);
+  if (prev && s.factions[prev]) s.factions[prev].flags.lost_regions = Number(s.factions[prev].flags.lost_regions ?? 0) + 1;
   if (prev !== to && (prev || to)) {
     const name = REGION_BY_ID[region]?.name ?? region;
     const who = to ? polityName(s, to) : 'local chiefs';

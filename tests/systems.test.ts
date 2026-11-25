@@ -354,3 +354,46 @@ describe('the war of 1845, the years beyond, reforms and taxes', () => {
     expect(regionRevenue(s, r).total).toBeGreaterThan(base);
   });
 });
+
+describe('alerts and puppets', () => {
+  it('raises an alert when a house goes to war with the player during the turn', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { endTurn } = await import('../src/engine/turn');
+    let s = newGame({ scenarioId: 's1748', playerFaction: 'ahluwalia', seed: 3 });
+    // The Durrani come down at Diwali 1748 and are at war with every misl.
+    s.factions.durrani.relations.ahluwalia = 'peace';
+    s.factions.ahluwalia.relations.durrani = 'peace';
+    for (let i = 0; i < 2; i++) s = endTurn(s);
+    expect((s.alerts ?? []).some((a) => a.kind === 'war' && a.faction === 'durrani')).toBe(true);
+  });
+  it('makes a puppet that pays tribute at the level set, and revolts when pushed', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { makeVassal, vassalTurn, liberty } = await import('../src/engine/vassals');
+    const { factionIncome } = await import('../src/engine/economy');
+    const s = newGame({ scenarioId: 's1767', playerFaction: 'bhangi', seed: 8 });
+    const t = 'nakai';
+    makeVassal(s, 'bhangi', t);
+    const light = (() => { s.factions[t].flags.tribute_level = 'light'; return factionIncome(s, 'bhangi').parts.find((p) => p.label.startsWith('Tribute from'))!.value; })();
+    const heavy = (() => { s.factions[t].flags.tribute_level = 'heavy'; return factionIncome(s, 'bhangi').parts.find((p) => p.label.startsWith('Tribute from'))!.value; })();
+    expect(heavy).toBeGreaterThan(light);
+    s.factions[t].flags.liberty = 99;
+    s.factions[t].miri = s.factions.bhangi.miri;
+    for (let i = 0; i < 6 && s.factions[t].flags.overlord; i++) vassalTurn(s);
+    expect(s.factions[t].flags.overlord).toBeUndefined();
+    expect(s.factions.bhangi.relations[t]).toBe('war');
+    expect((s.alerts ?? []).some((a) => a.kind === 'revolt')).toBe(true);
+    expect(liberty(s, t)).toBe(0);
+  });
+  it('annexes a loyal puppet after ten seasons', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { makeVassal, annex } = await import('../src/engine/vassals');
+    const s = newGame({ scenarioId: 's1767', playerFaction: 'bhangi', seed: 8 });
+    makeVassal(s, 'bhangi', 'nakai');
+    expect(annex(s, 'nakai')).toBeNull();
+    s.turn += 10;
+    s.factions.nakai.flags.liberty = 10;
+    s.factions.bhangi.treasury = 1000;
+    expect(annex(s, 'nakai')).not.toBeNull();
+    expect(s.factions.nakai.alive).toBe(false);
+  });
+});

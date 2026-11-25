@@ -259,6 +259,8 @@ export interface GameState {
   josh: Josh;
   chronicle: ChronicleEntry[];
   battles: BattleReport[];
+  /** On-screen alerts for the player (wars declared, revolts...). */
+  alerts?: import('./vassals').Alert[];
   /** The Khabar: news of the subcontinent (engine/khabar.ts). */
   khabar?: import('./khabar').KhabarItem[];
   /** Battles from the most recent resolution, for the vignette. */

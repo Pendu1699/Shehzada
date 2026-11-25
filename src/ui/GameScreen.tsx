@@ -17,6 +17,7 @@ import { EventModal } from './EventModal';
 import { Tutorial } from './Tutorial';
 import { UnifyModal } from './UnifyModal';
 import { KhabarModal } from './KhabarModal';
+import { Alerts } from './Alerts';
 import { ReformsModal } from './ReformsModal';
 import { MapMenu, MouseHints } from './MapMenu';
 
@@ -194,6 +195,7 @@ export function GameScreen() {
       <DhadiPanel />
       <HoverCard />
       <MouseHints moveMode={moveMode} />
+      <Alerts />
       <MapMenu />
       <div className="zoom-ctl">
         <button className="btn small neela" onClick={() => getMap()?.zoomBy(1.25)} aria-label="Zoom in">

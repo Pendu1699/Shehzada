@@ -1,3 +1,4 @@
+import { alert, vassalTurn } from './vassals';
 import { reformsTurn } from './reforms';
 import { gatherKhabar, report } from './khabar';
 import { eraTransition } from './eras';
@@ -371,6 +372,9 @@ export function endTurn(prev: GameState): GameState {
   s.pendingEvents = [];
   if (s.gurmatas.some((g) => g.passed === undefined)) finishSarbat(s);
   const log: ResolutionLog = { dhadi: [], notes: [], battles: [] };
+  // Who was at war with the player when the season began (for alerts).
+  const pl = s.playerFaction;
+  const warsBefore = new Set(Object.keys(s.factions[pl]?.relations ?? {}).filter((g) => atWar(s, pl, g)));
 
   runAI(s);
   companyTurn(s);
@@ -398,6 +402,7 @@ export function endTurn(prev: GameState): GameState {
   log.notes.push(...joshTurn(s));
   regionTurn(s);
   tributeTurn(s);
+  vassalTurn(s);
   const incomeParts: { label: string; value: number }[] = [];
   for (const f of Object.values(s.factions)) {
     if (!f.alive) continue;
@@ -419,6 +424,12 @@ export function endTurn(prev: GameState): GameState {
   refreshExploration(s);
   checkEnding(s, endedNow);
   const era = eraTransition(s);
+  // Alerts: every house that is newly at war with the player this season.
+  for (const g of Object.keys(s.factions)) {
+    if (g === pl || !s.factions[g].alive || warsBefore.has(g) || !atWar(s, pl, g)) continue;
+    if (s.alerts?.some((a) => a.turn === s.turn && a.faction === g)) continue;
+    alert(s, { kind: 'war', faction: g, title: `${polityName(s, g).replace(/^t/, 'T')} declares war!`, text: `${polityName(s, g).replace(/^t/, 'T')} is now at war with you. Look to your borders.` });
+  }
 
   s.summary = {
     turn: s.turn,

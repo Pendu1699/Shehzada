@@ -1856,3 +1856,53 @@ button.chip {
   margin-top: 4px;
 }
 svg[aria-label="portrait"] { flex: none; }
+
+/* ── Alerts ──────────────────────────────────────────────────────────────── */
+
+.alert-stack {
+  position: absolute;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  width: min(560px, 92vw);
+}
+.alert-card {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  background: #f7eedb;
+  border: 2px solid var(--sindoor);
+  border-left: 8px solid var(--sindoor);
+  box-shadow: 0 8px 24px rgba(40, 10, 4, 0.45);
+  animation: alert-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+.alert-card.unrest {
+  border-color: var(--kesri);
+}
+.alert-title {
+  font-family: 'Langar', var(--font-display);
+  font-size: 1.25em;
+  color: var(--sindoor);
+}
+.alert-card.unrest .alert-title {
+  color: var(--kesri-deep);
+}
+.alert-text {
+  font-size: 0.95em;
+}
+@keyframes alert-in {
+  from {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.96);
+  }
+}
+.reduced-motion .alert-card {
+  animation: none;
+}
