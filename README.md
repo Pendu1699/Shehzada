@@ -9,7 +9,92 @@ Everything you see and hear is generated in code: the wasli-paper map, the paint
 figures, the drone, drums and sarangi. The only bundled third-party assets are
 open-licence fonts installed through `@fontsource`.
 
-## Running
+## How to download and play
+
+You don't need to know how to code. It takes about five minutes the first time.
+
+### 1. Install Node.js (once)
+
+Download the **LTS** version from [nodejs.org](https://nodejs.org) and install it like any other app.
+To check it worked, open **Terminal** (Mac: press Cmd + Space and type "Terminal"; Windows: open
+"Command Prompt") and type:
+
+```bash
+node -v
+```
+
+It should print a version number such as `v22.x.x`.
+
+### 2. Download the game
+
+Download the ZIP of the game:
+[akal-claude-vibrant-meitner-ooqsx4.zip](https://github.com/pendu1699/akal/archive/refs/heads/claude/vibrant-meitner-ooqsx4.zip)
+(or, on the repository page, pick the branch and choose **Code → Download ZIP**).
+
+Unzip it (double-click it in Downloads). You can rename the unzipped folder to something short,
+like `Akal`.
+
+> **Using git instead?** If the repository is private and `git clone` says *"Invalid username or
+> token"*, log in with the GitHub CLI first (`brew install gh`, then `gh auth login`), or just use the
+> ZIP.
+
+### 3. Start it
+
+In Terminal, go into the game's folder. The easiest way: type `cd ` (with a space), drag the folder
+from Finder/Explorer into the Terminal window, and press Enter. Then:
+
+```bash
+npm install
+```
+
+```bash
+npm run dev
+```
+
+The first command downloads the game's tools (only needed once, or after downloading a new
+version). The second starts the game. Open **http://localhost:5173** in your browser.
+
+Leave Terminal open while you play. To stop, click in Terminal and press **Ctrl + C**. Next time,
+you only need the `cd` step and `npm run dev`.
+
+**If something goes wrong**
+
+- *"Could not read package.json"* — you're not inside the game's folder. Do the `cd` step again.
+- *"command not found: npm"* — Node.js isn't installed; go back to step 1.
+- *An error mentioning esbuild* — run `npm rebuild esbuild`, then `npm run dev` again.
+- Vulnerability warnings during `npm install` are about the build tools, not the game. Ignore
+  them, and don't run `npm audit fix --force`.
+
+**Updating to a new version:** download the ZIP again, unzip it, and repeat step 3 in the new
+folder. Your saved games live in your browser, so they carry over.
+
+### 4. Playing
+
+1. Click **Begin a new vaar**, choose a start year (1748, 1767, 1799 or 1839) and a misl. For a
+   first game, try **1748** with the **Ahluwalia** misl, and leave the tutorial on.
+2. Nawab Kapur Singh's **Counsel** walks you through everything. You can replay it any time with
+   the **? Counsel** button at the top, or the **?** key.
+3. Give orders, then **Beat the nagara** (bottom right, or Enter) to end the season. Each turn is
+   half a year, Vaisakhi or Diwali.
+4. The game ends in 1849, or earlier if your misl falls. Then the dhadi sings your **Vaar**.
+
+**Mouse**
+
+| Do this | And this happens |
+| --- | --- |
+| Left-click land or an army | Select it |
+| Drag open land / scroll wheel | Move / zoom the map |
+| Drag your army onto a region | March there |
+| Ctrl + drag your army | Divide it and send half |
+| Right-click a region (army selected) | March there; right-click an enemy army to attack |
+| Right-click your army | Orders: divide, join, halt, how to fight |
+| Right-click land (nothing selected) | Langar, fort, rakhi, recruit |
+
+**Tips:** hover over any number to see how it's worked out. Keep **Miri** (power) and **Piri** (the
+Panth's trust) growing together. Langar, sparing cities and keeping rakhi raise Piri. Settings
+(⚙) has colour-blind mode, UI scale, reduced motion and sound.
+
+## For developers
 
 ```bash
 npm install
