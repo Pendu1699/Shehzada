@@ -16,7 +16,7 @@
 
 import type { JSX } from 'react';
 
-export type Shape = 'pennant' | 'swallow' | 'rect' | 'double' | 'stripes';
+export type Shape = 'pennant' | 'swallow' | 'rect' | 'double' | 'stripes' | 'tricolour' | 'hoist';
 export type Pattern = 'none' | 'dots' | 'trefoil' | 'chevrons' | 'waves' | 'stars';
 
 export interface FlagDesign {
@@ -53,6 +53,9 @@ export const FLAGS: Record<string, FlagDesign> = {
   mughal: { shape: 'pennant', field: '#2E6B45', border: '#C9A13B', vine: GOLD, device: 'sherkhurshid', deviceColor: GOLD, pattern: 'none' },
   maratha: { shape: 'swallow', field: '#E8770E', device: 'none', deviceColor: '#E8770E', pattern: 'none' },
   company: { shape: 'stripes', field: '#B02222', device: 'union', deviceColor: '#F2E6C9', pattern: 'none' },
+  // The two dominions of 1947.
+  india: { shape: 'tricolour', field: '#F7F3EA', device: 'chakra', deviceColor: '#1F3A8C', pattern: 'none' },
+  pakistan: { shape: 'hoist', field: '#1E5E36', device: 'crescent_star', deviceColor: '#F7F3EA', pattern: 'none' },
   kangra: { shape: 'pennant', field: '#C9502B', border: '#1F3A68', device: 'mountain', deviceColor: '#F2E6C9', pattern: 'none' },
   hill_states: { shape: 'pennant', field: '#8C6A3A', border: '#B83A2B', device: 'mountain', deviceColor: '#F2E6C9', pattern: 'chevrons', patternColor: '#9C7A4A' },
   jammu: { shape: 'rect', field: '#B83A2B', border: '#E6C23B', device: 'sun', deviceColor: '#E6C23B', pattern: 'none' },
@@ -252,6 +255,24 @@ export function Device({ id, color }: { id: string; color: string }): JSX.Elemen
           <path d="M70 36 L73 44 L81 44 L75 49 L77 57 L70 52 L63 57 L65 49 L59 44 L67 44 Z" />
         </g>
       );
+    case 'chakra':
+      return (
+        <g stroke={c} fill="none">
+          <circle cx="50" cy="50" r="40" strokeWidth="6" />
+          <circle cx="50" cy="50" r="7" fill={c} />
+          {Array.from({ length: 24 }, (_, i) => {
+            const a = (i * Math.PI) / 12;
+            return <line key={i} x1={50} y1={50} x2={50 + 38 * Math.cos(a)} y2={50 + 38 * Math.sin(a)} strokeWidth="2.6" />;
+          })}
+        </g>
+      );
+    case 'crescent_star':
+      return (
+        <g fill={c}>
+          <path fillRule="evenodd" d="M14 52 A34 34 0 1 0 82 52 A34 34 0 1 0 14 52 Z M28 44 A30 30 0 1 0 88 44 A30 30 0 1 0 28 44 Z" />
+          <path d="M70 26 L74 37 L86 37 L76 44 L80 56 L70 49 L60 56 L64 44 L54 37 L66 37 Z" />
+        </g>
+      );
     case 'crescent_swords':
       return (
         <g fill={c}>
@@ -424,7 +445,15 @@ export function FlagCloth({ design, accent }: { design: FlagDesign; accent?: { d
   const clip = `clip-${uid}`;
   const isPennant = design.shape === 'pennant';
   // Where the device sits: in the broad part of the cloth.
-  const dev = isPennant ? { x: 7, y: 9, s: 0.43 } : design.shape === 'double' ? { x: 8, y: 22, s: 0.34 } : { x: 26, y: 6, s: 0.48 };
+  const dev = isPennant
+    ? { x: 7, y: 9, s: 0.43 }
+    : design.shape === 'double'
+      ? { x: 8, y: 22, s: 0.34 }
+      : design.shape === 'tricolour'
+        ? { x: 41, y: 21, s: 0.18 }
+        : design.shape === 'hoist'
+          ? { x: 42, y: 8, s: 0.44 }
+          : { x: 26, y: 6, s: 0.48 };
   return (
     <g>
       <defs>
@@ -437,6 +466,13 @@ export function FlagCloth({ design, accent }: { design: FlagDesign; accent?: { d
         <path d={d} fill={design.field} />
         {design.shape === 'stripes' &&
           Array.from({ length: 13 }, (_, i) => (i % 2 ? <rect key={i} x="0" y={(i * 60) / 13} width="100" height={60 / 13} fill="#F7F1E3" /> : null))}
+        {design.shape === 'tricolour' && (
+          <g>
+            <rect x="0" y="0" width="100" height="20" fill="#F08A24" />
+            <rect x="0" y="40" width="100" height="20" fill="#1E7A2E" />
+          </g>
+        )}
+        {design.shape === 'hoist' && <rect x="0" y="0" width="25" height="60" fill="#F7F3EA" />}
         {design.shape === 'stripes' && (
           // The Union in the canton (St George and St Andrew, as before 1801).
           <g>

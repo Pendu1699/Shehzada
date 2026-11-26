@@ -88,6 +88,10 @@ export function composeVaar(s: GameState): Vaar {
   endings.khalsa_voice = `In 1947 the Punjab was not simply cut in two by men who had never seen it. ${polity} had lands of its own, and friends abroad, and the world had to listen. The dhadi cannot say what came after; but the Panth sat at the table.`;
   endings.gurdwaras_freed = 'The Raj was not won back. But the gurdwaras were freed, the Akal Takht had its jathedar again, and the Panth came to 1947 with its institutions in its own hands.';
   endings.partition = 'In August 1947 the line ran through the middle of the Punjab, through Lahore and the canal colonies and the shrines of the Gurus. Millions walked across it; hundreds of thousands did not reach the other side. The dhadi does not sing of it. He only remembers.';
+  endings.khalsa_state = `When the British left in 1947, ${polity} held land of its own, won back from the Raj, and the men drawing the new borders had to reckon with it. What it became is a story the dhadi has not yet sung.`;
+  endings.punjabi_suba = 'The movement won the Punjabi Suba before history would have given it, and whole: the Punjabi-speaking lands together, a state of the language of the Gurus’ hymns and the dhadis’ vaars.';
+  endings.suba_1966 = 'In November 1966 the Punjabi Suba was made — smaller than the movement had asked, Chandigarh shared, villages left outside, the rivers in Delhi’s hands. Still, the Punjab had a state of its own language. The struggle had lasted a hundred and seventeen years.';
+  endings.state_fallen = `${polity.replace(/^t/, 'T')} did not last. Its lands passed to its neighbours; but for a while the Nishan Sahib flew over a state of the Panth’s own, and the dhadis will sing of it.`;
   const closing = 'Here the dhadd falls silent, and the sarangi plays on a little alone.';
   return {
     title: s.mode === 'struggle' ? 'The Vaar of the Long Struggle' : `The Vaar of ${f.kind === 'misl' && !s.factions[p].sarkar ? `the ${f.name} misl` : polity.replace(/^the /, 'the ')}`,

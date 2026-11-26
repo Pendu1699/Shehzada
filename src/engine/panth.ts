@@ -137,7 +137,11 @@ export function jathedarTurn(s: GameState): void {
   }
   // A placeman at the Takht wears away every Sikh house's standing.
   if (s.jathedar?.kind === 'sarbrah')
-    for (const f of Object.values(s.factions)) if (f.alive && isSikh(f.id) && !f.flags.in_struggle_passive) changePiri(s, f.id, -0.4, 'A masand at the Akal Takht');
+    for (const f of Object.values(s.factions)) {
+      // The movement of the Long Struggle is the one fighting the sarbrah: it does not share the shame.
+      if (!f.alive || !isSikh(f.id) || (s.mode === 'struggle' && f.id === s.playerFaction)) continue;
+      changePiri(s, f.id, -0.4, 'A masand at the Akal Takht');
+    }
 }
 
 /** Stability modifier for a region from the state of the Takht. */

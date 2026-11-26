@@ -85,6 +85,8 @@ const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 export function checkElimination(s: GameState, f: FactionId, by?: FactionId): void {
   const fs = s.factions[f];
   if (!fs?.alive) return;
+  // The movement of the Long Struggle lives on without land or army.
+  if (s.mode === 'struggle' && f === s.playerFaction) return;
   const hasLand = regionsOf(s, f).length > 0;
   const hasArmy = Object.values(s.armies).some((a) => a.owner === f && armyMen(a) > 0);
   if (hasLand || hasArmy) return;

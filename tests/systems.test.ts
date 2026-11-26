@@ -539,7 +539,87 @@ describe('the Long Struggle', () => {
     let s = newGame({ scenarioId: 's1849', playerFaction: 'khalsa_panth', seed: 3 });
     for (let i = 0; i < 200 && s.phase !== 'ended'; i++) s = endTurn(s);
     expect(s.phase).toBe('ended');
-    expect(['raj_restored', 'khalsa_voice', 'gurdwaras_freed', 'partition']).toContain(s.ending?.kind);
+    expect(['raj_restored', 'khalsa_voice', 'gurdwaras_freed', 'partition', 'khalsa_state']).toContain(s.ending?.kind);
     expect((s.khabar ?? []).length).toBeGreaterThan(20);
+  });
+  it('collects land tax from risen lands, and the movement never dies', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { endTurn } = await import('../src/engine/turn');
+    const { transferRegion } = await import('../src/engine/conquest');
+    let s = newGame({ scenarioId: 's1849', playerFaction: 'khalsa_panth', seed: 3 });
+    s = endTurn(s);
+    expect(s.factions.khalsa_panth.alive).toBe(true);
+    for (const r of ['amritsar', 'batala', 'tarn_taran'].filter((r) => s.regions[r])) transferRegion(s, r, 'khalsa_panth', 90);
+    s = endTurn(s);
+    const ledger = s.struggle!.ledger!.reduce((t, l) => t + l.value, 0);
+    // lastIncome is land revenue plus the movement's own accounts.
+    expect(s.factions.khalsa_panth.lastIncome).toBeGreaterThan(ledger);
+  });
+  it('rides on past 1947: India and Pakistan, then the Punjabi Suba to 1966', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { endTurn } = await import('../src/engine/turn');
+    const { applyAction } = await import('../src/engine/actions');
+    let s = newGame({ scenarioId: 's1849', playerFaction: 'khalsa_panth', seed: 3 });
+    for (let i = 0; i < 200 && s.phase !== 'ended'; i++) s = endTurn(s);
+    expect(s.phase).toBe('ended');
+    // Make sure the movement holds nothing, for the Suba path.
+    for (const r of Object.values(s.regions)) if (r.owner === 'khalsa_panth') r.owner = 'company';
+    s.ending = { kind: 'partition', turn: s.turn };
+    const r = applyAction(s, { type: 'rideOn' });
+    expect(r.error).toBeUndefined();
+    s = r.state;
+    expect(s.factions.india.alive).toBe(true);
+    expect(s.factions.pakistan.alive).toBe(true);
+    expect(s.factions.company.alive).toBe(false);
+    expect(s.regions.lahore.owner).toBe('pakistan');
+    expect(s.regions.amritsar.owner).toBe('india');
+    expect(s.regions.delhi.owner).toBe('india');
+    expect(s.flags?.suba).toBe(true);
+    for (let i = 0; i < 60 && s.phase !== 'ended'; i++) s = endTurn(s);
+    expect(s.phase).toBe('ended');
+    expect(['punjabi_suba', 'suba_1966']).toContain(s.ending?.kind);
+  });
+  it('settles a Sikh state in 1947 for a movement that holds land, and plays on', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { endTurn } = await import('../src/engine/turn');
+    const { applyAction } = await import('../src/engine/actions');
+    const { transferRegion } = await import('../src/engine/conquest');
+    let s = newGame({ scenarioId: 's1849', playerFaction: 'khalsa_panth', seed: 3 });
+    for (let i = 0; i < 200 && s.phase !== 'ended'; i++) s = endTurn(s);
+    for (const r of ['amritsar', 'batala', 'jalandhar']) transferRegion(s, r, 'khalsa_panth', 80);
+    s.ending = { kind: 'khalsa_state', turn: s.turn };
+    s = applyAction(s, { type: 'rideOn' }).state;
+    const pend = s.pendingEvents.find((p) => p.eventId === 'st_settlement')!;
+    expect(pend).toBeDefined();
+    s = applyAction(s, { type: 'eventChoice', pendingId: pend.id, choice: 0 }).state;
+    const fs = s.factions.khalsa_panth;
+    expect(fs.flags.state_name).toBe('Khalistan');
+    expect(fs.sarkar).toBe(true);
+    expect(s.mode).toBeUndefined();
+    expect(s.regions.amritsar.owner).toBe('khalsa_panth');
+    for (let i = 0; i < 6; i++) s = endTurn(s);
+    expect(s.phase).not.toBe('ended');
+    expect(s.factions.khalsa_panth.alive).toBe(true);
+  });
+  it('loads saves made before the newer houses existed, and plays on', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { endTurn } = await import('../src/engine/turn');
+    const { serialize, deserialize } = await import('../src/engine/save');
+    const s = newGame({ scenarioId: 's1748', playerFaction: 'ahluwalia', seed: 9 });
+    const old = JSON.parse(serialize(s));
+    for (const id of ['india', 'pakistan', 'khalsa_panth']) {
+      delete old.factions[id];
+      for (const f of Object.values(old.factions) as { relations: Record<string, string>; attitude: Record<string, number> }[]) {
+        delete f.relations[id];
+        delete f.attitude[id];
+      }
+    }
+    delete old.khabar;
+    delete old.unions;
+    delete old.jathedar;
+    let g = deserialize(JSON.stringify(old));
+    expect(g.factions.india).toBeDefined();
+    for (let i = 0; i < 6; i++) g = endTurn(g);
+    expect(g.turn).toBe(6);
   });
 });

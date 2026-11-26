@@ -44,7 +44,7 @@ export function checkEnding(s: GameState, finalTurnPassed: boolean): void {
     // Past 1849 the game ends only if the player's house loses everything.
     if (!regionsOf(s, s.playerFaction).length) {
       s.phase = 'ended';
-      s.ending = { kind: 'annexation', turn: s.turn };
+      s.ending = { kind: p.flags.state_name ? 'state_fallen' : 'annexation', turn: s.turn };
     }
     return;
   }
@@ -58,5 +58,7 @@ export function checkEnding(s: GameState, finalTurnPassed: boolean): void {
 /** Can the player ride on past the end of the century? Only with a house still standing. */
 export function canRideOn(s: GameState): boolean {
   const p = s.factions[s.playerFaction];
-  return s.mode !== 'struggle' && !!p?.alive && regionsOf(s, s.playerFaction).length > 0 && !p.flags.annexed && s.ending?.kind !== 'ghallughara';
+  // The Long Struggle rides on past its turning points — a won Raj, or 1947 — but not past the Punjabi Suba.
+  if (s.mode === 'struggle') return !s.flags?.transferred && ['raj_restored', 'khalsa_state', 'khalsa_voice', 'gurdwaras_freed', 'partition'].includes(s.ending?.kind ?? '');
+  return !!p?.alive && regionsOf(s, s.playerFaction).length > 0 && !p.flags.annexed && s.ending?.kind !== 'ghallughara';
 }

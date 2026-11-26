@@ -18,6 +18,10 @@ const ENDING_NAMES: Record<string, string> = {
   khalsa_voice: 'The Panth heard',
   gurdwaras_freed: 'The gurdwaras freed',
   partition: 'Partition',
+  khalsa_state: 'Land of its own in 1947',
+  punjabi_suba: 'The Punjabi Suba won',
+  suba_1966: 'The Punjabi Suba of 1966',
+  state_fallen: 'The state fell',
 };
 
 function wrap(ctx: CanvasRenderingContext2D, text: string, width: number): string[] {
@@ -201,9 +205,9 @@ export function VaarPage() {
                 onClick={() => {
                   if (dispatch({ type: 'rideOn' })) closeModal();
                 }}
-                title="The world runs on, with the computer playing every other power"
+                title={game.mode === 'struggle' ? (game.ending?.kind === 'raj_restored' ? 'Play on as the restored Khalsa Raj' : 'The British leave: India and Pakistan are born, and you settle what you hold — or carry the movement on') : 'The world runs on, with the computer playing every other power'}
               >
-                Ride on beyond 1849
+                {game.mode === 'struggle' ? (game.ending?.kind === 'raj_restored' ? 'Ride on as the restored Raj' : 'Ride on beyond 1947') : 'Ride on beyond 1849'}
               </button>
             )}
             <button className="btn" onClick={() => setScreen('title')}>

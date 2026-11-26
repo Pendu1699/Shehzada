@@ -283,7 +283,7 @@ export interface GameState {
   /** Set when the game ends. */
   /** The player chose to ride on past 1849: the world runs on with no history script. */
   beyond?: boolean;
-  ending?: { kind: 'sovereign' | 'protected' | 'annexation' | 'ghallughara' | 'raj_restored' | 'khalsa_voice' | 'gurdwaras_freed' | 'partition'; turn: number };
+  ending?: { kind: 'sovereign' | 'protected' | 'annexation' | 'ghallughara' | 'raj_restored' | 'khalsa_voice' | 'gurdwaras_freed' | 'partition' | 'khalsa_state' | 'punjabi_suba' | 'suba_1966' | 'state_fallen'; turn: number };
   settings: { difficulty: 'gentle' | 'standard' | 'hard' };
   /** The player's darbar, once they rule as the Sarkar-i-Khalsa. */
   court?: Court;

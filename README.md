@@ -113,6 +113,20 @@ Nankana Sahib and the morchas, the world wars and 1947. The **Support** map view
 movement is strong. Win by bringing back the Raj — or at least freeing the gurdwaras or making the
 world hear the Panth before the line is drawn.
 
+**After 1947.** The Long Struggle doesn't have to end in 1947. On the closing page choose **Ride on beyond
+1947**: the British leave, the Punjab is cut along the Radcliffe line, and India and Pakistan take over the
+Raj's lands. Then:
+- **If you hold land** (a rising that held), you sit at the negotiating table. Proclaim a sovereign Sikh
+  state — **Khalistan**, **Sikhistan** or the restored **Sarkar-i-Khalsa** — or join India as **Azad Punjab**,
+  a self-governing Sikh state. How much land you get depends on your strength at the table: land held,
+  Amritsar and Lahore, men under arms, friends abroad, support at home. Strong enough, and the Sikh lands
+  around you join; stronger still, and the princes of Patiala, Nabha, Jind, Faridkot and Kapurthala come
+  too. Then the game goes on as a state: the refugees of 1947, the Kashmir war, the canal waters, a constitution.
+- **If you hold none**, the movement goes on as the **Punjabi Suba movement** (1947–1966): morchas,
+  mass arrests, the banned slogan of 1955, the great morcha of 1960, Sant Fateh Singh's fast — for a state
+  of the Punjabi language. Win it before history does, or see the smaller Suba of 1966.
+If you win the Raj back *before* 1947, you can also ride on and play the restored Raj against the British.
+
 **After 1849.** When the century ends you get your Vaar, and if your house still stands you can
 choose **Ride on beyond 1849**: the world carries on, with the computer playing every other power.
 
@@ -128,6 +142,10 @@ itself. The **Codex** button explains the Punjabi words.
 | Drag your army somewhere | March there |
 | Right-click your army | Its orders: split it, join armies, how it fights |
 | Right-click land | Langar, fort, recruiting, offering protection |
+
+**Saving, and older saves.** **Save** keeps games in your browser, on this computer; they carry over when
+the game is updated (saves from older versions load and play on). To move a game to another computer, or
+to keep a backup, use **Save → Export JSON**, and **Import JSON** to load it back.
 
 Settings (the ⚙ button) has bigger text, colour-blind mode, and sound on/off.
 

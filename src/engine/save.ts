@@ -1,6 +1,8 @@
 // Saving and loading. A save is the GameState as JSON (it already contains the RNG
 // state, so loading resumes the identical random stream).
 
+import { FACTIONS } from '../data/factions';
+import { ensureFaction } from './partition';
 import { SAVE_VERSION, type GameState } from './state';
 
 export const SAVE_PREFIX = 'rkk.save.';
@@ -20,6 +22,8 @@ export function migrate(s: GameState): GameState {
   if (!s.version) s.version = 1;
   if (!s.piriNotes) s.piriNotes = [];
   for (const a of Object.values(s.armies)) if (!a.policy) a.policy = 'spare';
+  // Houses added to the game since the save was made (the Khalsa Panth, India, Pakistan…).
+  for (const f of FACTIONS) if (!s.factions[f.id]) ensureFaction(s, f.id);
   if (s.version > SAVE_VERSION) throw new Error('This save comes from a newer version of the game.');
   s.version = SAVE_VERSION;
   return s;

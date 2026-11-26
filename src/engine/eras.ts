@@ -21,6 +21,7 @@ export const ERAS: EraDef[] = [
   { id: 'sarkar', from: 1799 },
   { id: 'twilight', from: 1839 },
   { id: 'beyond', from: 1849 },
+  { id: 'after_raj', from: 1947 },
 ];
 
 export interface EraPage {
@@ -38,6 +39,7 @@ export const STRUGGLE_ERAS: EraDef[] = [
   { id: 'st_ghadar', from: 1907 },
   { id: 'st_morcha', from: 1919 },
   { id: 'st_partition', from: 1940 },
+  { id: 'st_suba', from: 1948 },
 ];
 
 export function eraOf(y: number, list: EraDef[] = ERAS): EraDef {
@@ -77,6 +79,13 @@ export function eraTitle(s: GameState, id = eraOf(year(s), s.mode === 'struggle'
       return 'The Morchas';
     case 'st_partition':
       return s.struggle && Object.values(s.regions).some((r) => r.owner === s.playerFaction) ? 'The Khalsa Rises' : 'Towards Partition';
+    case 'st_suba':
+      return 'The Punjabi Suba';
+    case 'after_raj': {
+      const name = s.factions[p]?.flags.state_name;
+      if (typeof name === 'string') return s.factions[p].flags.azad_punjab ? `${name}, within India` : `Free ${name.replace(/^the /, '')}`;
+      return 'After the Raj';
+    }
     case 'beyond':
       if (sk && sk === p) return 'The Khalsa Raj Endures';
       return 'The Unwritten Years';
@@ -102,6 +111,10 @@ const AHEAD: Record<string, string> = {
     'If history holds: Jallianwala Bagh, then the morchas — Nankana, Guru ka Bagh, Jaito — until the gurdwaras are freed.',
   st_partition:
     'If history holds: a second world war, the INA, and in 1947 a line drawn through the middle of the Punjab.',
+  st_suba:
+    'If history holds: Master Tara Singh and Sant Fateh Singh lead morcha after morcha; the slogan is banned in 1955 and the police enter the Darbar Sahib; the States Reorganisation Commission says no; the morcha of 1960–61 fills the jails; and in 1966 a smaller Punjab of the Punjabi language is made.',
+  after_raj:
+    'If history holds: ten million cross the new line, the princely states join India one by one, and India and Pakistan go to war over Kashmir. Your state’s story from here is unwritten.',
   beyond:
     'History has nothing more to say: from here no one knows. The Company, the Afghans and every court of Hindustan will act as their rulers choose — and so will you.',
   twilight:
@@ -133,11 +146,16 @@ export function eraTransition(s: GameState): EraPage | null {
       ? `${polityName(s, p).replace(/^t/, 'T')} held ${before} ${before === 1 ? 'land' : 'lands'} when the last age began, and holds ${now} now. Miri ${fs.miri}, Piri ${Math.round(fs.piri)}.`
       : `The banner of ${polityName(s, p)} has fallen.`,
   );
-  lines.push(sk ? `${polityName(s, sk).replace(/^t/, 'T')} rules at Lahore${sk === p ? ' — your house.' : '.'}` : `No one rules the Punjab alone. Lahore is held by ${holder(s, 'lahore')}.`);
+  const seat = sk && s.regions.lahore?.owner !== sk ? (s.regions.amritsar?.owner === sk ? 'Amritsar' : null) : 'Lahore';
+  lines.push(
+    sk
+      ? `${polityName(s, sk).replace(/^t/, 'T')} rules ${seat ? `at ${seat}` : 'its lands'}${sk === p ? ' — your house.' : '.'}${seat !== 'Lahore' ? ` Lahore is held by ${holder(s, 'lahore')}.` : ''}`
+      : `No one rules the Punjab alone. Lahore is held by ${holder(s, 'lahore')}.`,
+  );
   if (fs.flags.early_sarkar && sk === p) lines.push('Your Sarkar came a generation before history’s, and the century has bent around it.');
   if (fs.flags.confederacy) lines.push('The misls hold to the union sworn before the Akal Takht: no king, one Khalsa.');
   lines.push(`Delhi is held by ${holder(s, 'delhi')}; Kabul by ${holder(s, 'kabul')}; Multan by ${holder(s, 'multan')}.`);
   const company = regionsOf(s, 'company').length;
   if (company) lines.push(`The East India Company holds ${company} lands of the subcontinent.`);
-  return { id: era.id, title: eraTitle(s, era.id), years: `${era.from} – ${list[list.indexOf(era) + 1]?.from ?? (s.mode === 'struggle' ? 1947 : 1849)}`, lines, ahead: AHEAD[era.id] ?? '' };
+  return { id: era.id, title: eraTitle(s, era.id), years: `${era.from} – ${list[list.indexOf(era) + 1]?.from ?? (s.mode === 'struggle' ? 1966 : '')}`, lines, ahead: AHEAD[era.id] ?? '' };
 }

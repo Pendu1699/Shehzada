@@ -1,4 +1,5 @@
 import type { Ask, Venture } from '../data/abroad';
+import { rideOnFrom1947 } from './partition';
 import { struggleAct, type Power, type StruggleAct } from './struggle';
 import { foundUnion, joinChance, joinUnion, leaveUnion, sendAid, unionOf } from './unions';
 import { annex, makeVassal, overlordOf, release, submissionChance } from './vassals';
@@ -113,6 +114,18 @@ export function applyAction(prev: GameState, action: Action): Result {
     if (prev.phase !== 'ended' || !canRideOn(prev)) return { state: prev, error: 'There is no road onward from here.' };
     const s = structuredClone(prev);
     s.phase = 'orders';
+    if (s.mode === 'struggle') {
+      if (s.ending?.kind === 'raj_restored') {
+        // The Raj won back before 1947: from here it is a state's game, against the Company.
+        s.mode = undefined;
+        s.struggle = undefined;
+        s.beyond = true;
+        s.factions[s.playerFaction].sarkar = true;
+        chronicle(s, 'event', 'The Khalsa Raj was restored at Lahore, and the story went on.', { faction: s.playerFaction, weight: 6 });
+      } else rideOnFrom1947(s);
+      s.ending = undefined;
+      return { state: s };
+    }
     s.beyond = true;
     chronicle(s, 'event', 'The century closed, and the story did not. The riders went on into years no dhadi had sung.', { faction: s.playerFaction, weight: 4 });
     return { state: s };

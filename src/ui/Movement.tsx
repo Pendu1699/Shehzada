@@ -123,25 +123,53 @@ function PunjabTab() {
             <Bar value={avgSupport(game)} color="var(--kesri)" />
           </div>
         </Tip>
-        <Tip block title="Heat" content={<span>How hard the police are watching. Heat brings raids — your spies may warn you of one — and above 90, mass arrests. It falls a little each season.</span>}>
+        <Tip
+          block
+          title="Heat"
+          content={<span>How hard the police are watching. Heat brings raids — your spies may warn you of one — and above 90, mass arrests. It falls a little each season.</span>}
+        >
           <div style={{ marginTop: 6 }}>
             <div className="small">Heat {Math.round(st.heat)}</div>
             <Bar value={st.heat} color="var(--sindoor)" />
           </div>
         </Tip>
-        {st.raid && (st.cells[st.raid] > 0 || (st.cells.lahore ?? 0) >= 2) && <p className="small" style={{ color: 'var(--sindoor)' }}>Your spies warn of a raid in {REGION_BY_ID[st.raid].name} next season.</p>}
+        {st.raid && (st.cells[st.raid] > 0 || (st.cells.lahore ?? 0) >= 2) && (
+          <p className="small" style={{ color: 'var(--sindoor)' }}>
+            Your spies warn of a raid in {REGION_BY_ID[st.raid].name} next season.
+          </p>
+        )}
         <div className="section-title" style={{ marginTop: 10 }}>
           Across the Punjab
         </div>
         <div className="row" style={{ gap: 4, flexWrap: 'wrap' }}>
           {st.press ? <ActButton act="print" label={`Print ${paperName(game)}`} /> : <ActButton act="press" />}
           <ActButton act="hunt" />
-          <ActButton act="petition" />
+          <ActButton act="petition" label={game.flags?.transferred ? 'Petition Delhi' : undefined} />
         </div>
       </div>
       <div>
-        <div className="section-title">Freeing the gurdwaras</div>
-        {game.flags?.gurdwaras_freed ? (
+        {game.flags?.suba && (
+          <>
+            <div className="section-title">The Punjabi Suba</div>
+            <Tip
+              block
+              title="Punjabi Suba"
+              content={
+                <span>
+                  A state of the Punjabi language within India. Morchas advance it — most at Amritsar — and so do the great events of the years. At 100 it is won; history granted a smaller one in
+                  1966.
+                </span>
+              }
+            >
+              <div style={{ marginBottom: 10 }}>
+                <div className="small">{Math.round(st.suba ?? 0)}% — hold morchas, court arrest, keep the Panth behind you.</div>
+                <Bar value={st.suba ?? 0} color="var(--kesri)" />
+              </div>
+            </Tip>
+          </>
+        )}
+        {!game.flags?.transferred && <div className="section-title">Freeing the gurdwaras</div>}
+        {game.flags?.transferred ? null : game.flags?.gurdwaras_freed ? (
           <p className="small">The gurdwaras and the Akal Takht are in the Panth’s hands.</p>
         ) : (
           <Tip block title="Gurdwara reform" content={<span>From 1920, morchas at Amritsar advance the cause of freeing the gurdwaras from the mahants and the government’s sarbrah.</span>}>
@@ -152,16 +180,26 @@ function PunjabTab() {
           </Tip>
         )}
         <div className="section-title" style={{ marginTop: 10 }}>
-          For a rising
+          {game.flags?.transferred ? 'No risings' : 'For a rising'}
         </div>
-        <p className="small" style={{ margin: 0 }}>
-          A region can rise with support 70 and two cells. Arms hidden for it: <b>{st.arms ?? 0}</b> shipment{(st.arms ?? 0) === 1 ? '' : 's'} (ask friends abroad for more).
-          {(year(game) >= 1914 && year(game) <= 1918) || (year(game) >= 1939 && year(game) <= 1945) ? ' The British army is away at the world war: now is the time.' : ''}
-        </p>
+        {game.flags?.transferred ? (
+          <p className="small" style={{ margin: 0 }}>
+            In free India the movement fights with morchas, the vote and the press. Courting arrest by the thousand is its weapon now.
+          </p>
+        ) : (
+          <p className="small" style={{ margin: 0 }}>
+            A region can rise with support 70 and two cells. Arms hidden for it: <b>{st.arms ?? 0}</b> shipment{(st.arms ?? 0) === 1 ? '' : 's'} (ask friends abroad for more).
+            {(year(game) >= 1914 && year(game) <= 1918) || (year(game) >= 1939 && year(game) <= 1945) ? ' The British army is away at the world war: now is the time.' : ''}
+          </p>
+        )}
         <div className="section-title" style={{ marginTop: 10 }}>
           The world hears the Panth
         </div>
-        <Tip block title="Voice" content={<span>Raised by friends abroad who speak for you. In 1947, a loud enough voice with strong support at home means the Panth is heard when the line is drawn.</span>}>
+        <Tip
+          block
+          title="Voice"
+          content={<span>Raised by friends abroad who speak for you. In 1947, a loud enough voice with strong support at home means the Panth is heard when the line is drawn.</span>}
+        >
           <div>
             <div className="small">{Math.round(st.voice ?? 0)} of 60 needed</div>
             <Bar value={st.voice ?? 0} max={60} color="var(--mehndi)" />
@@ -188,8 +226,8 @@ function AbroadTab() {
   return (
     <div>
       <p className="small" style={{ margin: '2px 0 8px' }}>
-        Send envoys to win a power’s trust; once they listen (influence {MEET_MIN}), arrange a meeting and ask for money, arms, shelter for hunted men, or a voice in the world. Each power meets you once every two years. British intelligence watched every exile —
-        the hotter the police at home, the likelier a meeting is reported.
+        Send envoys to win a power’s trust; once they listen (influence {MEET_MIN}), arrange a meeting and ask for money, arms, shelter for hunted men, or a voice in the world. Each power meets you
+        once every two years. British intelligence watched every exile — the hotter the police at home, the likelier a meeting is reported.
       </p>
       <div className="abroad-list">
         {(Object.keys(POWERS) as Power[]).map((p) => {
@@ -206,7 +244,18 @@ function AbroadTab() {
                 {live && (
                   <>
                     <ActButton act="envoy" power={p} label="Send envoy" />
-                    <Tip title="Arrange a meeting" content={<span>{inf < MEET_MIN ? `They will not meet you yet: influence ${Math.round(inf)} of ${MEET_MIN}.` : wait ? `They met you lately; again in ${wait} season${wait > 1 ? 's' : ''}.` : 'Choose what to ask for.'}</span>}>
+                    <Tip
+                      title="Arrange a meeting"
+                      content={
+                        <span>
+                          {inf < MEET_MIN
+                            ? `They will not meet you yet: influence ${Math.round(inf)} of ${MEET_MIN}.`
+                            : wait
+                              ? `They met you lately; again in ${wait} season${wait > 1 ? 's' : ''}.`
+                              : 'Choose what to ask for.'}
+                        </span>
+                      }
+                    >
                       <button className={`btn small ${open === p ? 'kesri' : ''}`} disabled={inf < MEET_MIN || wait > 0 || st.actionsLeft <= 0} onClick={() => setOpen(open === p ? null : p)}>
                         Meet…
                       </button>
@@ -281,7 +330,8 @@ function FundsTab() {
           </table>
         )}
         <p className="small" style={{ marginTop: 8 }}>
-          Other ways to raise money: <b>collect funds</b> in a region (click it on the map — the melas at {Object.values(MELA_REGIONS).join(', ')} give most), and <b>ask friends abroad</b> at a meeting.
+          Other ways to raise money: <b>collect funds</b> in a region (click it on the map — the melas at {Object.values(MELA_REGIONS).join(', ')} give most), and <b>ask friends abroad</b> at a
+          meeting.
         </p>
       </div>
       <div>
@@ -349,7 +399,7 @@ export function RegionMovement({ id }: { id: string }) {
       </Tip>
       <div className="small" style={{ marginTop: 4 }}>
         Cells: {'●'.repeat(cells)}
-        {'○'.repeat(3 - cells)} · British troops near: {fmt(Math.round(garrison(game, id)))}
+        {'○'.repeat(3 - cells)} · {game.flags?.transferred ? 'Government' : 'British'} troops near: {fmt(Math.round(garrison(game, id)))}
         {st.raid === id && (cells > 0 || (st.cells.lahore ?? 0) >= 2) && <span style={{ color: 'var(--sindoor)' }}> · a raid is coming!</span>}
       </div>
       <div className="row" style={{ gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
@@ -358,7 +408,15 @@ export function RegionMovement({ id }: { id: string }) {
         <ActButton act="collect" region={id} label={`Collect ${rs(gift)}`} extra={MELA_REGIONS[id] ? `Here: ${MELA_REGIONS[id]}.` : ''} />
         <ActButton act="morcha" region={id} disabled={sup < 35} extra="Needs support 35." />
         <ActButton act="lie_low" region={id} disabled={st.lyingLow.includes(id)} />
-        <ActButton act="rise" region={id} disabled={rc <= 0} label={rc > 0 ? `Rise (${Math.round(rc * 100)}%)` : 'Rise'} extra="Needs support 70 and two cells; hidden arms, a world war and friends abroad help; informers and nearby troops make it harder." />
+        {!game.flags?.transferred && (
+          <ActButton
+            act="rise"
+            region={id}
+            disabled={rc <= 0}
+            label={rc > 0 ? `Rise (${Math.round(rc * 100)}%)` : 'Rise'}
+            extra="Needs support 70 and two cells; hidden arms, a world war and friends abroad help; informers and nearby troops make it harder."
+          />
+        )}
       </div>
     </div>
   );

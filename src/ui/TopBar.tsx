@@ -49,7 +49,10 @@ export function TopBar() {
   const fresh = (game.khabar ?? []).filter((k) => k.turn === game.turn && k.weight >= 2).length;
   const fs = game.factions[p];
   const d = date(game);
-  const inc = factionIncome(game, p);
+  const land = factionIncome(game, p);
+  // In the Long Struggle the movement's own accounts (donations, ventures, costs) come on top.
+  const movement = game.struggle?.ledger ?? [];
+  const inc = movement.length ? { ...land, parts: [...movement, ...land.parts], total: land.total + movement.reduce((t, l) => t + l.value, 0) } : land;
   const miri = computeMiri(game, p);
   const bal = balanceOf(game, p);
   const balColor = bal.state === 'balanced' ? '#9bc46a' : bal.state === 'weak' ? '#8fb4e8' : '#ff8a6a';

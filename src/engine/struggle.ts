@@ -51,6 +51,8 @@ export interface StruggleState {
   collected?: Record<RegionId, number>;
   /** Last season's accounts. */
   ledger?: { label: string; value: number }[];
+  /** After 1947: progress of the Punjabi Suba movement (0–100). */
+  suba?: number;
 }
 
 export const POWERS: Record<Power, { name: string; from: number; to: number; detail: string }> = {
@@ -58,7 +60,7 @@ export const POWERS: Record<Power, { name: string; from: number; to: number; det
   russia: { name: 'Russia', from: 1849, to: 1917, detail: 'The Great Game: the Tsar’s generals looked toward India over the Pamirs.' },
   afghanistan: { name: 'Kabul', from: 1849, to: 1947, detail: 'The amirs played the British and the Russians against each other.' },
   ireland: { name: 'The Irish', from: 1860, to: 1922, detail: 'Fenians and later Sinn Féin, who also fought the British Crown, and traded help.' },
-  america: { name: 'The diaspora in America', from: 1900, to: 1947, detail: 'Punjabi farmers and mill-hands of California and British Columbia; the Ghadar Party printed its paper in San Francisco.' },
+  america: { name: 'The diaspora in America', from: 1900, to: 1966, detail: 'Punjabi farmers and mill-hands of California and British Columbia; the Ghadar Party printed its paper in San Francisco.' },
   germany: { name: 'Germany', from: 1900, to: 1945, detail: 'In both world wars Berlin courted Indian revolutionaries.' },
   japan: { name: 'Japan', from: 1937, to: 1945, detail: 'The Indian National Army was raised with Japanese backing.' },
 };
@@ -110,8 +112,9 @@ export const powerOpen = (s: GameState, p: Power) => year(s) >= POWERS[p].from &
 
 /** The British strength in a region: garrisons there and next door. */
 export function garrison(s: GameState, r: RegionId): number {
-  let t = armiesIn(s, r).filter((a) => a.owner === 'company').reduce((n, a) => n + armyMen(a), 0);
-  for (const e of neighbors(r)) t += armiesIn(s, e.to).filter((a) => a.owner === 'company').reduce((n, a) => n + armyMen(a), 0) * 0.3;
+  const gov = s.flags?.transferred ? 'india' : 'company';
+  let t = armiesIn(s, r).filter((a) => a.owner === gov).reduce((n, a) => n + armyMen(a), 0);
+  for (const e of neighbors(r)) t += armiesIn(s, e.to).filter((a) => a.owner === gov).reduce((n, a) => n + armyMen(a), 0) * 0.3;
   return t + 2000;
 }
 
@@ -220,6 +223,8 @@ export function riseChance(s: GameState, r: RegionId): number {
   const st = s.struggle!;
   const support = st.support[r] ?? 0;
   const cells = st.cells[r] ?? 0;
+  // The Punjabi Suba was won by morchas, not risings.
+  if (s.flags?.transferred) return 0;
   if (support < 70 || cells < 2) return 0;
   const foreign = Object.values(st.influence).reduce((t, v) => t + v, 0);
   const g = garrison(s, r);
@@ -275,6 +280,7 @@ export function struggleAct(s: GameState, act: StruggleAct, region?: RegionId, p
         report(s, `Firing on the jathas at ${name}`, `The police fired on the jathas at ${name}. They did not lift a hand in return. The news ran through every village of the Punjab.`, { region, weight: 3 });
       }
       if (region === 'amritsar' && year(s) >= 1920) st.gurdwaraReform = clamp(st.gurdwaraReform + 25, 0, 100);
+      if (s.flags?.suba) st.suba = clamp((st.suba ?? 0) + (region === 'amritsar' ? 12 : 6) + Math.round((st.support[region] ?? 0) / 20), 0, 100);
       return `Jatha after jatha courted arrest at ${name}, singing, unarmed.`;
     }
     case 'lie_low': {
@@ -337,7 +343,7 @@ export function struggleAct(s: GameState, act: StruggleAct, region?: RegionId, p
       spend();
       st.heat = clamp(st.heat - 8, 0, 100);
       for (const r of punjab()) st.support[r] = clamp((st.support[r] ?? 0) - 1, 0, 100);
-      return 'A memorial went up to the Lieutenant-Governor, with many signatures.';
+      return s.flags?.transferred ? 'A memorandum went to Delhi, with many signatures.' : 'A memorial went up to the Lieutenant-Governor, with many signatures.';
     }
     case 'envoy': {
       if (!power || !powerOpen(s, power)) return null;
@@ -423,6 +429,7 @@ export function struggleAct(s: GameState, act: StruggleAct, region?: RegionId, p
 
 export function paperName(s: GameState): string {
   const y = year(s);
+  if (y >= 1947) return 'Akali Patrika';
   if (y >= 1926) return 'The Kirti';
   if (y >= 1920) return 'The Akali';
   if (y >= 1913) return 'Ghadar';
@@ -439,6 +446,13 @@ export function struggleTurn(s: GameState): void {
   const p = s.playerFaction;
   const fs = s.factions[p];
   const y = year(s);
+  // The movement cannot be destroyed by losing its land (older saves marked it fallen).
+  fs.alive = true;
+  // Older saves wore the movement's Piri away under the sarbrah's toll, which now falls on others; give it back once.
+  if (!fs.flags.piri_restored) {
+    fs.flags.piri_restored = true;
+    if (fs.piri < 45) fs.piri = 45;
+  }
   // The season's accounts: what came in, and what the work cost.
   const ledger: { label: string; value: number }[] = [];
   ledger.push({ label: 'Donations of the sangat', value: Math.round(4 + avgSupport(s) * 0.16) });
@@ -455,7 +469,7 @@ export function struggleTurn(s: GameState): void {
   if (st.raid && !st.lyingLow.includes(st.raid)) ledger.push({ label: 'Lawyers for the arrested', value: -5 });
   // The Press Act of 1910: papers deposited a security, forfeited at the government's pleasure.
   if (st.press && y >= 1910 && st.heat >= 60 && chance(s, 0.15)) {
-    ledger.push({ label: 'Security forfeited under the Press Act', value: -15 });
+    ledger.push({ label: y >= 1947 ? 'Security forfeited under the press laws' : 'Security forfeited under the Press Act', value: -15 });
     alert(s, { kind: 'unrest', title: 'The Press Act', text: `The government has forfeited the security of ${paperName(s)}. A new deposit had to be found.` });
   }
   const net = ledger.reduce((t, l) => t + l.value, 0);
@@ -514,15 +528,22 @@ export function struggleTurn(s: GameState): void {
 }
 
 /** The struggle's end, in 1947 (or before, if the Punjab is won). */
-export function struggleEnding(s: GameState): 'raj_restored' | 'khalsa_voice' | 'gurdwaras_freed' | 'partition' | null {
+export function struggleEnding(s: GameState): 'raj_restored' | 'khalsa_voice' | 'gurdwaras_freed' | 'partition' | 'khalsa_state' | 'punjabi_suba' | 'suba_1966' | null {
   const p = s.playerFaction;
+  // After 1947: the Punjabi Suba movement, or a settlement still being made.
+  if (s.flags?.transferred) {
+    if (!s.flags.suba) return null;
+    if ((s.struggle?.suba ?? 0) >= 100) return 'punjabi_suba';
+    return year(s) >= 1967 ? 'suba_1966' : null;
+  }
   const held = Object.values(s.regions).filter((r) => r.owner === p).map((r) => r.id);
   const won = held.includes('lahore') && held.includes('amritsar') && held.length >= 14;
   if (won) return 'raj_restored';
   const d = year(s);
   if (d < 1947) return null;
   const foreign = Object.values(s.struggle?.influence ?? {}).reduce((t, v) => t + v, 0);
-  if (held.length >= 6 || (avgSupport(s) >= 65 && foreign >= 100) || ((s.struggle?.voice ?? 0) >= 60 && avgSupport(s) >= 50)) return 'khalsa_voice';
+  if (held.length >= 1) return 'khalsa_state';
+  if ((avgSupport(s) >= 65 && foreign >= 100) || ((s.struggle?.voice ?? 0) >= 60 && avgSupport(s) >= 50)) return 'khalsa_voice';
   if (s.flags?.gurdwaras_freed) return 'gurdwaras_freed';
   return 'partition';
 }
