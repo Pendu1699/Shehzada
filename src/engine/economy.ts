@@ -1,3 +1,4 @@
+import { takhtStability } from './panth';
 import { TRIBUTE_RATE, type TributeLevel } from './vassals';
 import { factionMods, hasReform } from './reforms';
 // Revenue, rakhi, jagirs, langar and upkeep. All amounts are in thousands of rupees
@@ -219,6 +220,7 @@ export function stabilityTarget(s: GameState, id: RegionId): number {
   if (st.tax === 'light') t += 8;
   t += (st.town ?? 0) * 2;
   if (hasReform(s, owner, 'adalat')) t += 6;
+  t += takhtStability(s, id, def.faith.sikh);
   t += st.buildings.length * 3;
   t -= st.devastation * 40;
   t -= (100 - st.control) * 0.2;

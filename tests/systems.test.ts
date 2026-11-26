@@ -404,6 +404,7 @@ describe('alliance unions', () => {
     const { applyAction } = await import('../src/engine/actions');
     const { joinUnion, unionOf, unionTurn } = await import('../src/engine/unions');
     let s = newGame({ scenarioId: 's1767', playerFaction: 'bhangi', seed: 5 });
+    s = applyAction(s, { type: 'leaveUnion' }).state; // a misl starts in the Dal Khalsa
     s = applyAction(s, { type: 'foundUnion', name: 'League of the Doabs' }).state;
     const u = unionOf(s, 'bhangi')!;
     expect(u.name).toBe('League of the Doabs');
@@ -423,5 +424,38 @@ describe('alliance unions', () => {
     // Aid.
     const aid = applyAction(res.state, { type: 'sendAid', target: 'kanhaiya', amount: 20 });
     expect(aid.state.factions.kanhaiya.flags.aid_for_army).toBe(20);
+  });
+});
+
+describe('the Dal Khalsa and the Akal Takht', () => {
+  it('raises the Dal Khalsa in 1748, keeps it through misl quarrels, and lets it pass in 1799', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { dalKhalsaTurn } = await import('../src/engine/panth');
+    const { unionTurn } = await import('../src/engine/unions');
+    const s = newGame({ scenarioId: 's1748', playerFaction: 'ahluwalia', seed: 4 });
+    const dk = s.unions!.find((u) => u.id === 'dal_khalsa')!;
+    expect(dk.members.length).toBeGreaterThan(8);
+    s.factions.bhangi.relations.kanhaiya = 'war';
+    s.factions.kanhaiya.relations.bhangi = 'war';
+    unionTurn(s);
+    dalKhalsaTurn(s);
+    expect(s.unions!.find((u) => u.id === 'dal_khalsa')!.members).toContain('kanhaiya');
+    s.turn = (1799 - s.startYear) * 2;
+    dalKhalsaTurn(s);
+    expect(s.unions!.some((u) => u.id === 'dal_khalsa')).toBe(false);
+  });
+  it('keeps a Nihang jathedar while the Khalsa holds Amritsar, and a sarbrah when another power does', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { jathedarTurn } = await import('../src/engine/panth');
+    const s = newGame({ scenarioId: 's1767', playerFaction: 'bhangi', seed: 4 });
+    s.regions.amritsar.owner = 'bhangi';
+    jathedarTurn(s);
+    expect(s.jathedar?.kind).toBe('akali');
+    expect(s.jathedar?.name).toBe('Jassa Singh Ahluwalia');
+    const piri = s.factions.bhangi.piri;
+    s.regions.amritsar.owner = 'phulkian';
+    jathedarTurn(s);
+    expect(s.jathedar?.kind).toBe('sarbrah');
+    expect(s.factions.bhangi.piri).toBeLessThan(piri);
   });
 });

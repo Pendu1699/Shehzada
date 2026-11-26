@@ -1,3 +1,4 @@
+import { dalKhalsaTurn, jathedarTurn } from './panth';
 import { unionTurn } from './unions';
 import { alert, vassalTurn } from './vassals';
 import { reformsTurn } from './reforms';
@@ -405,6 +406,8 @@ export function endTurn(prev: GameState): GameState {
   tributeTurn(s);
   vassalTurn(s);
   unionTurn(s);
+  dalKhalsaTurn(s);
+  jathedarTurn(s);
   const incomeParts: { label: string; value: number }[] = [];
   for (const f of Object.values(s.factions)) {
     if (!f.alive) continue;

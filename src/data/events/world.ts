@@ -317,4 +317,40 @@ export const WORLD: EventDef[] = [
       fx.legend(s, sk, 2);
     },
   },
+  {
+    id: 'tankhah',
+    title: 'Summoned to the Akal Takht',
+    gurmukhi: 'ਤਨਖਾਹ',
+    kind: 'generic',
+    chance: 0.35,
+    cooldown: 12,
+    weight: 6,
+    mood: 'solemn',
+    when: (s) => isSikh(P(s)) && s.jathedar?.kind === 'akali' && s.factions[P(s)].piri < 38 && !s.mode?.startsWith('struggle'),
+    text: (s) =>
+      `${s.jathedar!.name}, Jathedar of the Akal Takht, has summoned you to answer before the Takht for your conduct. Akali Phula Singh once had the Maharaja himself stand there and accept his tankhah. The whole Panth is watching.`,
+    playerOnly: () => true,
+    choices: [
+      {
+        label: 'Stand before the Takht and accept the tankhah',
+        detail: 'Pay a fine to the langar (₹20k) and do sewa. The Panth’s trust returns.',
+        effect: (s) => {
+          fx.money(s, P(s), -20);
+          fx.piri(s, P(s), 9, 'Accepting the tankhah of the Akal Takht');
+          fx.legend(s, P(s), 2);
+          return 'You stood barefoot before the Takht, and the Jathedar pronounced the tankhah. The sangat saw that no one is above the Panth.';
+        },
+      },
+      {
+        label: 'Ignore the summons',
+        detail: 'The Nihangs will not forget; Piri falls sharply.',
+        effect: (s) => {
+          fx.piri(s, P(s), -10, 'Ignoring the summons of the Akal Takht');
+          if (s.factions.shaheedan) fx.attitude(s, 'shaheedan', P(s), -40);
+          return 'You did not go. In every dera of the Nihangs your name was spoken with contempt.';
+        },
+      },
+    ],
+    aiChoice: 0,
+  },
 ];

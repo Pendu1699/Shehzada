@@ -99,6 +99,7 @@ export function unionTurn(s: GameState): void {
     for (const m of [...u.members]) if (!s.factions[m]?.alive) leaveUnion(s, m);
     if (!s.unions?.includes(u)) continue;
     // Members at war with one another cannot stay in one league.
+    if (u.id === 'dal_khalsa') continue; // handled in panth.ts: the misls quarrel and still ride together
     for (const a of u.members) for (const b of u.members) if (a !== b && atWar(s, a, b)) leaveUnion(s, b === u.leader ? a : b);
     // Call to arms: the enemies of one are the enemies of all.
     const enemies = new Set<FactionId>();

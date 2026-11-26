@@ -261,6 +261,13 @@ export interface GameState {
   battles: BattleReport[];
   /** Alliance unions (engine/unions.ts). */
   unions?: import('./unions').Union[];
+  /** World-level flags (e.g. gurdwaras_freed). */
+  flags?: Record<string, number | boolean | string>;
+  /** Who keeps the Akal Takht. */
+  jathedar?: import('./panth').Jathedar;
+  /** 'struggle' for The Long Struggle (1849–1947). */
+  mode?: 'century' | 'struggle';
+  struggle?: import('./struggle').StruggleState;
   /** On-screen alerts for the player (wars declared, revolts...). */
   alerts?: import('./vassals').Alert[];
   /** The Khabar: news of the subcontinent (engine/khabar.ts). */

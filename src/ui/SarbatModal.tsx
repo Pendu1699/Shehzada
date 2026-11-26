@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { AkalTakhtScene } from '../art/AkalTakht';
+import { Portrait } from '../art/Portrait';
 import { BannerEmblem } from '../art/Banner';
 import { GURMATA_INFO, assembly, sarbatConvenes, tally, type GurmataKind } from '../engine/sarbat';
 import { date, isSikh, polityName } from '../engine/query';
@@ -36,6 +37,17 @@ export function SarbatModal() {
         <span className="small muted">{date(game).label} · before the Akal Takht</span>
       </div>
       <AkalTakhtScene members={convenes ? members : []} year={date(game).year} />
+      {game.jathedar && (
+        <div className={`jathedar-card ${game.jathedar.kind}`}>
+          <Portrait id={game.jathedar.id} faction={game.jathedar.kind === 'akali' ? 'shaheedan' : 'mughal'} age={55} size={64} />
+          <div>
+            <div className="jathedar-role">{game.jathedar.kind === 'akali' ? 'Jathedar of the Akal Takht' : 'Sarbrah of the Akal Takht — a masand, the Panth says'}</div>
+            <div className="jathedar-name">{game.jathedar.name}</div>
+            <div className="small">{game.jathedar.note}</div>
+            {game.jathedar.kind === 'sarbrah' && <div className="small" style={{ color: 'var(--sindoor)' }}>While a placeman holds the Takht, every Sikh house loses Piri each season, and Sikh lands are restless.</div>}
+          </div>
+        </div>
+      )}
       <p className="small" style={{ margin: '6px 0 4px', fontStyle: 'italic' }}>
         {date(game).year < 1800
           ? 'Twice a year, at Vaisakhi and Diwali, the sardars of every misl gather at Amritsar before the Akal Takht — the throne of the Timeless One, raised by Guru Hargobind Ji facing the Harmandir. Here, before the Guru Granth Sahib, the Khalsa decides as one.'

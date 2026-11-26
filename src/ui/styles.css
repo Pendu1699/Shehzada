@@ -1978,3 +1978,26 @@ svg[aria-label="portrait"] { flex: none; }
     max-width: 70vw;
   }
 }
+.jathedar-card {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 8px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--gold-dark);
+  border-left: 5px solid #1e3fa0;
+  background: rgba(255, 250, 235, 0.7);
+}
+.jathedar-card.sarbrah {
+  border-left-color: var(--sindoor);
+}
+.jathedar-role {
+  font-size: 0.75em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sindoor);
+}
+.jathedar-name {
+  font-family: 'Langar', var(--font-display);
+  font-size: 1.3em;
+}

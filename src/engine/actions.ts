@@ -374,6 +374,7 @@ export function applyAction(prev: GameState, action: Action): Result {
     }
     case 'leaveUnion': {
       if (!unionOf(s, p)) return err('You are in no union.');
+      if (unionOf(s, p)?.id === 'dal_khalsa') changePiri(s, p, -5, 'Leaving the Dal Khalsa');
       leaveUnion(s, p);
       return { state: s, info: 'You have left the union.' };
     }
