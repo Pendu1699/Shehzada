@@ -93,7 +93,11 @@ const AKALI_NAMES = ['Akali Sadhu Singh', 'Akali Teja Singh', 'Akali Dhian Singh
 function keeperOfAmritsar(s: GameState): 'panth' | 'other' {
   const o = s.regions.amritsar?.owner;
   if (s.flags?.gurdwaras_freed) return 'panth';
-  return o && isSikh(o) && o !== 'phulkian' ? 'panth' : 'other';
+  // A sarbrah is a placeman of a ruler who keeps the shrine to manage it: the
+  // Phulkian house or the British. Mughal and Afghan governors desecrated
+  // Amritsar but put no manager over the Takht; the Panth's jathedar led on
+  // from the jungle.
+  return o === 'company' || o === 'phulkian' ? 'other' : 'panth';
 }
 
 /** Each turn: who keeps the Takht, and what that means for the Panth. */

@@ -457,6 +457,25 @@ describe('the Dal Khalsa and the Akal Takht', () => {
     jathedarTurn(s);
     expect(s.jathedar?.kind).toBe('sarbrah');
     expect(s.factions.bhangi.piri).toBeLessThan(piri);
+    // A Mughal or Afghan governor at Amritsar puts no manager over the Takht.
+    s.regions.amritsar.owner = 'durrani';
+    jathedarTurn(s);
+    expect(s.jathedar?.kind).toBe('akali');
+  });
+  it('lets the player ask a rich friend for silver', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { applyAction } = await import('../src/engine/actions');
+    const { diploChance } = await import('../src/engine/diplomacy');
+    let s = newGame({ scenarioId: 's1767', playerFaction: 'ahluwalia', seed: 2 });
+    s.factions.ahluwalia.relations.kanhaiya = 'alliance';
+    s.factions.kanhaiya.relations.ahluwalia = 'alliance';
+    s.factions.kanhaiya.attitude.ahluwalia = 80;
+    s.factions.kanhaiya.treasury = 500;
+    s.factions.ahluwalia.treasury = 10;
+    expect(diploChance(s, 'subsidy', 'kanhaiya')).toBeGreaterThan(0.5);
+    s = applyAction(s, { type: 'diplo', kind: 'subsidy', target: 'kanhaiya' }).state;
+    // Asked once: not again for two years, whatever the answer.
+    expect(diploChance(s, 'subsidy', 'kanhaiya')).toBe(0);
   });
 });
 
@@ -485,6 +504,34 @@ describe('the Long Struggle', () => {
     expect(riseChance(s, 'batala')).toBeGreaterThan(0);
     s.struggle!.support.kasur = 20;
     expect(riseChance(s, 'kasur')).toBe(0);
+  });
+  it('meets friends abroad, asks for money, collects at the melas and founds ventures', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { applyAction } = await import('../src/engine/actions');
+    const { endTurn } = await import('../src/engine/turn');
+    const { meetWait, collectAmount } = await import('../src/engine/struggle');
+    let s = newGame({ scenarioId: 's1849', playerFaction: 'khalsa_panth', seed: 5 });
+    // Not yet listening: no meeting.
+    s.struggle!.influence.france = 5;
+    expect(applyAction(s, { type: 'struggle', act: 'meet', power: 'france', ask: 'funds' }).error).toBeDefined();
+    s.struggle!.influence.france = 90;
+    const t0 = s.factions.khalsa_panth.treasury;
+    s = applyAction(s, { type: 'struggle', act: 'meet', power: 'france', ask: 'funds' }).state;
+    expect(meetWait(s, 'france')).toBeGreaterThan(0);
+    expect(s.struggle!.actionsLeft).toBe(2);
+    // Either they gave (treasury up) or not (spent the travel only).
+    expect(s.factions.khalsa_panth.treasury).not.toBe(t0);
+    const gift = collectAmount(s, 'amritsar');
+    const t1 = s.factions.khalsa_panth.treasury;
+    s = applyAction(s, { type: 'struggle', act: 'collect', region: 'amritsar' }).state;
+    expect(s.factions.khalsa_panth.treasury).toBe(t1 + gift);
+    expect(collectAmount(s, 'amritsar')).toBeLessThan(gift);
+    s.factions.khalsa_panth.treasury = 100;
+    s = applyAction(s, { type: 'struggle', act: 'venture', venture: 'trade' }).state;
+    expect(s.struggle!.ventures).toContain('trade');
+    s = endTurn(s);
+    expect(s.struggle!.ledger!.some((l) => l.label.startsWith('A trading house'))).toBe(true);
+    expect(s.struggle!.ledger!.some((l) => l.value < 0)).toBe(true);
   });
   it('plays through to 1947 and ends', async () => {
     const { newGame } = await import('../src/engine/setup');

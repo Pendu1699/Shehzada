@@ -247,6 +247,8 @@ export function resolveBattle(s: GameState, o: BattleOptions): BattleReport {
   // Treachery / holding back by disloyal commanders in a brittle polity.
   let betrayal: string | undefined;
   const checkTreachery = (side: Side, which: 'A' | 'D') => {
+    // Local garrisons of unowned lands belong to no house.
+    if (!s.factions[side.faction]) return;
     const bal = balanceOf(s, side.faction);
     const crisis = !!s.factions[side.faction]?.flags.court_crisis;
     if (bal.state !== 'brittle' && bal.state !== 'very_brittle' && !crisis) return;

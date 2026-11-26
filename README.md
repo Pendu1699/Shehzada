@@ -70,6 +70,9 @@ Sikh Empire. It's meant to be hard: you need a lot of land and both Miri and Pir
 beating): it keeps its lands, fights beside you and pays the tribute you choose (10, 20 or 35%).
 Heavy tribute makes it restless — at full liberty desire it revolts. After 10 seasons you can annex a loyal puppet.
 
+**Asking for silver.** In **Bahi-khata → Diplomacy**, **Ask silver** asks a richer friend for a subsidy.
+Allies and houses that like you give more readily; each can be asked once every two years.
+
 **Unions.** In **Bahi-khata → Union** you can found a named league and invite other houses. Members
 are allies, ride to war when any one of them is attacked, let you raise men in their lands, and
 accept silver from you to build their own armies.
@@ -93,8 +96,16 @@ Punjab has been annexed; you play the **Khalsa Panth**, a movement with no army 
   (protest), **Lie low** before a raid, or — once support and cells are strong — **Rise**;
 - across the province, **set up a press** and print your paper (from pamphlets to the *Ghadar* printed
   in San Francisco), **hunt informers**, or **petition the Crown**;
-- send **envoys abroad**: France, Russia, Kabul, the Irish, the diaspora in America, Germany, Japan —
-  each only in its own years.
+- **friends abroad**: France, Russia, Kabul, the Irish, the diaspora in America, Germany, Japan — each
+  only in its own years. Send envoys until they listen, then **meet** the real people of the time
+  (Duleep Singh in Paris, Katkov in Moscow, the Amir at Kabul, Clan na Gael, the Ghadar Party in San
+  Francisco, the Berlin India Committee, Mohan Singh's INA…) and ask for **money**, **arms** for a rising,
+  **shelter** for hunted men, or for them to **speak for you** to the world;
+- **money**: donations and remittances come in each season, and the organisers, the press and lawyers
+  for the arrested cost money. Raise more by **collecting funds** at the gurdwaras and melas (Vaisakhi at
+  Amritsar, Hola Mohalla at Anandpur, Maghi at Muktsar), and by founding **ventures** that pay every
+  season — a trading house, land in the canal colonies, a Sikh bank, farms in California, a motor
+  transport company — or Khalsa schools, which train more organisers. The **Funds** tab shows the accounts.
 The police watch you (**Heat**). Your own spies may warn you of a raid a season ahead; with too much
 heat come mass arrests. History arrives along the way: Maharani Jind Kaur's escape, Duleep Singh's
 return, the Kukas, the Singh Sabha, the Ghadar Party and the Komagata Maru, Jallianwala Bagh,

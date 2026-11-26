@@ -44,6 +44,8 @@ export function runEvents(s: GameState): { notes: string[]; dhadi: string[] } {
   if (s.phase === 'ended') return { notes, dhadi };
   let genericFired = 0;
   for (const ev of EVENTS) {
+    // The Long Struggle has its own events: the misls' and the darbar's do not belong in it.
+    if (s.mode === 'struggle' && !ev.id.startsWith('st_') && ev.id !== 'tankhah') continue;
     const ctx = eligible(s, ev);
     if (!ctx) continue;
     if (ev.kind === 'generic') {

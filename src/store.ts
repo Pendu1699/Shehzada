@@ -221,3 +221,6 @@ export const useStore = create<Store>((set, get) => ({
     return g ? serialize(g) : null;
   },
 }));
+
+// For the browser tests: the store, reachable from the page in development only.
+if (import.meta.env.DEV && typeof window !== 'undefined') (window as unknown as { __store: typeof useStore }).__store = useStore;

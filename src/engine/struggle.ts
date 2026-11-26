@@ -7,6 +7,7 @@
 // ground is ready, rises. The British answer with "heat": raids, arrests and
 // informers. History runs alongside (data/events/struggle.ts).
 
+import { ASKS, MELA_REGIONS, VENTURES, contactOf, type Ask, type Venture } from '../data/abroad';
 import { PUNJAB_REGION_IDS, REGION_BY_ID } from '../data/regions';
 import { UNIT_TYPES } from '../data/units';
 import { addRecruits } from './ai';
@@ -38,6 +39,18 @@ export interface StruggleState {
   lyingLow: RegionId[];
   gurdwaraReform: number;
   arrests: number;
+  /** Shipments of arms hidden for a rising. */
+  arms?: number;
+  /** How far the world has heard the Panth's cause (0–100). */
+  voice?: number;
+  /** The turn of the last meeting with each power. */
+  met?: Partial<Record<Power, number>>;
+  /** Businesses and institutions the movement has founded. */
+  ventures?: Venture[];
+  /** The turn each region was last asked for money. */
+  collected?: Record<RegionId, number>;
+  /** Last season's accounts. */
+  ledger?: { label: string; value: number }[];
 }
 
 export const POWERS: Record<Power, { name: string; from: number; to: number; detail: string }> = {
@@ -77,6 +90,12 @@ export function initStruggle(s: GameState): void {
     lyingLow: [],
     gurdwaraReform: 0,
     arrests: 0,
+    arms: 0,
+    voice: 0,
+    met: {},
+    ventures: [],
+    collected: {},
+    ledger: [],
   };
 }
 
@@ -98,7 +117,7 @@ export function garrison(s: GameState, r: RegionId): number {
 
 /* ── Actions ─────────────────────────────────────────────────────────────── */
 
-export type StruggleAct = 'organise' | 'cell' | 'morcha' | 'lie_low' | 'rise' | 'hunt' | 'press' | 'print' | 'petition' | 'envoy';
+export type StruggleAct = 'organise' | 'cell' | 'morcha' | 'lie_low' | 'rise' | 'hunt' | 'press' | 'print' | 'petition' | 'envoy' | 'meet' | 'collect' | 'venture';
 
 export const ACT_INFO: Record<StruggleAct, { name: string; cost: number; detail: string }> = {
   organise: { name: 'Organise', cost: 5, detail: 'Meetings in the villages and the gurdwaras. Support +8 here (more with cells).' },
@@ -111,7 +130,91 @@ export const ACT_INFO: Record<StruggleAct, { name: string; cost: number; detail:
   print: { name: 'Print the paper', cost: 10, detail: 'Support +3 wherever you have a cell; heat +6.' },
   petition: { name: 'Petition the Crown', cost: 5, detail: 'Memorials, deputations, loyal addresses. Heat −8; the hot-heads grumble (support −1).' },
   envoy: { name: 'Send an envoy', cost: 20, detail: 'Seek friends abroad. Influence with that power +12.' },
+  meet: { name: 'Meet', cost: 10, detail: 'Sit down with them and ask for something: money, arms, shelter for exiles, or a voice in the world. Needs influence 20; once every two years with each power.' },
+  collect: { name: 'Collect funds', cost: 0, detail: 'Pass the bowl at the gurdwaras and the melas. The more support here, the more is given; asking the same villages too often brings less.' },
+  venture: { name: 'Found', cost: 0, detail: 'Found a business or institution that pays the movement every season.' },
 };
+
+/* ── Friends abroad: meetings ───────────────────────────────────────────── */
+
+export const MEET_MIN = 20;
+export const MEET_EVERY = 4;
+
+const atWorldWar = (y: number) => (y >= 1914 && y <= 1918) || (y >= 1939 && y <= 1945);
+
+/** How a power answers each kind of ask (1 = ordinary). */
+function askBias(power: Power, ask: Ask, y: number): number {
+  const war = atWorldWar(y);
+  const table: Record<Power, Record<Ask, number>> = {
+    france: { funds: 0.8, arms: 0.4, shelter: 1.3, voice: 1.2 },
+    russia: { funds: 1, arms: 1, shelter: 1, voice: 0.7 },
+    afghanistan: { funds: 0.7, arms: 1.1, shelter: 1.2, voice: 0.5 },
+    ireland: { funds: 0.7, arms: 0.9, shelter: 0.9, voice: 1.2 },
+    america: { funds: 1.4, arms: 0.9, shelter: 1.1, voice: 1.2 },
+    germany: { funds: war ? 1.4 : 0.8, arms: war ? 1.5 : 0.5, shelter: 0.9, voice: 0.8 },
+    japan: { funds: 1, arms: 1.4, shelter: 0.8, voice: 0.8 },
+  };
+  return table[power][ask];
+}
+
+export function askChance(s: GameState, power: Power, ask: Ask): number {
+  const st = s.struggle;
+  if (!st) return 0;
+  const inf = st.influence[power];
+  if (inf < MEET_MIN) return 0;
+  const base = { funds: 0.3, arms: 0.15, shelter: 0.4, voice: 0.4 }[ask];
+  return clamp((base + inf / 140) * askBias(power, ask, year(s)), 0.05, 0.9);
+}
+
+/** Seasons until the power will meet again (0: now). */
+export function meetWait(s: GameState, power: Power): number {
+  const last = s.struggle?.met?.[power];
+  return last === undefined ? 0 : Math.max(0, last + MEET_EVERY - s.turn);
+}
+
+/** What asking for money would bring, if they agree. */
+export function fundsOffered(s: GameState, power: Power): number {
+  const inf = s.struggle?.influence[power] ?? 0;
+  return Math.round((15 + inf * 0.8) * askBias(power, 'funds', year(s)));
+}
+
+/* ── Paying for it ──────────────────────────────────────────────────────── */
+
+/** What passing the bowl in a region would bring. */
+export function collectAmount(s: GameState, r: RegionId): number {
+  const st = s.struggle;
+  if (!st) return 0;
+  const sup = st.support[r] ?? 0;
+  let amt = 2 + sup * 0.2 + REGION_BY_ID[r].population / 120;
+  if (MELA_REGIONS[r]) amt *= 1.5;
+  const last = st.collected?.[r];
+  if (last !== undefined && s.turn - last < 4) amt *= 0.4;
+  return Math.max(1, Math.round(amt));
+}
+
+export function ventureOpen(s: GameState, v: Venture): boolean {
+  const st = s.struggle;
+  if (!st) return false;
+  if (year(s) < VENTURES[v].from || (st.ventures ?? []).includes(v)) return false;
+  if (v === 'farms' && st.influence.america < 10) return false;
+  return true;
+}
+
+/** Income of a venture this season. */
+export function ventureIncome(s: GameState, v: Venture): number {
+  const st = s.struggle!;
+  const base = VENTURES[v].income;
+  switch (v) {
+    case 'bank':
+      return Math.round(base + avgSupport(s) * 0.05);
+    case 'farms':
+      return Math.round(base + st.influence.america * 0.08);
+    case 'trade':
+      return Math.round(base + (st.support.amritsar ?? 0) * 0.02);
+    default:
+      return base;
+  }
+}
 
 export function riseChance(s: GameState, r: RegionId): number {
   const st = s.struggle!;
@@ -120,14 +223,14 @@ export function riseChance(s: GameState, r: RegionId): number {
   if (support < 70 || cells < 2) return 0;
   const foreign = Object.values(st.influence).reduce((t, v) => t + v, 0);
   const g = garrison(s, r);
-  let c = 0.15 + (support - 70) / 100 + cells * 0.08 + foreign / 600 - g / 60000 - (st.informers[r] ?? 0) * 0.15 - st.heat / 400;
+  let c = 0.15 + (support - 70) / 100 + cells * 0.08 + Math.min(4, st.arms ?? 0) * 0.07 + foreign / 600 - g / 60000 - (st.informers[r] ?? 0) * 0.15 - st.heat / 400;
   // A world war draws the British army away.
   if ((year(s) >= 1914 && year(s) <= 1918) || (year(s) >= 1939 && year(s) <= 1945)) c += 0.12;
   return clamp(c, 0.02, 0.85);
 }
 
 /** Do one action of the movement. Returns a message, or null if it cannot be done. */
-export function struggleAct(s: GameState, act: StruggleAct, region?: RegionId, power?: Power): string | null {
+export function struggleAct(s: GameState, act: StruggleAct, region?: RegionId, power?: Power, ask?: Ask, venture?: Venture): string | null {
   const st = s.struggle;
   const p = s.playerFaction;
   const fs = s.factions[p];
@@ -184,6 +287,8 @@ export function struggleAct(s: GameState, act: StruggleAct, region?: RegionId, p
       const c = riseChance(s, region);
       if (c <= 0) return null;
       spend();
+      // The hidden rifles come out of the wells and the haystacks.
+      st.arms = Math.max(0, (st.arms ?? 0) - 2);
       if (chance(s, c)) {
         transferRegion(s, region, p, 55);
         const men = Math.round(REGION_BY_ID[region].population * ((st.support[region] ?? 0) / 100) * 40);
@@ -241,6 +346,77 @@ export function struggleAct(s: GameState, act: StruggleAct, region?: RegionId, p
       st.heat = clamp(st.heat + 3, 0, 100);
       return `An envoy reached ${POWERS[power].name}.`;
     }
+    case 'meet': {
+      if (!power || !ask || !powerOpen(s, power) || meetWait(s, power) > 0) return null;
+      const who = contactOf(power, year(s));
+      if (!who || st.influence[power] < MEET_MIN) return null;
+      const pr = askChance(s, power, ask);
+      spend();
+      st.met = { ...(st.met ?? {}), [power]: s.turn };
+      // British intelligence watched the exiles abroad.
+      let tail = '';
+      if (chance(s, 0.08 + st.heat / 400)) {
+        st.heat = clamp(st.heat + 8, 0, 100);
+        tail = ' British intelligence had a man in the room: the police at home know of it.';
+      }
+      if (!chance(s, pr)) {
+        st.influence[power] = clamp(st.influence[power] - 4, 0, 100);
+        return `${who.name} heard your envoy out, and promised nothing.${tail}`;
+      }
+      switch (ask) {
+        case 'funds': {
+          const amt = fundsOffered(s, power);
+          fs.treasury += amt;
+          st.influence[power] = clamp(st.influence[power] - 12, 0, 100);
+          return `${who.name} gave ₹${amt}k to the cause.${tail}`;
+        }
+        case 'arms': {
+          st.influence[power] = clamp(st.influence[power] - 10, 0, 100);
+          if (chance(s, clamp(0.2 + st.heat / 300 - st.influence[power] / 400, 0.05, 0.6))) {
+            st.heat = clamp(st.heat + 15, 0, 100);
+            chronicle(s, 'loss', `A shipment of rifles from ${POWERS[power].name} was seized at sea.`, { faction: p, weight: 3 });
+            return `${who.name} sent rifles — but the ship was searched and seized, and the police know who they were for.${tail}`;
+          }
+          st.arms = (st.arms ?? 0) + 1;
+          st.heat = clamp(st.heat + 4, 0, 100);
+          return `${who.name} sent rifles. They came ashore in crates of machine parts and are hidden in the villages.${tail}`;
+        }
+        case 'shelter': {
+          st.heat = clamp(st.heat - 18, 0, 100);
+          st.influence[power] = clamp(st.influence[power] - 6, 0, 100);
+          return `${who.name} will shelter your hunted men. The police have lost the trail.${tail}`;
+        }
+        case 'voice': {
+          st.voice = clamp((st.voice ?? 0) + 8 + Math.round(st.influence[power] / 10), 0, 100);
+          st.influence[power] = clamp(st.influence[power] - 5, 0, 100);
+          return `${who.name} raised the Punjab’s cause in ${POWERS[power].name === 'Kabul' ? 'the darbar' : 'the press and the halls of government'}. ${ASKS.voice.name}: the world hears a little more.${tail}`;
+        }
+      }
+      return null;
+    }
+    case 'collect': {
+      if (!region) return null;
+      const amt = collectAmount(s, region);
+      spend();
+      fs.treasury += amt;
+      st.collected = { ...(st.collected ?? {}), [region]: s.turn };
+      st.heat = clamp(st.heat + 1, 0, 100);
+      const mela = MELA_REGIONS[region];
+      return mela ? `At ${mela} the sangat gave ₹${amt}k to the cause.` : `The villages of ${name} gave ₹${amt}k to the cause.`;
+    }
+    case 'venture': {
+      if (!venture || !ventureOpen(s, venture)) return null;
+      const v = VENTURES[venture];
+      if (fs.treasury < v.cost) return null;
+      spend();
+      fs.treasury -= v.cost;
+      st.ventures = [...(st.ventures ?? []), venture];
+      if (venture === 'school') {
+        for (const r of punjab()) st.support[r] = clamp((st.support[r] ?? 0) + 3, 0, 100);
+        st.organisers += 1;
+      }
+      return `${v.name}: founded.`;
+    }
   }
   return null;
 }
@@ -263,10 +439,28 @@ export function struggleTurn(s: GameState): void {
   const p = s.playerFaction;
   const fs = s.factions[p];
   const y = year(s);
-  // Donations from the sangat, at home and abroad.
-  const gift = Math.round(3 + avgSupport(s) * 0.18 + st.influence.america * 0.12 + Object.values(st.influence).reduce((t, v) => t + v, 0) * 0.02);
-  fs.treasury += gift;
-  fs.flags.donations = gift;
+  // The season's accounts: what came in, and what the work cost.
+  const ledger: { label: string; value: number }[] = [];
+  ledger.push({ label: 'Donations of the sangat', value: Math.round(4 + avgSupport(s) * 0.16) });
+  const abroad = Math.round(st.influence.america * 0.1 + Object.values(st.influence).reduce((t, v) => t + v, 0) * 0.02);
+  if (abroad) ledger.push({ label: 'Remittances from abroad', value: abroad });
+  if (st.press) ledger.push({ label: `Subscriptions to ${paperName(s)}`, value: Math.round(1 + avgSupport(s) * 0.05) });
+  for (const v of st.ventures ?? []) {
+    const inc = ventureIncome(s, v);
+    if (inc) ledger.push({ label: VENTURES[v].name, value: inc });
+  }
+  if (s.flags?.gurdwaras_freed) ledger.push({ label: 'The golak of the freed gurdwaras', value: 10 });
+  ledger.push({ label: 'Keep of the organisers', value: -st.organisers });
+  if (st.press) ledger.push({ label: 'Paper, ink and the press', value: -2 });
+  if (st.raid && !st.lyingLow.includes(st.raid)) ledger.push({ label: 'Lawyers for the arrested', value: -5 });
+  // The Press Act of 1910: papers deposited a security, forfeited at the government's pleasure.
+  if (st.press && y >= 1910 && st.heat >= 60 && chance(s, 0.15)) {
+    ledger.push({ label: 'Security forfeited under the Press Act', value: -15 });
+    alert(s, { kind: 'unrest', title: 'The Press Act', text: `The government has forfeited the security of ${paperName(s)}. A new deposit had to be found.` });
+  }
+  const net = ledger.reduce((t, l) => t + l.value, 0);
+  fs.treasury = Math.max(0, fs.treasury + net);
+  st.ledger = ledger;
   // Support drifts back toward what the people would feel anyway.
   for (const r of punjab()) {
     const base = 5 + REGION_BY_ID[r].faith.sikh * 0.4;
@@ -307,7 +501,7 @@ export function struggleTurn(s: GameState): void {
     alert(s, { kind: 'war', title: 'Mass arrests', text: 'Under new ordinances the leaders of the movement have been rounded up. You have one organiser fewer.' });
   }
   // Organisers return as the movement grows.
-  const want = 3 + (y >= 1873 ? 1 : 0) + (y >= 1920 ? 1 : 0) + (avgSupport(s) >= 50 ? 1 : 0);
+  const want = 3 + (y >= 1873 ? 1 : 0) + (y >= 1920 ? 1 : 0) + (avgSupport(s) >= 50 ? 1 : 0) + ((st.ventures ?? []).includes('school') ? 1 : 0);
   if (st.organisers < want && chance(s, 0.3)) st.organisers += 1;
   st.actionsLeft = st.organisers;
   // The Gurdwara Reform Movement: freeing the Takht.
@@ -328,7 +522,7 @@ export function struggleEnding(s: GameState): 'raj_restored' | 'khalsa_voice' | 
   const d = year(s);
   if (d < 1947) return null;
   const foreign = Object.values(s.struggle?.influence ?? {}).reduce((t, v) => t + v, 0);
-  if (held.length >= 6 || (avgSupport(s) >= 65 && foreign >= 100)) return 'khalsa_voice';
+  if (held.length >= 6 || (avgSupport(s) >= 65 && foreign >= 100) || ((s.struggle?.voice ?? 0) >= 60 && avgSupport(s) >= 50)) return 'khalsa_voice';
   if (s.flags?.gurdwaras_freed) return 'gurdwaras_freed';
   return 'partition';
 }

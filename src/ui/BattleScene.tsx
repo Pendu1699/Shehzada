@@ -61,7 +61,7 @@ export function BattleScene({ game, report, round, total, lost }: { game: GameSt
     void (async () => {
       await app.init({ width: W, height: H, backgroundAlpha: 0, antialias: true, resolution: Math.min(2, window.devicePixelRatio || 1), autoDensity: true });
       if (!alive) {
-        app.destroy(true);
+        app.destroy({ removeView: true });
         return;
       }
       app.canvas.style.width = '100%';
@@ -219,7 +219,9 @@ export function BattleScene({ game, report, round, total, lost }: { game: GameSt
     return () => {
       alive = false;
       try {
-        app.destroy(true, { children: true });
+        // Not destroy(true): that also releases Pixi's global pools, which the map's
+        // own renderer is still using, and the map paints blank afterwards.
+        app.destroy({ removeView: true }, { children: true });
       } catch {
         /* not initialised */
       }

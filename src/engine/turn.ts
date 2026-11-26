@@ -416,7 +416,11 @@ export function endTurn(prev: GameState): GameState {
     const inc = collectIncome(s, f.id);
     if (f.id === s.playerFaction) incomeParts.push(...inc.parts);
   }
-  if (s.mode === 'struggle') incomeParts.unshift({ label: 'Donations of the sangat, at home and abroad', value: Number(s.factions[s.playerFaction].flags.donations ?? 0) });
+  if (s.mode === 'struggle') {
+    const ledger = s.struggle?.ledger ?? [];
+    incomeParts.unshift(...ledger);
+    s.factions[s.playerFaction].lastIncome += ledger.reduce((t, l) => t + l.value, 0);
+  }
   langarAndPiri(s);
   for (const f of Object.keys(s.factions)) updateMiri(s, f);
   const bal = balanceOf(s, s.playerFaction);

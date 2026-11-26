@@ -11,13 +11,18 @@ import { atWar, clamp, isSikh, polityName, regionsOf } from './query';
 import { chance } from './rng';
 import type { FactionId, GameState } from './state';
 
-export type DiploKind = 'alliance' | 'marriage' | 'tribute' | 'passage' | 'break_alliance';
+export type DiploKind = 'alliance' | 'marriage' | 'tribute' | 'passage' | 'subsidy' | 'break_alliance';
 
 export const DIPLO_INFO: Record<DiploKind, { name: string; detail: string; cost: number }> = {
   alliance: { name: 'Propose alliance', detail: 'Allies fight beside you and their armies are friends in your lands.', cost: 0 },
   marriage: { name: 'Marriage alliance', detail: 'A marriage between the houses. Costs a dowry and feasts; warms relations greatly, often to alliance.', cost: 30 },
   tribute: { name: 'Demand tribute', detail: 'A weaker neighbour may agree to pay you each season — or take offence.', cost: 0 },
   passage: { name: 'Ask safe passage', detail: 'Leave to march through their lands without war.', cost: 0 },
+  subsidy: {
+    name: 'Ask for silver',
+    detail: 'Ask a richer friend for a subsidy, as the Company paid its allies and the Afghan kings paid theirs. Allies and those who like you give more readily; it cools their regard a little. Once every two years.',
+    cost: 0,
+  },
   break_alliance: { name: 'End the alliance', detail: 'Release both houses from their promises.', cost: 0 },
 };
 
@@ -54,10 +59,25 @@ export function diploChance(s: GameState, kind: DiploKind, target: FactionId): n
     case 'passage':
       c = 0.3 + att / 120 + kin;
       break;
+    case 'subsidy': {
+      const last = Number(me.flags[`subsidy_${target}`] ?? -99);
+      if (s.turn - last < 4 || them.treasury < 40 || them.treasury < me.treasury) return 0;
+      c = 0.1 + att / 120 + kin + (me.relations[target] === 'alliance' ? 0.3 : 0);
+      // A shared enemy opens the purse.
+      if (Object.keys(me.relations).some((x) => me.relations[x] === 'war' && them.relations[x] === 'war')) c += 0.2;
+      break;
+    }
     case 'break_alliance':
       return s.factions[p].relations[target] === 'alliance' ? 1 : 0;
   }
   return clamp(c * dip, 0.02, 0.92);
+}
+
+/** What a subsidy from them would be. */
+export function subsidyAmount(s: GameState, target: FactionId): number {
+  const them = s.factions[target];
+  const ally = s.factions[s.playerFaction].relations[target] === 'alliance';
+  return Math.max(5, Math.min(120, Math.round(them.treasury * (ally ? 0.2 : 0.12))));
 }
 
 export function diplomacy(s: GameState, kind: DiploKind, target: FactionId): { ok: boolean; text: string } | null {
@@ -114,6 +134,18 @@ export function diplomacy(s: GameState, kind: DiploKind, target: FactionId): { o
         return { ok, text: `${name} grants your armies passage.` };
       }
       return { ok, text: `${name} refused passage.` };
+    case 'subsidy': {
+      me.flags[`subsidy_${target}`] = s.turn;
+      if (ok) {
+        const amt = subsidyAmount(s, target);
+        them.treasury -= amt;
+        me.treasury += amt;
+        them.attitude[p] = clamp((them.attitude[p] ?? 0) - 6, -100, 100);
+        return { ok, text: `${name} sent ${amt} thousand rupees.` };
+      }
+      them.attitude[p] = clamp((them.attitude[p] ?? 0) - 3, -100, 100);
+      return { ok, text: `${name} pleaded empty coffers.` };
+    }
     case 'break_alliance':
       setRel('peace');
       them.attitude[p] = clamp((them.attitude[p] ?? 0) - 15, -100, 100);
