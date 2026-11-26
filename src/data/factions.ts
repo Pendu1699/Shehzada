@@ -526,7 +526,22 @@ export const FACTIONS: FactionDef[] = [
     personality: { aggression: 0.15, caution: 0.9, zeal: 0.5, greed: 0.3, honour: 0.7 },
     distant: true,
   }),
+  // ── The Long Struggle (1849–1947) ──
+  misl({
+    id: 'khalsa_panth',
+    name: 'Khalsa Panth',
+    epithet: 'The movement to restore the Khalsa Raj',
+    color: '#E07A12',
+    banner: { field: '#E8870E', band: '#1F3A68', emblem: 'sun' },
+    description:
+      'After 1849 there is no misl and no darbar: only the Panth, its gurdwaras, its soldiers home from the Company’s wars, its exiles in Paris and its labourers in California. A movement, not an army — until it is ready.',
+    bonuses: [
+      { label: 'A movement', detail: 'You hold no land at the start. Build support, cells and friends abroad; rise only when the ground is ready.' },
+    ],
+    mods: {},
+    personality: { aggression: 0.3, caution: 0.7, zeal: 0.8, greed: 0.2, honour: 0.9 },
+  }),
 ];
 
 export const FACTION_BY_ID: Record<string, FactionDef> = Object.fromEntries(FACTIONS.map((f) => [f.id, f]));
-export const MISL_IDS = FACTIONS.filter((f) => f.kind === 'misl').map((f) => f.id);
+export const MISL_IDS = FACTIONS.filter((f) => f.kind === 'misl' && f.id !== 'khalsa_panth').map((f) => f.id);

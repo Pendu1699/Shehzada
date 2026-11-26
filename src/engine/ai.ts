@@ -356,6 +356,7 @@ function aiDiplomacy(s: GameState, f: FactionId) {
 
 /** The Company's patient encroachment: subsidiary alliances and lapse, one district at a time. */
 export function companyTurn(s: GameState): void {
+  if (s.mode === 'struggle') return; // the princely states survive under paramountcy
   const c = s.factions.company;
   if (!c?.alive || year(s) < 1805 || s.turn % 5 !== 2) return;
   const owned = new Set(regionsOf(s, 'company'));
@@ -403,7 +404,7 @@ export function runAI(s: GameState): void {
 }
 
 export function runAIFor(s: GameState, f: FactionId): void {
-  aiDiplomacy(s, f);
+  if (s.mode !== 'struggle') aiDiplomacy(s, f);
   aiReforms(s, f);
   aiVassals(s, f);
   assignLeaders(s, f);

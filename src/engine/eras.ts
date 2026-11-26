@@ -31,9 +31,18 @@ export interface EraPage {
   ahead: string;
 }
 
-export function eraOf(y: number): EraDef {
-  let e = ERAS[0];
-  for (const x of ERAS) if (y >= x.from) e = x;
+/** The ages of the Long Struggle (1849–1947). */
+export const STRUGGLE_ERAS: EraDef[] = [
+  { id: 'st_annexed', from: 1849 },
+  { id: 'st_sabha', from: 1873 },
+  { id: 'st_ghadar', from: 1907 },
+  { id: 'st_morcha', from: 1919 },
+  { id: 'st_partition', from: 1940 },
+];
+
+export function eraOf(y: number, list: EraDef[] = ERAS): EraDef {
+  let e = list[0];
+  for (const x of list) if (y >= x.from) e = x;
   return e;
 }
 
@@ -41,7 +50,7 @@ const sarkarOf = (s: GameState) => Object.values(s.factions).find((f) => f.sarka
 const houseName = (f: string) => FACTION_BY_ID[f]?.name ?? f;
 
 /** The age's name, as the player's own century has shaped it. */
-export function eraTitle(s: GameState, id = eraOf(year(s)).id): string {
+export function eraTitle(s: GameState, id = eraOf(year(s), s.mode === 'struggle' ? STRUGGLE_ERAS : ERAS).id): string {
   const sk = sarkarOf(s);
   const p = s.playerFaction;
   switch (id) {
@@ -58,6 +67,16 @@ export function eraTitle(s: GameState, id = eraOf(year(s)).id): string {
       if (!sk) return 'The Red Ink';
       if (s.factions[sk].miri > (s.factions.company?.miri ?? 0) * 1.2) return 'The Two Empires';
       return 'Twilight of the Sarkar';
+    case 'st_annexed':
+      return 'The Annexed Years';
+    case 'st_sabha':
+      return 'The Singh Sabha';
+    case 'st_ghadar':
+      return 'Ghadar';
+    case 'st_morcha':
+      return 'The Morchas';
+    case 'st_partition':
+      return s.struggle && Object.values(s.regions).some((r) => r.owner === s.playerFaction) ? 'The Khalsa Rises' : 'Towards Partition';
     case 'beyond':
       if (sk && sk === p) return 'The Khalsa Raj Endures';
       return 'The Unwritten Years';
@@ -75,6 +94,14 @@ const AHEAD: Record<string, string> = {
     'If history holds: the Afghan kings will come down once or twice more and then stop coming. The misls will divide the Punjab among themselves, and quarrel over it. In the east the Company has just been granted Bengal.',
   sarkar:
     'If history holds: a young Sukerchakia will take Lahore and make one state of the Punjab, from the Sutlej to the Khyber. The Company will reach the Sutlej in 1809 and stop there, for a time.',
+  st_sabha:
+    'If history holds: the Singh Sabhas will teach the Panth to read and print in Gurmukhi again; the Kukas will be crushed; Duleep Singh will try to come home.',
+  st_ghadar:
+    'If history holds: the farmers of the canal colonies will rise against the water rates; the Ghadar Party will print its paper in San Francisco and plan a rising; the Komagata Maru will be turned away.',
+  st_morcha:
+    'If history holds: Jallianwala Bagh, then the morchas — Nankana, Guru ka Bagh, Jaito — until the gurdwaras are freed.',
+  st_partition:
+    'If history holds: a second world war, the INA, and in 1947 a line drawn through the middle of the Punjab.',
   beyond:
     'History has nothing more to say: from here no one knows. The Company, the Afghans and every court of Hindustan will act as their rulers choose — and so will you.',
   twilight:
@@ -84,7 +111,8 @@ const AHEAD: Record<string, string> = {
 /** Called each turn: returns the era page if an age has just begun. */
 export function eraTransition(s: GameState): EraPage | null {
   const y = year(s);
-  const era = eraOf(y);
+  const list = s.mode === 'struggle' ? STRUGGLE_ERAS : ERAS;
+  const era = eraOf(y, list);
   const key = `era_${era.id}`;
   const p = s.playerFaction;
   const fs = s.factions[p];
@@ -111,5 +139,5 @@ export function eraTransition(s: GameState): EraPage | null {
   lines.push(`Delhi is held by ${holder(s, 'delhi')}; Kabul by ${holder(s, 'kabul')}; Multan by ${holder(s, 'multan')}.`);
   const company = regionsOf(s, 'company').length;
   if (company) lines.push(`The East India Company holds ${company} lands of the subcontinent.`);
-  return { id: era.id, title: eraTitle(s, era.id), years: `${era.from} – ${ERAS[ERAS.indexOf(era) + 1]?.from ?? 1849}`, lines, ahead: AHEAD[era.id] ?? '' };
+  return { id: era.id, title: eraTitle(s, era.id), years: `${era.from} – ${list[list.indexOf(era) + 1]?.from ?? (s.mode === 'struggle' ? 1947 : 1849)}`, lines, ahead: AHEAD[era.id] ?? '' };
 }

@@ -9,6 +9,7 @@ import { langarCost, recruitCost, recruitPool, regionRevenue } from '../engine/e
 import { armiesIn, armyMen, atWar, isSikh, polityName, relation, year } from '../engine/query';
 import { unionOf } from '../engine/unions';
 import { useStore } from '../store';
+import { RegionMovement } from './Movement';
 import { Bar, BreakdownView, Folio, Tip, fmt, rs } from './common';
 
 const DOAB_NAMES: Record<string, string> = {
@@ -299,6 +300,7 @@ export function RegionPanel({ id }: { id: string }) {
           <Recruit region={id} />
         </div>
       )}
+      {game.struggle && <RegionMovement id={id} />}
       {!mine && seen && (
         <div className="section">
           <div className="section-title">Dealings</div>

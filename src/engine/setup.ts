@@ -1,3 +1,4 @@
+import { initStruggle } from './struggle';
 import { jathedarTurn, raiseDalKhalsa } from './panth';
 import { eraTransition } from './eras';
 import { outerOwnersAt, seedHistory } from './history';
@@ -172,7 +173,11 @@ export function newGame(opts: NewGameOptions): GameState {
   for (const f of FACTIONS) {
     const hasLand = Object.values(regions).some((r) => r.owner === f.id);
     const hasArmy = Object.values(s.armies).some((a) => a.owner === f.id);
-    if (!hasLand && !hasArmy) factions[f.id].alive = false;
+    if (!hasLand && !hasArmy && !(sc.mode === 'struggle' && f.id === opts.playerFaction)) factions[f.id].alive = false;
+  }
+  if (sc.mode === 'struggle') {
+    s.mode = 'struggle';
+    initStruggle(s);
   }
   if (!factions[opts.playerFaction]?.alive) throw new Error(`${opts.playerFaction} is not present in ${sc.id}`);
 

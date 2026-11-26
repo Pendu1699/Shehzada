@@ -14,6 +14,10 @@ const ENDING_NAMES: Record<string, string> = {
   protected: 'A protected state',
   annexation: 'Annexation',
   ghallughara: 'Ghallughara',
+  raj_restored: 'The Khalsa Raj restored',
+  khalsa_voice: 'The Panth heard',
+  gurdwaras_freed: 'The gurdwaras freed',
+  partition: 'Partition',
 };
 
 function wrap(ctx: CanvasRenderingContext2D, text: string, width: number): string[] {

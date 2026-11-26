@@ -1,3 +1,4 @@
+import { struggleTurn } from './struggle';
 import { dalKhalsaTurn, jathedarTurn } from './panth';
 import { unionTurn } from './unions';
 import { alert, vassalTurn } from './vassals';
@@ -408,12 +409,14 @@ export function endTurn(prev: GameState): GameState {
   unionTurn(s);
   dalKhalsaTurn(s);
   jathedarTurn(s);
+  struggleTurn(s);
   const incomeParts: { label: string; value: number }[] = [];
   for (const f of Object.values(s.factions)) {
     if (!f.alive) continue;
     const inc = collectIncome(s, f.id);
     if (f.id === s.playerFaction) incomeParts.push(...inc.parts);
   }
+  if (s.mode === 'struggle') incomeParts.unshift({ label: 'Donations of the sangat, at home and abroad', value: Number(s.factions[s.playerFaction].flags.donations ?? 0) });
   langarAndPiri(s);
   for (const f of Object.keys(s.factions)) updateMiri(s, f);
   const bal = balanceOf(s, s.playerFaction);

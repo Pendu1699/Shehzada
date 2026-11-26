@@ -84,9 +84,13 @@ export function composeVaar(s: GameState): Vaar {
     annexation: `And in the spring of eighteen forty-nine the red ink reached Lahore. The Punjab was annexed. But the dhadi has seen kingdoms fall before, and the Panth outlive them.`,
     ghallughara: `The banner of ${polity} fell in the dark years. Its riders scattered; its name passed to other misls. Weep, then remember: the Khalsa was never one misl, and it endured.`,
   };
+  endings.raj_restored = `Ninety-eight years after the red ink reached Lahore, it ran out. ${polity} holds Lahore and Amritsar again; the Nishan Sahib flies over the fort where the Lion of the Punjab held his darbar. Raj karega Khalsa — the old saying came true twice.`;
+  endings.khalsa_voice = `In 1947 the Punjab was not simply cut in two by men who had never seen it. ${polity} had lands of its own, and friends abroad, and the world had to listen. The dhadi cannot say what came after; but the Panth sat at the table.`;
+  endings.gurdwaras_freed = 'The Raj was not won back. But the gurdwaras were freed, the Akal Takht had its jathedar again, and the Panth came to 1947 with its institutions in its own hands.';
+  endings.partition = 'In August 1947 the line ran through the middle of the Punjab, through Lahore and the canal colonies and the shrines of the Gurus. Millions walked across it; hundreds of thousands did not reach the other side. The dhadi does not sing of it. He only remembers.';
   const closing = 'Here the dhadd falls silent, and the sarangi plays on a little alone.';
   return {
-    title: `The Vaar of ${f.kind === 'misl' && !s.factions[p].sarkar ? `the ${f.name} misl` : polity.replace(/^the /, 'the ')}`,
+    title: s.mode === 'struggle' ? 'The Vaar of the Long Struggle' : `The Vaar of ${f.kind === 'misl' && !s.factions[p].sarkar ? `the ${f.name} misl` : polity.replace(/^the /, 'the ')}`,
     subtitle: `${s.startYear} – ${end.year}`,
     stanzas: [...stanzas, endings[kind]],
     tallies,

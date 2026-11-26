@@ -9,7 +9,7 @@ import type { GameState } from '../engine/state';
 import { unionOf } from '../engine/unions';
 import { overlordOf } from '../engine/vassals';
 
-export type MapMode = 'painted' | 'countries' | 'alliances' | 'terrain' | 'faith' | 'wealth';
+export type MapMode = 'painted' | 'countries' | 'alliances' | 'terrain' | 'faith' | 'wealth' | 'support';
 
 export const MAP_MODES: { id: MapMode; name: string; detail: string }[] = [
   { id: 'painted', name: 'Painted', detail: 'The watercolour map: what your riders have seen, and who holds it.' },
@@ -18,6 +18,7 @@ export const MAP_MODES: { id: MapMode; name: string; detail: string }[] = [
   { id: 'terrain', name: 'Terrain', detail: 'Plains, river belas, jungle, hills, the bar, desert and mountains.' },
   { id: 'faith', name: 'Faith', detail: 'The faith most of the people follow.' },
   { id: 'wealth', name: 'Wealth', detail: 'How much land revenue and trade each region yields.' },
+  { id: 'support', name: 'Support', detail: 'The Long Struggle: how strongly each region backs the movement.' },
 ];
 
 export const ALLIANCE_KEY = {
@@ -78,6 +79,12 @@ export function modeColor(s: GameState, mode: MapMode, id: string, ownerColor: (
     case 'wealth': {
       const g = regionGross(s, id);
       return wealthColor((g.land + g.trade) / Math.max(1, maxWealth));
+    }
+    case 'support': {
+      const v = s.struggle?.support[id];
+      if (v === undefined) return st.owner === p ? ALLIANCE_KEY.you : '#D8D0BC';
+      if (st.owner === p) return ALLIANCE_KEY.you;
+      return lerp('#EFE6D0', '#C8500E', v / 100);
     }
     default:
       return null;

@@ -79,7 +79,8 @@ describe('new game', () => {
       for (const f of sc.playable) {
         const s = newGame({ scenarioId: sc.id, playerFaction: f, seed: 1 });
         expect(s.factions[f].alive).toBe(true);
-        expect(Object.values(s.armies).some((a) => a.owner === f)).toBe(true);
+        // Every player starts with an army — except the movement of the Long Struggle.
+        if (sc.mode !== 'struggle') expect(Object.values(s.armies).some((a) => a.owner === f)).toBe(true);
       }
   });
   it('knows the whole map by report and the player’s own land in detail', () => {

@@ -1,3 +1,4 @@
+import { PUNJAB_REGION_IDS } from './regions';
 // The four scenario start points. Ownership is approximate: the Punjab of the
 // misl era was a patchwork of overlapping claims, rakhi arrangements and shifting
 // jagirs, which a region map can only sketch. See HISTORY.md, "Starting positions".
@@ -38,6 +39,8 @@ export interface ScenarioDef {
   alliances?: [string, string][];
   /** Factions recognised as the Sarkar-i-Khalsa at start. */
   sarkar?: string;
+  /** The Long Struggle: a political game after the annexation. */
+  mode?: 'struggle';
 }
 
 const MISLS = [
@@ -412,6 +415,51 @@ export const SCENARIOS: ScenarioDef[] = [
     flags: { sukerchakia: { european_officers: true }, phulkian: { company_protection: true } },
     wars: [['sukerchakia', 'durrani']],
     alliances: [['phulkian', 'company'], ['bahawalpur', 'company']],
+  },
+  {
+    id: 's1849',
+    title: 'The Long Struggle',
+    gurmukhi: 'ਲੰਮਾ ਸੰਘਰਸ਼',
+    year: 1849,
+    festival: 'vaisakhi',
+    mode: 'struggle',
+    blurb:
+      'Vaisakhi 1849. The Punjab has been annexed; the Koh-i-Noor is on its way to London; the boy-Maharaja Duleep Singh is in British hands. The Khalsa army is disbanded and a British sarbrah will sit at the Akal Takht. But the Panth is not a kingdom, and it has not been annexed. A political game: build support and cells, find friends abroad, outwit the police and their informers — and bring back the Raj by 1947, if you can.',
+    playable: ['khalsa_panth'],
+    recommended: 'khalsa_panth',
+    owners: {
+      ...Object.fromEntries([...PUNJAB_REGION_IDS].map((r) => [r, 'company'])),
+      kapurthala: 'ahluwalia',
+      patiala: 'phulkian',
+      nabha: 'phulkian',
+      jind: 'phulkian',
+      faridkot: 'phulkian',
+      malerkotla: 'malerkotla',
+      bahawalpur: 'bahawalpur',
+      jammu: 'jammu',
+      mirpur: 'jammu',
+      srinagar: 'jammu',
+      muzaffarabad: 'jammu',
+      bilaspur: 'hill_states',
+      mandi: 'hill_states',
+      chamba: 'hill_states',
+      sirmur: 'hill_states',
+    },
+    armies: [
+      { owner: 'company', region: 'lahore', units: [['sepoy', 9000], ['british_regular', 3000], ['company_cav', 1500], ['horse_artillery', 600]], name: 'Lahore Division' },
+      { owner: 'company', region: 'peshawar', units: [['sepoy', 8000], ['british_regular', 2500], ['company_cav', 2000], ['horse_artillery', 600]], name: 'Peshawar Frontier Force' },
+      { owner: 'company', region: 'ferozepur', units: [['sepoy', 5000], ['british_regular', 1500], ['horse_artillery', 400]] },
+      { owner: 'company', region: 'rawalpindi', units: [['sepoy', 5000], ['british_regular', 1000], ['company_cav', 1000]] },
+      { owner: 'company', region: 'multan', units: [['sepoy', 4000], ['british_regular', 800]] },
+      { owner: 'company', region: 'delhi', units: [['sepoy', 6000], ['british_regular', 1500]] },
+      { owner: 'company', region: 'amritsar', units: [['sepoy', 2500], ['british_regular', 500]] },
+    ],
+    treasury: { default: 100, khalsa_panth: 40, company: 9000, phulkian: 500, jammu: 600 },
+    piri: { default: 50, khalsa_panth: 60, phulkian: 40 },
+    absent: ['mughal', 'peshawar', 'multan', 'kasur', 'kangra', 'bhangi', 'kanhaiya', 'ramgarhia', 'nakai', 'dallewalia', 'nishanwalia', 'faizullapuria', 'karorasinghia', 'shaheedan', 'sukerchakia', 'durrani', 'maratha'],
+    flags: { phulkian: { company_protection: true }, ahluwalia: { company_protection: true } },
+    wars: [],
+    alliances: [['phulkian', 'company'], ['ahluwalia', 'company'], ['jammu', 'company'], ['bahawalpur', 'company']],
   },
 ];
 

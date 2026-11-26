@@ -154,6 +154,10 @@ export function generateSummaryOpening(s: GameState): string[] {
     lines.push('Listen! The century turns. Zaman Shah has gone home, and Lahore waits behind its walls for a master.');
     lines.push('Three sardars quarrel in the fort; the merchants and the qazis and the pandits look north to Gujranwala.');
     lines.push(`Ride now, ${f.name}, for whoever holds Lahore holds the Punjab.`);
+  } else if (s.scenarioId === 's1849') {
+    lines.push('Listen, and do weep a little. The Koh-i-Noor has gone over the sea, the boy Maharaja has been sent away, and the red coats stand guard on the Lahore fort.');
+    lines.push('There is no army now and no Sarkar. There are villages, gurdwaras, presses and men who remember. The Company has spies in every bazaar; so can you.');
+    lines.push('A hundred years lie ahead. Organise, print, petition, find friends across the sea — and when the time is right, rise.');
   } else {
     lines.push('Listen, and do not weep yet. The Lion of the Punjab has gone to his rest, and the empire he built stands from the Khyber to the Sutlej.');
     lines.push('But the court is a nest of whispers, the army counts its arrears, and red ink spreads along the far bank of the Sutlej.');

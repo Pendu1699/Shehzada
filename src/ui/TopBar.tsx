@@ -136,7 +136,12 @@ export function TopBar() {
         <button className="btn small" data-tut="ledger" onClick={() => openModal('ledger')} title="Ledger (L)">
           Bahi-khata
         </button>
-        {isSikh(p) && !fs.sarkar && !Object.values(game.factions).some((f) => f.sarkar && f.alive) && (
+        {game.struggle && (
+          <button className="btn small kesri" onClick={() => openModal('movement')} title="The Movement (G)">
+            The Movement · {game.struggle.actionsLeft}/{game.struggle.organisers}
+          </button>
+        )}
+        {!game.struggle && isSikh(p) && !fs.sarkar && !Object.values(game.factions).some((f) => f.sarkar && f.alive) && (
           <button className="btn small kesri" onClick={() => openModal('unify')} title="Found the Sikh Empire">
             Unify the Punjab
           </button>

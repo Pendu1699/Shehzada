@@ -20,6 +20,7 @@ import { KhabarModal } from './KhabarModal';
 import { Alerts } from './Alerts';
 import { MapModes } from './MapModes';
 import { ReformsModal } from './ReformsModal';
+import { MovementModal } from './Movement';
 import { MapMenu, MouseHints } from './MapMenu';
 
 function HoverCard() {
@@ -148,6 +149,7 @@ export function GameScreen() {
       else if (k === 'b') openModal('darbar');
       else if (k === 'n') openModal('khabar');
       else if (k === 'r') openModal('reforms');
+      else if (k === 'g' && game.struggle) openModal('movement');
       else if (e.key === '?') st.restartTutorial();
       else if (k === 'h') {
         const home = Object.values(game.regions).find((r) => r.owner === game.playerFaction);
@@ -224,7 +226,7 @@ export function GameScreen() {
           )}
         </button>
       </div>
-      {settings.tutorial && <Tutorial key={tutorialRun} />}
+      {settings.tutorial && !game.struggle && <Tutorial key={tutorialRun} />}
       {battle ? (
         <BattleVignette key={battle.id} report={battle} />
       ) : (
@@ -240,6 +242,7 @@ export function GameScreen() {
           {modal === 'unify' && <UnifyModal />}
           {modal === 'khabar' && <KhabarModal />}
           {modal === 'reforms' && <ReformsModal />}
+          {modal === 'movement' && game.struggle && <MovementModal />}
           {!modal && game.pendingEvents.length > 0 && <EventModal />}
         </>
       )}

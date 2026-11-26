@@ -75,7 +75,32 @@ are allies, ride to war when any one of them is attacked, let you raise men in t
 accept silver from you to build their own armies.
 
 **Map views.** Buttons at the bottom-left switch the map between **Painted**, **Countries**,
-**Alliances**, **Terrain**, **Faith** and **Wealth**, each with a small legend.
+**Alliances**, **Terrain**, **Faith** and **Wealth** (and **Support** in the Long Struggle), each with a small legend.
+
+**The Dal Khalsa and the Akal Takht.** In the early starts every misl except the Phulkian houses
+rides in the **Dal Khalsa**: when one member is attacked by an outsider, the others usually come. It
+holds until **1799** (or until someone founds the Sarkar), then breaks apart, and after that every
+house is on its own. At the Akal Takht sits a **Jathedar**. While Sikhs hold Amritsar he is a Nihang
+of the Akali tradition — Nawab Kapur Singh, Jassa Singh Ahluwalia, Akali Phula Singh, Akali Hanuman
+Singh. If Amritsar falls to Patiala's house or to the British, a government **sarbrah** (a masand-like
+manager) is put in charge, and every Sikh house slowly loses Piri while he sits there. If your Piri sinks
+too low, an Akali Jathedar may summon you to the Takht for **tankhah** (a penance).
+
+**The Long Struggle (1849–1947).** Pick **1849** on the start screen for a different kind of game.
+Punjab has been annexed; you play the **Khalsa Panth**, a movement with no army and no land. Open
+**The Movement** (top bar, or **G**) and use your organisers each season:
+- click a region of the Punjab to **Organise** support, plant secret **cells**, hold a **morcha**
+  (protest), **Lie low** before a raid, or — once support and cells are strong — **Rise**;
+- across the province, **set up a press** and print your paper (from pamphlets to the *Ghadar* printed
+  in San Francisco), **hunt informers**, or **petition the Crown**;
+- send **envoys abroad**: France, Russia, Kabul, the Irish, the diaspora in America, Germany, Japan —
+  each only in its own years.
+The police watch you (**Heat**). Your own spies may warn you of a raid a season ahead; with too much
+heat come mass arrests. History arrives along the way: Maharani Jind Kaur's escape, Duleep Singh's
+return, the Kukas, the Singh Sabha, the Ghadar Party and the Komagata Maru, Jallianwala Bagh,
+Nankana Sahib and the morchas, the world wars and 1947. The **Support** map view shows where the
+movement is strong. Win by bringing back the Raj — or at least freeing the gurdwaras or making the
+world hear the Panth before the line is drawn.
 
 **After 1849.** When the century ends you get your Vaar, and if your house still stands you can
 choose **Ride on beyond 1849**: the world carries on, with the computer playing every other power.
@@ -176,14 +201,17 @@ simplifications, and `AUDIO.md` for the musical choices.
 - **Alternative history.** Any misl that holds Lahore and Amritsar with the Panth's trust can proclaim the
   Sarkar-i-Khalsa early — or keep the misls a united confederacy. Ranjit Singh may find Lahore already
   yours. Delhi, Kabul, Patna Sahib, Hazur Sahib, Lhasa and Fort William can all be reached.
-- **The Sarbat Khalsa** gathers before the Akal Takht, painted as the era had it.
+- **The Sarbat Khalsa** gathers before the Akal Takht, painted as the era had it. The Dal Khalsa binds the
+  misls until 1799; the Jathedar of the Takht is an Akali while Sikhs hold Amritsar, and a government
+  sarbrah, draining the Panth, when they don't.
 - **History by default, bendable.** Scripted events from Ram Rauni (1748) to annexation (1849) fire unless
   their conditions have been changed — the succession tragedies and the treachery of 1845–46 can be averted.
 - **Respect.** The Gurus are never depicted; no Gurbani is quoted or invented; no Sikh faction can
   desecrate a sacred site (enforced and tested).
 
-Four scenarios: 1748 *The Age of Ghallugharas*, 1767 *The Misl Raj*, 1799 *The Lion of Lahore*,
-1839 *Twilight of the Sarkar*.
+Five scenarios: 1748 *The Age of Ghallugharas*, 1767 *The Misl Raj*, 1799 *The Lion of Lahore*,
+1839 *Twilight of the Sarkar*, and 1849 *The Long Struggle* — a political game of organisers, presses,
+spies, morchas and friends abroad that runs to 1947.
 
 ## Controls
 
@@ -199,4 +227,5 @@ Four scenarios: 1748 *The Age of Ghallugharas*, 1767 *The Misl Raj*, 1799 *The L
 | Replay the tutorial | **? Counsel** | ? |
 | End the turn | **Beat the nagara** | Enter |
 | Ledger (bahi-khata) · Sarbat Khalsa · Codex | top bar | L · K · C |
+| The Movement (Long Struggle only) | top bar | G |
 | Close / deselect | | Esc |

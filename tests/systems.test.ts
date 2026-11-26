@@ -459,3 +459,40 @@ describe('the Dal Khalsa and the Akal Takht', () => {
     expect(s.factions.bhangi.piri).toBeLessThan(piri);
   });
 });
+
+describe('the Long Struggle', () => {
+  it('starts with no land, the British everywhere and a sarbrah at the Takht', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const s = newGame({ scenarioId: 's1849', playerFaction: 'khalsa_panth', seed: 1 });
+    expect(s.mode).toBe('struggle');
+    expect(Object.values(s.regions).some((r) => r.owner === 'khalsa_panth')).toBe(false);
+    expect(s.regions.lahore.owner).toBe('company');
+    expect(s.jathedar?.kind).toBe('sarbrah');
+  });
+  it('organises, plants cells, and can rise once the ground is ready', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { applyAction } = await import('../src/engine/actions');
+    const { riseChance } = await import('../src/engine/struggle');
+    let s = newGame({ scenarioId: 's1849', playerFaction: 'khalsa_panth', seed: 1 });
+    const before = s.struggle!.support.amritsar;
+    s = applyAction(s, { type: 'struggle', act: 'organise', region: 'amritsar' }).state;
+    expect(s.struggle!.support.amritsar).toBeGreaterThan(before);
+    s = applyAction(s, { type: 'struggle', act: 'cell', region: 'amritsar' }).state;
+    expect(s.struggle!.cells.amritsar).toBe(2);
+    expect(s.struggle!.actionsLeft).toBe(1);
+    s.struggle!.support.batala = 90;
+    s.struggle!.cells.batala = 3;
+    expect(riseChance(s, 'batala')).toBeGreaterThan(0);
+    s.struggle!.support.kasur = 20;
+    expect(riseChance(s, 'kasur')).toBe(0);
+  });
+  it('plays through to 1947 and ends', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { endTurn } = await import('../src/engine/turn');
+    let s = newGame({ scenarioId: 's1849', playerFaction: 'khalsa_panth', seed: 3 });
+    for (let i = 0; i < 200 && s.phase !== 'ended'; i++) s = endTurn(s);
+    expect(s.phase).toBe('ended');
+    expect(['raj_restored', 'khalsa_voice', 'gurdwaras_freed', 'partition']).toContain(s.ending?.kind);
+    expect((s.khabar ?? []).length).toBeGreaterThan(20);
+  });
+});

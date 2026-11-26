@@ -47,6 +47,7 @@ export const FLAGS: Record<string, FlagDesign> = {
   karorasinghia: { shape: 'pennant', field: '#7A6A2A', border: '#B83A2B', device: 'darwaza', deviceColor: '#F2E6C9', pattern: 'dots', patternColor: '#9A8A4A' },
   shaheedan: { shape: 'pennant', field: '#22307A', border: '#E8870E', device: 'shastar', deviceColor: '#D9DDE2', pattern: 'stars', patternColor: '#3A4A9A' },
   phulkian: { shape: 'pennant', field: '#F2E6C9', border: '#6B8F3A', device: 'phul', deviceColor: '#C9502B', pattern: 'trefoil', patternColor: '#8FAF5A' },
+  khalsa_panth: { shape: 'pennant', field: '#E8870E', border: '#1E3FA0', vine: '#E6C766', device: 'nishans', deviceColor: '#1E3FA0', pattern: 'none' },
   // ── The powers of the Punjab ──
   durrani: { shape: 'rect', field: '#1B1712', border: '#2F6F73', device: 'crescent_swords', deviceColor: '#F2E6C9', pattern: 'none' },
   mughal: { shape: 'pennant', field: '#2E6B45', border: '#C9A13B', vine: GOLD, device: 'sherkhurshid', deviceColor: GOLD, pattern: 'none' },

@@ -27,11 +27,18 @@ export function MapModes() {
   const mode = useStore((s) => s.settings.mapMode ?? 'painted');
   const update = useStore((s) => s.updateSettings);
   const sw = SWATCHES[mode];
+  const struggle = useStore((s) => !!s.game?.struggle);
   return (
     <div className="map-modes">
       {mode !== 'painted' && (
         <div className="map-legend">
-          {mode === 'wealth' ? (
+          {mode === 'support' ? (
+            <div className="legend-ramp">
+              <span>none</span>
+              <span className="ramp" style={{ background: 'linear-gradient(90deg, #EFE6D0, #C8500E)' }} />
+              <span>fervent</span>
+            </div>
+          ) : mode === 'wealth' ? (
             <div className="legend-ramp">
               <span>poor</span>
               <span className="ramp" style={{ background: `linear-gradient(90deg, ${WEALTH_STOPS_KEY.join(',')})` }} />
@@ -50,7 +57,7 @@ export function MapModes() {
         </div>
       )}
       <div className="map-mode-buttons" role="group" aria-label="Map view">
-        {MAP_MODES.map((m) => (
+        {MAP_MODES.filter((m) => m.id !== 'support' || struggle).map((m) => (
           <Tip key={m.id} title={`${m.name} view`} content={<span>{m.detail}</span>}>
             <button className={`chip ${mode === m.id ? 'on' : ''}`} onClick={() => update({ mapMode: m.id })}>
               {m.name}

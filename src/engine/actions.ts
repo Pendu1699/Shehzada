@@ -1,3 +1,4 @@
+import { struggleAct, type Power, type StruggleAct } from './struggle';
 import { foundUnion, joinChance, joinUnion, leaveUnion, sendAid, unionOf } from './unions';
 import { annex, makeVassal, overlordOf, release, submissionChance } from './vassals';
 import { beginReform, factionMods, hasReform } from './reforms';
@@ -50,6 +51,7 @@ export type Action =
   | { type: 'propose'; kind: string; target?: string }
   | { type: 'proclaimEmpire' }
   | { type: 'rideOn' }
+  | { type: 'struggle'; act: StruggleAct; region?: string; power?: Power }
   | { type: 'foundUnion'; name: string }
   | { type: 'inviteUnion'; target: string }
   | { type: 'leaveUnion' }
@@ -355,6 +357,10 @@ export function applyAction(prev: GameState, action: Action): Result {
       return { state: s };
     case 'vote':
       return castVote(s, action.gurmataId, action.yes) ? { state: s } : err('That vote cannot be cast.');
+    case 'struggle': {
+      const r = struggleAct(s, action.act, action.region, action.power);
+      return r ? { state: s, info: r } : err('That cannot be done now.');
+    }
     case 'foundUnion': {
       const u = foundUnion(s, p, action.name);
       return u ? { state: s, info: `The ${u.name} is founded. Invite others to join it.` } : err('You already belong to a union.');

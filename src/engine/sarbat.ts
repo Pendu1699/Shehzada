@@ -49,7 +49,7 @@ export function assembly(s: GameState): FactionId[] {
 
 export function sarbatConvenes(s: GameState): boolean {
   const p = s.factions[s.playerFaction];
-  if (!isSikh(s.playerFaction)) return false;
+  if (!isSikh(s.playerFaction) || s.mode === 'struggle') return false;
   if (p.sarkar && !p.convenesSarbat) return false;
   return assembly(s).length >= 2;
 }
