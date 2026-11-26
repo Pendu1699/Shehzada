@@ -1,79 +1,180 @@
-// The Sarbat Khalsa before the Akal Takht, painted in the flat manner of the
-// title miniature. The building follows the era: after Ahmad Shah blew it up
-// in 1762 it was rebuilt as a modest two-storeyed hall (1774); the gilded dome
-// and the upper storeys of white marble belong to the Sarkar years. In front
-// stand the two Nishan Sahibs of Miri and Piri. No figures of the Gurus.
+// The Sarbat Khalsa before the Akal Takht.
+//
+// The building follows the era. After Ahmad Shah blew it up in 1762 it was
+// rebuilt (1774) as a two-storeyed hall with a small white dome. In the Sarkar
+// years it rose to five storeys of white marble: a basement with its arcade, the
+// darbar with the golden palki, the great arched gallery with its balcony, a
+// storey of windows, and the drum under a ribbed, gilded onion dome. The gallery
+// and the storey above it turn back at the corners, and four chhatris stand on
+// the corners: two tall ones beside the dome, two low ones at the ends of the
+// gallery. Two stairs climb to the darbar. The proportions follow photographs
+// of the Takht.
+//
+// Two Nishan Sahibs, of Miri and Piri, stand beside it. The Gurus are not
+// depicted. The finials are plain kalash spires: the Khanda is kept for the
+// Nishan Sahib.
 
 import { FACTION_BY_ID } from '../data/factions';
 
-const MARBLE = '#F4EEDF';
-const SHADE = '#D9CFB8';
-const LINE = '#B8AA8A';
-const DARK = '#4A3A28';
-const GOLD = '#D9A930';
-const GOLD_HI = '#F3D27A';
-const GOLD_LO = '#9C6F14';
+const MARBLE = '#F6F1E4';
+const SIDE = '#E4DBC6'; // the faces that turn back
+const SHADE = '#D6CBB2';
+const LINE = '#A99A78';
+const DOOR = '#7A4E2A';
+const GOLD_LO = '#8F6410';
 
-function Arches({ x, y, w, h, n, deep = DARK }: { x: number; y: number; w: number; h: number; n: number; deep?: string }) {
+const DARK = 'url(#at-dark)';
+const GILT = 'url(#at-gilt)';
+
+/** A cusped (multifoil) arch, or a round one if lobes is 0. y is the apex. */
+function archD(x: number, y: number, w: number, h: number, lobes: number): string {
+  const rx = w / 2;
+  const cx = x + rx;
+  const ry = Math.min(h * 0.5, w * 0.62);
+  const ys = y + ry;
+  let d = `M${x} ${y + h} L${x} ${ys}`;
+  if (!lobes) d += ` A${rx} ${ry} 0 0 1 ${x + w} ${ys}`;
+  else {
+    let px = x,
+      py = ys;
+    for (let i = 1; i <= lobes; i++) {
+      const phi = Math.PI - (i * Math.PI) / lobes;
+      // A slightly pointed outline: the top rises a little faster than a circle.
+      const nx = cx + rx * Math.cos(phi);
+      const ny = ys - ry * Math.pow(Math.sin(phi), 0.8);
+      const r = Math.hypot(nx - px, ny - py) * 0.6;
+      d += ` A${r.toFixed(2)} ${r.toFixed(2)} 0 0 1 ${nx.toFixed(2)} ${ny.toFixed(2)}`;
+      px = nx;
+      py = ny;
+    }
+  }
+  return d + ` L${x + w} ${y + h} Z`;
+}
+
+function Arch({ x, y, w, h, lobes = 0, fill = DARK, frame }: { x: number; y: number; w: number; h: number; lobes?: number; fill?: string; frame?: boolean }) {
+  return (
+    <g>
+      {frame && <rect x={x - 3} y={y - 3} width={w + 6} height={h + 3} fill="none" stroke={LINE} strokeWidth="0.7" />}
+      <path d={archD(x, y, w, h, lobes)} fill={fill} stroke={LINE} strokeWidth="0.8" />
+    </g>
+  );
+}
+
+/** n arches side by side across [x, x+w], with slender piers between them. */
+function ArchRow({ x, y, w, h, n, lobes = 0, pier = 0.22, fill = DARK, frame }: { x: number; y: number; w: number; h: number; n: number; lobes?: number; pier?: number; fill?: string; frame?: boolean }) {
   const gap = w / n;
+  const aw = gap * (1 - pier);
   return (
     <g>
-      {Array.from({ length: n }, (_, i) => {
-        const ax = x + i * gap + gap * 0.14,
-          aw = gap * 0.72;
-        const top = y + h * 0.28;
-        return (
-          <path
-            key={i}
-            d={`M${ax} ${y + h} L${ax} ${top} Q${ax + aw * 0.12} ${top - h * 0.16} ${ax + aw * 0.3} ${top - h * 0.18} Q${ax + aw * 0.5} ${top - h * 0.3} ${ax + aw * 0.7} ${top - h * 0.18} Q${ax + aw * 0.88} ${top - h * 0.16} ${ax + aw} ${top} L${ax + aw} ${y + h} Z`}
-            fill={deep}
-            stroke={LINE}
-            strokeWidth="1"
-          />
-        );
+      {Array.from({ length: n }, (_, i) => (
+        <Arch key={i} x={x + i * gap + (gap - aw) / 2} y={y} w={aw} h={h} lobes={lobes} fill={fill} frame={frame} />
+      ))}
+    </g>
+  );
+}
+
+/** A jali railing: a pierced marble screen between a rail and a plinth. */
+function Railing({ x, y, w, h = 8 }: { x: number; y: number; w: number; h?: number }) {
+  const posts = Math.max(1, Math.round(w / 16));
+  return (
+    <g>
+      <rect x={x} y={y} width={w} height={h} fill="url(#at-jali)" stroke={LINE} strokeWidth="0.7" />
+      <rect x={x - 1} y={y - 1.5} width={w + 2} height={2.2} fill={MARBLE} stroke={LINE} strokeWidth="0.5" />
+      {Array.from({ length: posts + 1 }, (_, i) => (
+        <rect key={i} x={x + (i * w) / posts - 1.2} y={y - 1} width={2.4} height={h + 1} fill={MARBLE} stroke={LINE} strokeWidth="0.4" />
+      ))}
+    </g>
+  );
+}
+
+/** A projecting eave (chhajja) on brackets, with its shadow. */
+function Chhajja({ x, y, w, d = 7 }: { x: number; y: number; w: number; d?: number }) {
+  return (
+    <g>
+      <rect x={x} y={y + 5} width={w} height={d - 2} fill="#000" opacity="0.1" />
+      <path d={`M${x - 7} ${y} L${x + w + 7} ${y} L${x + w + 2} ${y + 5} L${x - 2} ${y + 5} Z`} fill={MARBLE} stroke={LINE} strokeWidth="0.7" />
+      {Array.from({ length: Math.floor(w / 14) + 1 }, (_, i) => (
+        <path key={i} d={`M${x + i * 14 - 1.5} ${y + 5} l3 0 l-1 ${d - 2} l-1 0 Z`} fill={SHADE} />
+      ))}
+    </g>
+  );
+}
+
+/** An onion dome; yb is its base. */
+function onionD(cx: number, yb: number, w: number, h: number): string {
+  const L = (k: number) => cx - w * k,
+    R = (k: number) => cx + w * k,
+    Y = (k: number) => yb - h * k;
+  return (
+    `M${L(0.5)} ${yb} C${L(0.7)} ${Y(0.34)} ${L(0.56)} ${Y(0.72)} ${L(0.12)} ${Y(0.87)} Q${L(0.03)} ${Y(0.92)} ${cx} ${Y(1)} ` +
+    `Q${R(0.03)} ${Y(0.92)} ${R(0.12)} ${Y(0.87)} C${R(0.56)} ${Y(0.72)} ${R(0.7)} ${Y(0.34)} ${R(0.5)} ${yb} Z`
+  );
+}
+
+function Dome({ cx, yb, w, h, gilt = true, ribs = 0, lotus }: { cx: number; yb: number; w: number; h: number; gilt?: boolean; ribs?: number; lotus?: boolean }) {
+  return (
+    <g>
+      <path d={onionD(cx, yb, w, h)} fill={gilt ? GILT : MARBLE} stroke={gilt ? GOLD_LO : LINE} strokeWidth="0.9" />
+      {Array.from({ length: ribs }, (_, i) => {
+        const k = (i + 1) / (ribs + 1) - 0.5; // -0.5..0.5
+        return <path key={i} d={`M${cx + k * w * 1.05} ${yb} Q${cx + k * w * 1.35} ${yb - h * 0.55} ${cx} ${yb - h}`} stroke={gilt ? GOLD_LO : LINE} strokeWidth="0.8" fill="none" opacity="0.75" />;
       })}
+      {lotus &&
+        Array.from({ length: 12 }, (_, i) => {
+          const pw = w / 12;
+          const px = cx - w / 2 + i * pw;
+          return <path key={i} d={`M${px} ${yb} q${pw / 2} ${-pw * 1.3} ${pw} 0 Z`} fill={gilt ? '#E8BF4E' : SHADE} stroke={gilt ? GOLD_LO : LINE} strokeWidth="0.5" />;
+        })}
     </g>
   );
 }
 
-/** A jali balustrade: a rail with small pierced panels. */
-function Balustrade({ x, y, w }: { x: number; y: number; w: number }) {
+/** A finial of stacked kalash beads and a spike. */
+function Finial({ x, y, s, gilt = true }: { x: number; y: number; s: number; gilt?: boolean }) {
+  const c = gilt ? '#F1CF6E' : LINE;
+  const e = gilt ? GOLD_LO : LINE;
   return (
     <g>
-      <rect x={x} y={y} width={w} height={7} fill={MARBLE} stroke={LINE} strokeWidth="0.8" />
-      {Array.from({ length: Math.floor(w / 9) }, (_, i) => (
-        <rect key={i} x={x + 3 + i * 9} y={y + 1.8} width={4} height={3.4} fill={SHADE} />
-      ))}
+      <line x1={x} y1={y} x2={x} y2={y - 16 * s} stroke={c} strokeWidth={1.3 * s} />
+      <ellipse cx={x} cy={y - 3 * s} rx={2.6 * s} ry={1.6 * s} fill={c} stroke={e} strokeWidth="0.4" />
+      <circle cx={x} cy={y - 7 * s} r={1.9 * s} fill={c} stroke={e} strokeWidth="0.4" />
+      <circle cx={x} cy={y - 10.5 * s} r={1.4 * s} fill={c} stroke={e} strokeWidth="0.4" />
+      <path d={`M${x - 2.4 * s} ${y - 12.5 * s} L${x + 2.4 * s} ${y - 12.5 * s} L${x} ${y - 14.5 * s} Z`} fill={c} />
+      <path d={`M${x} ${y - 14 * s} L${x} ${y - 19 * s}`} stroke={c} strokeWidth={0.9 * s} />
     </g>
   );
 }
 
-/** A projecting eave (chhajja) on small brackets. */
-function Chhajja({ x, y, w }: { x: number; y: number; w: number }) {
+/** A chhatri: an open pavilion with a gilded dome on a tall pedestal. y is the base. */
+function Chhatri({ x, y, s, pedestal, gilt = true }: { x: number; y: number; s: number; pedestal: number; gilt?: boolean }) {
+  const top = y - pedestal; // floor of the pavilion
+  const ph = 13 * s; // pavilion height
   return (
     <g>
-      <path d={`M${x - 8} ${y} L${x + w + 8} ${y} L${x + w} ${y + 5} L${x} ${y + 5} Z`} fill={MARBLE} stroke={LINE} strokeWidth="0.8" />
-      {Array.from({ length: Math.floor(w / 26) + 1 }, (_, i) => (
-        <path key={i} d={`M${x + i * 26} ${y + 5} l3 0 l-1.5 5 Z`} fill={SHADE} />
-      ))}
+      {/* the pedestal: a shaft with mouldings that flares out under the pavilion */}
+      <rect x={x - 4.5 * s} y={top + 6 * s} width={9 * s} height={pedestal - 6 * s} fill={MARBLE} stroke={LINE} strokeWidth="0.7" />
+      {pedestal > 20 &&
+        [0.35, 0.65].map((k) => <rect key={k} x={x - 5.5 * s} y={top + 6 * s + (pedestal - 6 * s) * k} width={11 * s} height={2 * s} fill={MARBLE} stroke={LINE} strokeWidth="0.5" />)}
+      <path d={`M${x - 4.5 * s} ${top + 6 * s} C${x - 5 * s} ${top + 3 * s} ${x - 9 * s} ${top + 2 * s} ${x - 10 * s} ${top} L${x + 10 * s} ${top} C${x + 9 * s} ${top + 2 * s} ${x + 5 * s} ${top + 3 * s} ${x + 4.5 * s} ${top + 6 * s} Z`} fill={MARBLE} stroke={LINE} strokeWidth="0.7" />
+      <Railing x={x - 10 * s} y={top - 3 * s} w={20 * s} h={3 * s} />
+      {/* the open pavilion */}
+      <rect x={x - 9 * s} y={top - ph} width={18 * s} height={ph - 3 * s} fill={MARBLE} stroke={LINE} strokeWidth="0.7" />
+      <ArchRow x={x - 8.4 * s} y={top - ph + 1.6 * s} w={16.8 * s} h={ph - 4.6 * s} n={3} lobes={s > 1.3 ? 4 : 0} pier={0.28} />
+      <path d={`M${x - 11.5 * s} ${top - ph} L${x + 11.5 * s} ${top - ph} L${x + 9.5 * s} ${top - ph + 2.4 * s} L${x - 9.5 * s} ${top - ph + 2.4 * s} Z`} fill={MARBLE} stroke={LINE} strokeWidth="0.6" />
+      <rect x={x - 8 * s} y={top - ph - 2 * s} width={16 * s} height={2 * s} fill={gilt ? GILT : MARBLE} stroke={gilt ? GOLD_LO : LINE} strokeWidth="0.4" />
+      <Dome cx={x} yb={top - ph - 2 * s} w={14 * s} h={12.5 * s} gilt={gilt} ribs={s > 1.3 ? 3 : 0} />
+      <Finial x={x} y={top - ph - 14.5 * s} s={s * 0.7} gilt={gilt} />
     </g>
   );
 }
 
-/** A small open kiosk with a gilded dome. */
-function Kiosk({ x, y, s, gilt }: { x: number; y: number; s: number; gilt: boolean }) {
-  const dome = gilt ? GOLD : MARBLE;
+/** A small gilded domelet on a little drum. */
+function Domelet({ x, y, s }: { x: number; y: number; s: number }) {
   return (
     <g>
-      <rect x={x - 9 * s} y={y - 18 * s} width={18 * s} height={18 * s} fill={MARBLE} stroke={LINE} strokeWidth="0.8" />
-      {[-5, 0, 5].map((d) => (
-        <rect key={d} x={x + (d - 1.6) * s} y={y - 15 * s} width={3.2 * s} height={12 * s} fill={DARK} opacity="0.75" />
-      ))}
-      <path d={`M${x - 10.5 * s} ${y - 18 * s} L${x + 10.5 * s} ${y - 18 * s} L${x + 9 * s} ${y - 20.5 * s} L${x - 9 * s} ${y - 20.5 * s} Z`} fill={MARBLE} stroke={LINE} strokeWidth="0.6" />
-      <path d={`M${x - 9 * s} ${y - 20.5 * s} C${x - 10 * s} ${y - 30 * s} ${x - 3 * s} ${y - 36 * s} ${x} ${y - 38 * s} C${x + 3 * s} ${y - 36 * s} ${x + 10 * s} ${y - 30 * s} ${x + 9 * s} ${y - 20.5 * s} Z`} fill={dome} stroke={gilt ? GOLD_LO : LINE} strokeWidth="0.8" />
-      {gilt && <path d={`M${x - 4 * s} ${y - 21 * s} Q${x - 4 * s} ${y - 31 * s} ${x} ${y - 37 * s} M${x + 4 * s} ${y - 21 * s} Q${x + 4 * s} ${y - 31 * s} ${x} ${y - 37 * s}`} stroke={GOLD_LO} strokeWidth="0.7" fill="none" />}
-      <path d={`M${x} ${y - 38 * s} L${x} ${y - 46 * s}`} stroke={gilt ? GOLD_HI : LINE} strokeWidth={1.4 * s} />
-      <circle cx={x} cy={y - 46 * s} r={1.6 * s} fill={gilt ? GOLD_HI : LINE} />
+      <rect x={x - 5 * s} y={y - 5 * s} width={10 * s} height={5 * s} fill={MARBLE} stroke={LINE} strokeWidth="0.5" />
+      <Dome cx={x} yb={y - 5 * s} w={10 * s} h={10 * s} />
+      <Finial x={x} y={y - 15 * s} s={s * 0.5} />
     </g>
   );
 }
@@ -83,114 +184,226 @@ function NishanSahib({ x, base, h, flip }: { x: number; base: number; h: number;
   const dir = flip ? -1 : 1;
   return (
     <g>
-      <rect x={x - 7} y={base - 6} width={14} height={6} fill={MARBLE} stroke={LINE} />
-      <line x1={x} y1={base - 6} x2={x} y2={top} stroke="#E8870E" strokeWidth="4" />
-      <line x1={x} y1={base - 6} x2={x} y2={top} stroke="#B86A08" strokeWidth="1" />
-      <path d={`M${x} ${top + 4} L${x + 52 * dir} ${top + 20} L${x} ${top + 36} Z`} fill="#E8870E" stroke="#9A5206" strokeWidth="0.8" />
+      <rect x={x - 8} y={base - 8} width={16} height={8} fill={MARBLE} stroke={LINE} />
+      <rect x={x - 5} y={base - 12} width={10} height={4} fill={MARBLE} stroke={LINE} />
+      <line x1={x} y1={base - 12} x2={x} y2={top} stroke="#E8870E" strokeWidth="4" />
+      <line x1={x + 1} y1={base - 12} x2={x + 1} y2={top} stroke="#B86A08" strokeWidth="1" />
+      <path d={`M${x} ${top + 4} L${x + 46 * dir} ${top + 19} L${x} ${top + 34} Z`} fill="#E8870E" stroke="#9A5206" strokeWidth="0.8" />
       <path d={`M${x} ${top} L${x - 3} ${top - 12} L${x} ${top - 16} L${x + 3} ${top - 12} Z`} fill="#C9C9C9" stroke="#6E6E6E" strokeWidth="0.6" />
     </g>
   );
 }
 
+/** A golden palki under a small dome, seen through the darbar's central arch. */
+function Palki({ x, base }: { x: number; base: number }) {
+  return (
+    <g>
+      <rect x={x - 22} y={base - 46} width={44} height={46} fill="#F3D27A" opacity="0.18" />
+      <rect x={x - 12} y={base - 12} width={24} height={12} fill={GILT} stroke={GOLD_LO} strokeWidth="0.6" />
+      {[-10, 10].map((d) => (
+        <rect key={d} x={x + d - 1.2} y={base - 27} width={2.4} height={15} fill={GILT} />
+      ))}
+      <rect x={x - 13} y={base - 29} width={26} height={3} fill={GILT} stroke={GOLD_LO} strokeWidth="0.4" />
+      <Dome cx={x} yb={base - 29} w={20} h={13} />
+      <Finial x={x} y={base - 42} s={0.4} />
+    </g>
+  );
+}
+
+/** One side of the stairs that climb to the darbar terrace. */
+function Stair({ x0, x1, yTop, yBot }: { x0: number; x1: number; yTop: number; yBot: number }) {
+  const n = 9;
+  const steps = Array.from({ length: n }, (_, i) => {
+    const t = (i + 1) / (n + 1);
+    return { x: x0 + (x1 - x0) * t, y: yBot - (yBot - yTop) * t };
+  });
+  return (
+    <g>
+      <path d={`M${x0} ${yBot} L${x1} ${yTop} L${x1} ${yBot} Z`} fill={MARBLE} stroke={LINE} strokeWidth="0.7" />
+      {steps.map((p, i) => (
+        <line key={i} x1={p.x} y1={p.y} x2={x1} y2={p.y} stroke={LINE} strokeWidth="0.6" />
+      ))}
+      <line x1={x0} y1={yBot - 10} x2={x1} y2={yTop - 10} stroke="#C9A13B" strokeWidth="1.4" />
+      {steps.filter((_, i) => i % 3 === 0).map((p, i) => (
+        <line key={i} x1={p.x} y1={p.y} x2={p.x} y2={p.y - 10} stroke="#C9A13B" strokeWidth="0.9" />
+      ))}
+    </g>
+  );
+}
+
+const sym = (cx: number, x: number, w = 0) => 2 * cx - x - w;
+
 export function AkalTakhtScene({ members, year }: { members: string[]; year: number }) {
   const grand = year >= 1800;
   const cx = 400;
   return (
-    <svg viewBox="0 -44 800 424" style={{ width: '100%', height: 'auto', display: 'block', border: '1px solid var(--gold)' }} aria-label="The Sarbat Khalsa gathered before the Akal Takht">
-      {/* sky in flat bands, with gold cloud ribbons */}
-      <rect y="-44" width="800" height="424" fill="#3B5C8C" />
-      <path d="M0 150 C200 140 600 160 800 146 L800 380 L0 380 Z" fill="#6F8FB4" />
-      <path d="M0 220 C220 212 580 230 800 218 L800 380 L0 380 Z" fill="#A9BDD0" />
-      {[[110, 70, 1], [640, 52, 0.9], [700, 120, 0.6], [60, 150, 0.6]].map(([x, y, s], i) => (
+    <svg viewBox="0 -86 800 466" style={{ width: '100%', height: 'auto', display: 'block', border: '1px solid var(--gold)' }} aria-label="The Sarbat Khalsa gathered before the Akal Takht">
+      <defs>
+        <linearGradient id="at-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#5E8DC8" />
+          <stop offset="0.7" stopColor="#A9C5E3" />
+          <stop offset="1" stopColor="#D6E3EF" />
+        </linearGradient>
+        <linearGradient id="at-gilt" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#9A6A12" />
+          <stop offset="0.28" stopColor="#F4D57E" />
+          <stop offset="0.5" stopColor="#DDAE38" />
+          <stop offset="0.82" stopColor="#B98418" />
+          <stop offset="1" stopColor="#7E560D" />
+        </linearGradient>
+        <linearGradient id="at-dark" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#3B2B1E" />
+          <stop offset="1" stopColor="#6A5440" />
+        </linearGradient>
+        <pattern id="at-jali" width="5" height="5" patternUnits="userSpaceOnUse">
+          <rect width="5" height="5" fill={MARBLE} />
+          <path d="M2.5 0.8 L4.2 2.5 L2.5 4.2 L0.8 2.5 Z" fill={SHADE} />
+        </pattern>
+      </defs>
+
+      {/* the sky, with a few clouds */}
+      <rect y="-86" width="800" height="466" fill="url(#at-sky)" />
+      {[[70, -40, 1], [600, -55, 0.85], [680, 40, 0.7], [20, 90, 0.6], [520, 110, 0.5]].map(([x, y, s], i) => (
         <g key={i} transform={`translate(${x} ${y}) scale(${s})`}>
-          <path d="M0 0 C10 -14 30 -14 38 -4 C44 -14 62 -14 68 -2 C76 -10 92 -8 96 2 C88 0 82 4 80 10 C70 4 58 8 54 14 C46 6 30 6 24 12 C18 4 6 6 0 0 Z" fill="#F7EFD9" opacity="0.9" />
-        </g>
-      ))}
-      {/* the parikrama walls and bungas behind */}
-      <rect x="0" y="250" width="800" height="70" fill={SHADE} />
-      {[30, 120, 640, 730].map((x) => (
-        <g key={x}>
-          <rect x={x} y={200} width={50} height={120} fill={MARBLE} stroke={LINE} />
-          <Arches x={x + 4} y={212} w={42} h={24} n={3} />
-          <Arches x={x + 4} y={250} w={42} h={30} n={3} />
+          <path d="M0 0 C10 -14 30 -14 38 -4 C44 -14 62 -14 68 -2 C76 -10 92 -8 96 2 C88 0 82 4 80 10 C70 4 58 8 54 14 C46 6 30 6 24 12 C18 4 6 6 0 0 Z" fill="#FFFFFF" opacity="0.85" />
         </g>
       ))}
 
+      {/* the parikrama: an older bunga to the left, white arcades to the right */}
+      <g>
+        <rect x={0} y={214} width={150} height={104} fill="#D8C7A2" stroke={LINE} />
+        <rect x={0} y={208} width={154} height={6} fill="#CDBA92" stroke={LINE} strokeWidth="0.6" />
+        <ArchRow x={4} y={224} w={140} h={30} n={5} lobes={0} pier={0.3} />
+        <ArchRow x={4} y={270} w={140} h={44} n={5} lobes={4} pier={0.3} />
+        <rect x={650} y={222} width={150} height={96} fill={MARBLE} stroke={LINE} />
+        <Railing x={648} y={214} w={152} />
+        <ArchRow x={656} y={230} w={140} h={28} n={5} lobes={4} pier={0.3} />
+        <Railing x={650} y={262} w={150} h={6} />
+        <ArchRow x={656} y={276} w={140} h={42} n={5} lobes={4} pier={0.3} />
+      </g>
+
       {/* ── The Akal Takht ── */}
       <g>
-        {/* plinth and ground storey */}
-        <rect x={cx - 215} y={300} width={430} height={18} fill={MARBLE} stroke={LINE} />
-        <rect x={cx - 200} y={238} width={400} height={62} fill={MARBLE} stroke={LINE} />
-        <Arches x={cx - 70} y={246} w={140} h={54} n={5} />
-        <rect x={cx - 186} y={255} width={34} height={45} fill="#7A5230" stroke={LINE} />
-        <rect x={cx + 152} y={255} width={34} height={45} fill="#7A5230" stroke={LINE} />
-        <rect x={cx - 130} y={258} width={38} height={26} fill="#7A5230" opacity="0.85" />
-        <rect x={cx + 92} y={258} width={38} height={26} fill="#7A5230" opacity="0.85" />
-        <rect x={cx - 26} y={254} width={52} height={46} fill={GOLD} opacity="0.55" />
-        <Balustrade x={cx - 205} y={231} w={410} />
-        {/* first storey: the great arched gallery */}
-        <rect x={cx - 190} y={168} width={380} height={63} fill={MARBLE} stroke={LINE} />
-        <Arches x={cx - 120} y={174} w={240} h={57} n={5} deep="#5E4A36" />
-        <Arches x={cx - 186} y={182} w={62} h={42} n={1} deep="#6B5640" />
-        <Arches x={cx + 124} y={182} w={62} h={42} n={1} deep="#6B5640" />
-        <Chhajja x={cx - 196} y={163} w={392} />
-        <Balustrade x={cx - 198} y={156} w={396} />
+        {/* stairs to the darbar terrace */}
+        <Stair x0={140} x1={190} yTop={272} yBot={318} />
+        <g transform={`translate(${2 * cx} 0) scale(-1 1)`}>
+          <Stair x0={140} x1={190} yTop={272} yBot={318} />
+        </g>
+
+        {/* the basement storey: shuttered windows and a small arcade */}
+        <rect x={190} y={274} width={420} height={44} fill={MARBLE} stroke={LINE} />
+        <rect x={186} y={312} width={428} height={6} fill={SHADE} stroke={LINE} strokeWidth="0.6" />
+        {[206, 262].flatMap((x) => [x, sym(cx, x, 34)]).map((x) => (
+          <g key={x}>
+            <rect x={x - 2} y={282} width={38} height={26} fill={MARBLE} stroke={LINE} strokeWidth="0.7" />
+            <rect x={x} y={284} width={34} height={22} fill={DOOR} />
+            {[1, 2, 3].map((k) => (
+              <line key={k} x1={x + (k * 34) / 4} y1={284} x2={x + (k * 34) / 4} y2={306} stroke="#5A3618" strokeWidth="0.8" />
+            ))}
+          </g>
+        ))}
+        <ArchRow x={348} y={281} w={104} h={37} n={5} lobes={4} pier={0.26} />
+        <Railing x={184} y={266} w={432} />
+
+        {/* the darbar: the golden palki in the middle, arched doorways either side */}
+        <rect x={200} y={206} width={400} height={60} fill={MARBLE} stroke={LINE} />
+        <rect x={343} y={218} width={114} height={48} fill={DARK} />
+        <ArchRow x={343} y={218} w={114} h={48} n={3} lobes={6} pier={0.12} fill="#4A3828" />
+        <Palki x={cx} base={266} />
+        {[272, sym(cx, 272, 60)].map((x) => (
+          <g key={x}>
+            <Arch x={x} y={216} w={60} h={50} lobes={6} fill={SHADE} frame />
+            <rect x={x + 16} y={238} width={28} height={28} fill={DOOR} stroke="#5A3618" strokeWidth="0.8" />
+            <line x1={x + 30} y1={238} x2={x + 30} y2={266} stroke="#5A3618" strokeWidth="0.8" />
+          </g>
+        ))}
+        {[212, sym(cx, 212, 40)].map((x) => (
+          <g key={x}>
+            <Arch x={x} y={222} w={40} h={44} lobes={4} fill={SHADE} frame />
+            <rect x={x + 10} y={240} width={20} height={26} fill={DOOR} stroke="#5A3618" strokeWidth="0.8" />
+          </g>
+        ))}
+        {[262, 338, 462, 538].map((x) => (
+          <rect key={x} x={x - 1.5} y={208} width={3} height={58} fill={SIDE} />
+        ))}
+        <Chhajja x={198} y={204} w={404} />
+
         {grand ? (
           <>
-            {/* second storey */}
-            <rect x={cx - 165} y={112} width={330} height={44} fill={MARBLE} stroke={LINE} />
-            <Arches x={cx - 150} y={118} w={300} h={34} n={9} deep="#6B5640" />
-            <Chhajja x={cx - 170} y={108} w={340} />
-            <Balustrade x={cx - 172} y={101} w={344} />
-            {/* top pavilion */}
-            <rect x={cx - 72} y={66} width={144} height={35} fill={MARBLE} stroke={LINE} />
-            <Arches x={cx - 52} y={70} w={104} h={31} n={3} deep="#5E4A36" />
-            <rect x={cx - 76} y={61} width={152} height={6} fill={GOLD} />
-            {/* the gilded fluted dome */}
-            <path d={`M${cx - 62} ${61} C${cx - 72} ${30} ${cx - 34} ${4} ${cx} ${-4} C${cx + 34} ${4} ${cx + 72} ${30} ${cx + 62} ${61} Z`} fill={GOLD} stroke={GOLD_LO} strokeWidth="1.2" />
-            {[-44, -26, -9, 9, 26, 44].map((d) => (
-              <path key={d} d={`M${cx + d} ${61} Q${cx + d * 0.75} ${20} ${cx} ${-3}`} stroke={GOLD_LO} strokeWidth="1.1" fill="none" />
+            {/* the great gallery, with its balcony; its ends turn back */}
+            <rect x={226} y={140} width={348} height={64} fill={MARBLE} stroke={LINE} />
+            <path d="M180 146 L226 140 L226 204 L180 204 Z" fill={SIDE} stroke={LINE} />
+            <path d="M620 146 L574 140 L574 204 L620 204 Z" fill={SIDE} stroke={LINE} />
+            <ArchRow x={290} y={150} w={220} h={46} n={5} lobes={6} pier={0.2} frame />
+            {[236, sym(cx, 236, 44)].map((x) => (
+              <g key={x}>
+                <Arch x={x} y={150} w={44} h={46} lobes={6} fill={SHADE} frame />
+                <Arch x={x + 12} y={164} w={20} h={30} lobes={0} />
+              </g>
             ))}
-            <path d={`M${cx - 62} ${61} C${cx - 72} ${30} ${cx - 34} ${4} ${cx} ${-4}`} stroke={GOLD_HI} strokeWidth="2.2" fill="none" />
-            {/* finial */}
-            <path d={`M${cx - 9} ${-2} Q${cx} ${-12} ${cx + 9} ${-2} Z`} fill={GOLD_HI} />
-            <line x1={cx} y1={-6} x2={cx} y2={-30} stroke={GOLD_HI} strokeWidth="2.6" />
-            {[-14, -22].map((y) => (
-              <ellipse key={y} cx={cx} cy={y} rx="5" ry="2.6" fill={GOLD_HI} />
-            ))}
-            {/* small gilded domes beside the great dome, and kiosks at the corners */}
-            <Kiosk x={cx - 82} y={61} s={0.8} gilt />
-            <Kiosk x={cx + 82} y={61} s={0.8} gilt />
-            <Kiosk x={cx - 150} y={101} s={1.15} gilt />
-            <Kiosk x={cx + 150} y={101} s={1.15} gilt />
-            <Kiosk x={cx - 182} y={156} s={1.25} gilt />
-            <Kiosk x={cx + 182} y={156} s={1.25} gilt />
+            <Arch x={188} y={154} w={30} h={42} lobes={4} />
+            <Arch x={582} y={154} w={30} h={42} lobes={4} />
+            <Railing x={178} y={194} w={444} h={9} />
+            <Chhajja x={180} y={134} w={440} />
+            <Railing x={182} y={126} w={436} />
+
+            {/* the storey of windows */}
+            <rect x={272} y={82} width={256} height={46} fill={MARBLE} stroke={LINE} />
+            <path d="M252 86 L272 82 L272 128 L252 128 Z" fill={SIDE} stroke={LINE} />
+            <path d="M548 86 L528 82 L528 128 L548 128 Z" fill={SIDE} stroke={LINE} />
+            <line x1={252} y1={92} x2={548} y2={92} stroke={LINE} strokeWidth="0.6" />
+            <ArchRow x={276} y={98} w={248} h={26} n={7} lobes={0} pier={0.45} frame />
+            <Arch x={257} y={100} w={10} h={24} />
+            <Arch x={533} y={100} w={10} h={24} />
+            <Chhajja x={252} y={76} w={296} />
+            <Railing x={246} y={68} w={308} />
+
+            {/* the drum, the gilded dome and its finial */}
+            <rect x={352} y={44} width={96} height={24} fill={MARBLE} stroke={LINE} />
+            <ArchRow x={360} y={49} w={80} h={19} n={3} lobes={4} pier={0.4} />
+            <rect x={346} y={38} width={108} height={6} fill={GILT} stroke={GOLD_LO} strokeWidth="0.6" />
+            <Dome cx={cx} yb={38} w={88} h={74} ribs={7} lotus />
+            <Finial x={cx} y={-36} s={2.0} />
+
+            {/* domelets at the corners of the drum and of the roof */}
+            <Domelet x={347} y={44} s={1.1} />
+            <Domelet x={453} y={44} s={1.1} />
+            <Domelet x={300} y={68} s={1.2} />
+            <Domelet x={500} y={68} s={1.2} />
+
+            {/* the four chhatris */}
+            <Chhatri x={272} y={126} s={1.6} pedestal={78} />
+            <Chhatri x={528} y={126} s={1.6} pedestal={78} />
+            <Chhatri x={196} y={128} s={1.2} pedestal={22} />
+            <Chhatri x={604} y={128} s={1.2} pedestal={22} />
           </>
         ) : (
           <>
-            {/* the modest hall of the misl years, with a small white dome */}
-            <rect x={cx - 60} y={124} width={120} height={32} fill={MARBLE} stroke={LINE} />
-            <Arches x={cx - 46} y={128} w={92} h={28} n={3} deep="#6B5640" />
-            <path d={`M${cx - 48} ${124} C${cx - 52} ${100} ${cx - 22} ${84} ${cx} ${80} C${cx + 22} ${84} ${cx + 52} ${100} ${cx + 48} ${124} Z`} fill={MARBLE} stroke={LINE} strokeWidth="1.2" />
-            <line x1={cx} y1={80} x2={cx} y2={66} stroke={GOLD} strokeWidth="2" />
-            <circle cx={cx} cy={64} r="3" fill={GOLD} />
-            <Kiosk x={cx - 182} y={156} s={1.1} gilt={false} />
-            <Kiosk x={cx + 182} y={156} s={1.1} gilt={false} />
+            {/* the modest hall of the misl years, under a small white dome */}
+            <Railing x={196} y={196} w={408} />
+            <rect x={318} y={150} width={164} height={46} fill={MARBLE} stroke={LINE} />
+            <ArchRow x={326} y={158} w={148} h={36} n={3} lobes={6} pier={0.22} frame />
+            <Chhajja x={316} y={144} w={168} />
+            <rect x={352} y={128} width={96} height={16} fill={MARBLE} stroke={LINE} />
+            <Dome cx={cx} yb={128} w={82} h={54} gilt={false} ribs={5} lotus />
+            <Finial x={cx} y={74} s={1.6} />
+            <Chhatri x={214} y={196} s={1.1} pedestal={10} gilt={false} />
+            <Chhatri x={586} y={196} s={1.1} pedestal={10} gilt={false} />
           </>
         )}
       </g>
 
       {/* the two Nishan Sahibs of Miri and Piri */}
-      <NishanSahib x={150} base={322} h={250} />
-      <NishanSahib x={186} base={322} h={232} />
+      <NishanSahib x={88} base={322} h={372} flip />
+      <NishanSahib x={118} base={322} h={350} flip />
 
       {/* the marble courtyard */}
-      <rect x="0" y="318" width="800" height="62" fill="#EDE5D0" />
+      <rect x="0" y="318" width="800" height="62" fill="#EEE7D6" />
       {Array.from({ length: 14 }, (_, i) => (
-        <line key={i} x1={i * 62 - 30} y1={318} x2={(i - 6.5) * 120 + 400} y2={380} stroke={LINE} strokeWidth="0.8" opacity="0.6" />
+        <line key={i} x1={i * 62 - 30} y1={318} x2={(i - 6.5) * 120 + 400} y2={380} stroke={LINE} strokeWidth="0.7" opacity="0.5" />
       ))}
       {[330, 346, 364].map((y) => (
-        <line key={y} x1={0} y1={y} x2={800} y2={y} stroke={LINE} strokeWidth="0.8" opacity="0.6" />
+        <line key={y} x1={0} y1={y} x2={800} y2={y} stroke={LINE} strokeWidth="0.7" opacity="0.5" />
       ))}
 
       {/* the sardars of the misls, seated in a crescent under their banners */}
