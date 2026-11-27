@@ -10,6 +10,7 @@
 //   • with no land — the movement goes on, as the Punjabi Suba movement, for a
 //     Punjabi-speaking state within India (historically won in 1966).
 
+import { OUTSIDE_RAJ as OUTSIDE, TO_PAKISTAN } from '../data/borders';
 import { PUNJAB_REGION_IDS, REGION_BY_ID } from '../data/regions';
 import { chronicle } from './chronicle';
 import { transferRegion } from './conquest';
@@ -20,27 +21,8 @@ import { newId } from './state';
 import { avgSupport } from './struggle';
 import { alert, makeVassal } from './vassals';
 
-/** The Punjab west of the Radcliffe line, and the other lands that went to Pakistan. */
-export const TO_PAKISTAN = new Set<RegionId>([
-  // West Punjab
-  'lahore', 'kasur', 'chunian', 'dipalpur', 'pakpattan', 'multan', 'sialkot', 'gujranwala', 'wazirabad', 'ramnagar', 'sheikhupura',
-  'jhang', 'kamalia', 'gujrat', 'bhera', 'rawalpindi', 'dhanni', 'khewra', 'khushab', 'mankera', 'attock', 'bahawalpur',
-  // The Frontier and the hills
-  'hazara', 'peshawar', 'jamrud', 'kohat', 'bannu', 'dera_ismail_khan', 'dera_ghazi_khan', 'chitral', 'swat', 'gilgit', 'baltistan', 'mirpur', 'muzaffarabad',
-  // Baluchistan and Sindh
-  'quetta', 'kalat', 'makran', 'las_bela', 'shikarpur', 'hyderabad_sindh', 'thatta', 'thar',
-  // East Bengal
-  'dhaka', 'chittagong', 'rangpur',
-]);
-
-/** Lands outside British India in 1947, left to their own rulers. */
-const OUTSIDE = new Set<RegionId>([
-  'kabul', 'jalalabad', 'ghazni', 'kandahar', 'herat', 'farah', 'hazarajat', 'balkh', 'kunduz', 'badakhshan',
-  'kathmandu', 'gorkha', 'sikkim', 'ngari', 'changtang', 'tsang', 'lhasa', 'ceylon',
-]);
-
 /** The Sikh princely states, which a strong Sikh state might draw in. */
-const SIKH_PRINCES: FactionId[] = ['phulkian', 'ahluwalia'];
+const SIKH_PRINCES: FactionId[] = ['phulkian', 'kapurthala', 'ahluwalia'];
 
 export const isTransferred = (s: GameState) => !!s.flags?.transferred;
 /** Who governs the Punjab against the movement: the British, then India. */
@@ -90,8 +72,12 @@ export function transferOfPower(s: GameState): void {
     d.piri = 50;
   }
   const sideOf = (r: RegionId): FactionId | null => (OUTSIDE.has(r) ? null : TO_PAKISTAN.has(r) ? 'pakistan' : 'india');
-  // The Crown's own lands.
+  // The Crown's own lands, and the unclaimed tribal and forest country inside British India.
   for (const r of Object.values(s.regions)) {
+    if (r.owner === null && sideOf(r.id)) {
+      r.owner = sideOf(r.id);
+      continue;
+    }
     if (r.owner !== 'company') continue;
     const to = sideOf(r.id);
     if (r.id === 'ceylon' || !to) {
@@ -225,6 +211,7 @@ export function settle(s: GameState, kind: 'sovereign' | 'autonomous', name: str
 /** The princely Sikh states' lands, as they were in 1947. */
 const PRINCELY_LANDS: Record<string, RegionId[]> = {
   phulkian: ['patiala', 'nabha', 'jind', 'faridkot'],
+  kapurthala: ['kapurthala'],
   ahluwalia: ['kapurthala'],
 };
 

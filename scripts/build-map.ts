@@ -20,7 +20,8 @@ import { fileURLToPath } from 'node:url';
 import { PUNJAB_REGION_IDS, REGIONS } from '../src/data/regions';
 import { LAND } from '../src/data/coast';
 import { RIVERS, FORDS } from '../src/data/rivers';
-import { project, WORLD_W, WORLD_H } from '../src/data/projection';
+import { project, unproject, WORLD_W, WORLD_H } from '../src/data/projection';
+import { BANGLADESH, WEST_OF_LINE, inPoly, sideOf } from '../src/data/borders';
 
 const CELL = 4;
 const GW = Math.ceil(WORLD_W / CELL);
@@ -85,6 +86,32 @@ const land = new Uint8Array(N);
     for (let dj = -3; dj <= 3; dj++) for (let di = -3; di <= 3; di++) if (ci + di >= 0 && cj + dj >= 0 && ci + di < GW && cj + dj < GH) land[idx(ci + di, cj + dj)] = 1;
   }
 }
+
+// ── 1c. Modern borders ───────────────────────────────────────────────────────
+// Regions are cut to the borders of today's India, Pakistan and Bangladesh, so
+// the lands of 1947 pass whole to one side or the other: a region on one side
+// may never claim a cell on the other.
+const cellWest = new Uint8Array(N);
+const cellBd = new Uint8Array(N);
+for (let j = 0; j < GH; j++)
+  for (let i = 0; i < GW; i++) {
+    const [la, lo] = unproject((i + 0.5) * CELL, (j + 0.5) * CELL);
+    if (inPoly(la, lo, WEST_OF_LINE)) cellWest[idx(i, j)] = 1;
+    if (inPoly(la, lo, BANGLADESH)) cellBd[idx(i, j)] = 1;
+  }
+const regionSide = REGIONS.map((r) => sideOf(r.id));
+const allowed = (k: number, c: number): boolean => {
+  switch (regionSide[k]) {
+    case 'pk':
+      return !!cellWest[c] && !cellBd[c];
+    case 'bd':
+      return !!cellBd[c];
+    case 'in':
+      return !cellWest[c] && !cellBd[c];
+    default:
+      return !cellBd[c];
+  }
+};
 
 // ── 2–3. Dijkstra flood ──────────────────────────────────────────────────────
 const REACH: Record<string, number> = {
@@ -201,6 +228,7 @@ for (let item = heap.pop(); item; item = heap.pop()) {
     if (ni < 0 || nj < 0 || ni >= GW || nj >= GH) continue;
     const n = idx(ni, nj);
     if (!land[n]) continue;
+    if (!allowed(k, n)) continue;
     const [si, sj] = seatCell[k];
     const g = Math.hypot(ni - si, nj - sj) * CELL;
     if (g > reach * edgeNoise(k, ni, nj, si, sj)) continue;
@@ -267,7 +295,7 @@ for (let pass = 0; pass < 3; pass++) {
           nj = j + dj;
         if (ni < 0 || nj < 0 || ni >= GW || nj >= GH) continue;
         const l = label[idx(ni, nj)];
-        if (l >= 0) counts.set(l, (counts.get(l) ?? 0) + 1);
+        if (l >= 0 && allowed(l, c)) counts.set(l, (counts.get(l) ?? 0) + 1);
       }
       let best = -1,
         bc = 0;
@@ -313,12 +341,35 @@ for (let pass = 0; pass < 3; pass++) {
           nj = j + dj;
         if (ni < 0 || nj < 0 || ni >= GW || nj >= GH) continue;
         const l = label[idx(ni, nj)];
-        if (l >= 0) {
+        if (l >= 0 && allowed(l, c)) {
           label[c] = l;
           break;
         }
       }
     }
+}
+
+// Bangladesh is drawn whole: its rivers would otherwise leave the Khulna side
+// blank once Calcutta may no longer reach across the border.
+for (let pass = 0; pass < 400; pass++) {
+  let changed = 0;
+  for (let c = 0; c < N; c++) {
+    if (label[c] >= 0 || !land[c] || !cellBd[c]) continue;
+    const i = c % GW,
+      j = (c / GW) | 0;
+    for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const ni = i + di,
+        nj = j + dj;
+      if (ni < 0 || nj < 0 || ni >= GW || nj >= GH) continue;
+      const l = label[idx(ni, nj)];
+      if (l >= 0 && allowed(l, c)) {
+        label[c] = l;
+        changed++;
+        break;
+      }
+    }
+  }
+  if (!changed) break;
 }
 
 // ── 5. Border tracing on the shared vertex graph ─────────────────────────────

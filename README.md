@@ -223,6 +223,9 @@ simplifications, and `AUDIO.md` for the musical choices.
   Asia (84 larger regions: Afghanistan, Sindh, Rajputana, Hindustan, Bengal, the Deccan, the South,
   Nepal and Tibet) follows its own history around you — Plassey, Panipat, Srirangapatna, the fall of the
   Marathas, the conquest of Sindh — unless you hold the land.
+- **Cut to the borders of 1947.** The regions follow today's India–Pakistan border — the Radcliffe line
+  through the Punjab, the Sindh–Rajasthan border and the Line of Control in Kashmir — and Bangladesh's,
+  so every land passes whole to one side when the Raj ends.
 - **Four ages, one century.** A game started in 1748 runs on through *The Misl Raj* (1765), *The Lion of
   Lahore* (1799) and *Twilight of the Sarkar* (1839). Each age opens with a page saying what has changed and
   what history would bring next; its name follows your story (*The Bhangi Sarkar*, *The Confederate Khalsa*,

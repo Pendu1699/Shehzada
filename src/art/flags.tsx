@@ -53,6 +53,7 @@ export const FLAGS: Record<string, FlagDesign> = {
   mughal: { shape: 'pennant', field: '#2E6B45', border: '#C9A13B', vine: GOLD, device: 'sherkhurshid', deviceColor: GOLD, pattern: 'none' },
   maratha: { shape: 'swallow', field: '#E8770E', device: 'none', deviceColor: '#E8770E', pattern: 'none' },
   company: { shape: 'stripes', field: '#B02222', device: 'union', deviceColor: '#F2E6C9', pattern: 'none' },
+  kapurthala: { shape: 'rect', field: '#1F3A68', border: '#C9A13B', device: 'kalgi', deviceColor: '#E6C766', pattern: 'dots', patternColor: '#C9A13B' },
   // The two dominions of 1947.
   india: { shape: 'tricolour', field: '#F7F3EA', device: 'chakra', deviceColor: '#1F3A8C', pattern: 'none' },
   pakistan: { shape: 'hoist', field: '#1E5E36', device: 'crescent_star', deviceColor: '#F7F3EA', pattern: 'none' },

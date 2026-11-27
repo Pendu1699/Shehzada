@@ -24,6 +24,21 @@ export function migrate(s: GameState): GameState {
   for (const a of Object.values(s.armies)) if (!a.policy) a.policy = 'spare';
   // Houses added to the game since the save was made (the Khalsa Panth, India, Pakistan…).
   for (const f of FACTIONS) if (!s.factions[f.id]) ensureFaction(s, f.id);
+  // The Long Struggle once had Kapurthala ruled by "the Ahluwalia misl": it is Kapurthala State now.
+  if (s.mode === 'struggle' && s.regions.kapurthala?.owner === 'ahluwalia') {
+    const k = s.factions.kapurthala;
+    const a = s.factions.ahluwalia;
+    s.regions.kapurthala.owner = 'kapurthala';
+    k.alive = true;
+    k.treasury = a.treasury;
+    k.flags = { ...a.flags };
+    for (const [g, rel] of Object.entries(a.relations)) {
+      k.relations[g] = rel;
+      if (s.factions[g]) s.factions[g].relations.kapurthala = rel;
+    }
+    for (const arm of Object.values(s.armies)) if (arm.owner === 'ahluwalia') arm.owner = 'kapurthala';
+    a.alive = false;
+  }
   if (s.version > SAVE_VERSION) throw new Error('This save comes from a newer version of the game.');
   s.version = SAVE_VERSION;
   return s;

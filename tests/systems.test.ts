@@ -622,4 +622,20 @@ describe('the Long Struggle', () => {
     for (let i = 0; i < 6; i++) g = endTurn(g);
     expect(g.turn).toBe(6);
   });
+  it('has Kapurthala as a princely state in 1849, not a misl, and moves older saves over', async () => {
+    const { newGame } = await import('../src/engine/setup');
+    const { serialize, deserialize } = await import('../src/engine/save');
+    const { polityName } = await import('../src/engine/query');
+    const s = newGame({ scenarioId: 's1849', playerFaction: 'khalsa_panth', seed: 1 });
+    expect(s.regions.kapurthala.owner).toBe('kapurthala');
+    expect(s.factions.ahluwalia.alive).toBe(false);
+    expect(polityName(s, 'phulkian')).toBe('the Phulkian States');
+    const old = JSON.parse(serialize(s));
+    old.regions.kapurthala.owner = 'ahluwalia';
+    old.factions.ahluwalia.alive = true;
+    old.factions.kapurthala.alive = false;
+    const g = deserialize(JSON.stringify(old));
+    expect(g.regions.kapurthala.owner).toBe('kapurthala');
+    expect(g.factions.ahluwalia.alive).toBe(false);
+  });
 });

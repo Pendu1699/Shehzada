@@ -429,7 +429,7 @@ export const SCENARIOS: ScenarioDef[] = [
     recommended: 'khalsa_panth',
     owners: {
       ...Object.fromEntries([...PUNJAB_REGION_IDS].map((r) => [r, 'company'])),
-      kapurthala: 'ahluwalia',
+      kapurthala: 'kapurthala',
       patiala: 'phulkian',
       nabha: 'phulkian',
       jind: 'phulkian',
@@ -457,9 +457,9 @@ export const SCENARIOS: ScenarioDef[] = [
     treasury: { default: 100, khalsa_panth: 40, company: 9000, phulkian: 500, jammu: 600 },
     piri: { default: 50, khalsa_panth: 60, phulkian: 40 },
     absent: ['mughal', 'peshawar', 'multan', 'kasur', 'kangra', 'bhangi', 'kanhaiya', 'ramgarhia', 'nakai', 'dallewalia', 'nishanwalia', 'faizullapuria', 'karorasinghia', 'shaheedan', 'sukerchakia', 'durrani', 'maratha'],
-    flags: { phulkian: { company_protection: true }, ahluwalia: { company_protection: true } },
+    flags: { phulkian: { company_protection: true }, kapurthala: { company_protection: true } },
     wars: [],
-    alliances: [['phulkian', 'company'], ['ahluwalia', 'company'], ['jammu', 'company'], ['bahawalpur', 'company']],
+    alliances: [['phulkian', 'company'], ['kapurthala', 'company'], ['jammu', 'company'], ['bahawalpur', 'company']],
   },
 ];
 

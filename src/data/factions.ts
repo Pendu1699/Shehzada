@@ -301,6 +301,20 @@ export const FACTIONS: FactionDef[] = [
     mods: {},
     personality: { aggression: 0.5, caution: 0.85, zeal: 0.1, greed: 0.8, honour: 0.6 },
   }),
+  {
+    ...power({
+      id: 'kapurthala',
+      name: 'Kapurthala State',
+      epithet: 'The Ahluwalia rajas under the Crown',
+      color: '#2F4F7F',
+      banner: { field: '#1F3A68', band: '#C9A13B', emblem: 'sun' },
+      description:
+        'After 1849 the Ahluwalia house no longer rode as a misl: it ruled Kapurthala as a princely state under British protection. Raja Randhir Singh sent his troops to Oudh for the British in 1857.',
+      mods: {},
+      personality: { aggression: 0.15, caution: 0.85, zeal: 0.3, greed: 0.4, honour: 0.6 },
+    }),
+    sikh: true,
+  },
   power({
     id: 'india',
     name: 'Dominion of India',

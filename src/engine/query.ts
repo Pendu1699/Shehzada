@@ -106,6 +106,8 @@ export function polityName(s: GameState, id: FactionId | null | undefined): stri
   if (typeof named === 'string') return named;
   if (s.factions[id]?.sarkar) return 'the Sikh Empire';
   if (id === 'khalsa_panth') return 'the Khalsa Panth';
+  // After 1849 the Phulkian houses were princely states, not a misl.
+  if (id === 'phulkian' && (s.mode === 'struggle' || s.flags?.transferred)) return 'the Phulkian States';
   const d = FACTION_BY_ID[id];
   if (!d) return id;
   return d.kind === 'misl' ? `the ${d.name} misl` : `the ${d.name}`;
